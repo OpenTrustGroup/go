@@ -74,6 +74,7 @@ var okgoos = []string{
 	"android",
 	"solaris",
 	"freebsd",
+	"fuchsia",
 	"nacl",
 	"netbsd",
 	"openbsd",
