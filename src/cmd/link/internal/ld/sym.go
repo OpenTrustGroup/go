@@ -93,6 +93,9 @@ func (ctxt *Link) computeTLSOffset() {
 			ctxt.Tlsoffset = -1 * ctxt.Arch.PtrSize
 		}
 
+	case obj.Hfuchsia:
+		ctxt.Tlsoffset = -1 * ctxt.Arch.PtrSize
+
 	case obj.Hnacl:
 		switch ctxt.Arch.Family {
 		default:

@@ -816,6 +816,7 @@ const (
 	Hdarwin
 	Hdragonfly
 	Hfreebsd
+	Hfuchsia
 	Hlinux
 	Hnacl
 	Hnetbsd
@@ -834,6 +835,8 @@ func (h *HeadType) Set(s string) error {
 		*h = Hdragonfly
 	case "freebsd":
 		*h = Hfreebsd
+	case "fuchsia":
+		*h = Hfuchsia
 	case "linux", "android":
 		*h = Hlinux
 	case "nacl":
@@ -864,6 +867,8 @@ func (h *HeadType) String() string {
 		return "dragonfly"
 	case Hfreebsd:
 		return "freebsd"
+	case Hfuchsia:
+		return "fuchsia"
 	case Hlinux:
 		return "linux"
 	case Hnacl:

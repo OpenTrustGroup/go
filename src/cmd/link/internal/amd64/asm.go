@@ -708,6 +708,7 @@ func asmb(ctxt *ld.Link) {
 
 	case obj.Hlinux,
 		obj.Hfreebsd,
+		obj.Hfuchsia,
 		obj.Hnetbsd,
 		obj.Hopenbsd,
 		obj.Hdragonfly,
@@ -739,6 +740,7 @@ func asmb(ctxt *ld.Link) {
 
 		case obj.Hlinux,
 			obj.Hfreebsd,
+			obj.Hfuchsia,
 			obj.Hnetbsd,
 			obj.Hopenbsd,
 			obj.Hdragonfly,
@@ -823,6 +825,7 @@ func asmb(ctxt *ld.Link) {
 
 	case obj.Hlinux,
 		obj.Hfreebsd,
+		obj.Hfuchsia,
 		obj.Hnetbsd,
 		obj.Hopenbsd,
 		obj.Hdragonfly,

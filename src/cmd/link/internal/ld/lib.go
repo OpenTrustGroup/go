@@ -1204,6 +1204,9 @@ func (l *Link) hostlink() {
 		argv = append(argv, "-Wl,--start-group", "-lmingwex", "-lmingw32", "-Wl,--end-group")
 		argv = append(argv, peimporteddlls()...)
 	}
+	if Headtype == obj.Hfuchsia {
+		argv = append(argv, "-lruntime", "-lmagenta", "-lmxio")
+	}
 
 	if l.Debugvlog != 0 {
 		l.Logf("%5.2f host link:", obj.Cputime())

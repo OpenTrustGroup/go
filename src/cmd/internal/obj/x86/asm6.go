@@ -2174,6 +2174,7 @@ func prefixof(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 
 			case obj.Hdragonfly,
 				obj.Hfreebsd,
+				obj.Hfuchsia,
 				obj.Hnetbsd,
 				obj.Hopenbsd,
 				obj.Hsolaris:

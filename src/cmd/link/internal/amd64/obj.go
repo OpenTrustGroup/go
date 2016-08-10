@@ -109,6 +109,7 @@ func archinit(ctxt *ld.Link) {
 
 	case obj.Hlinux, /* elf64 executable */
 		obj.Hfreebsd,   /* freebsd */
+		obj.Hfuchsia,   /* fuchsia */
 		obj.Hnetbsd,    /* netbsd */
 		obj.Hopenbsd,   /* openbsd */
 		obj.Hdragonfly, /* dragonfly */
