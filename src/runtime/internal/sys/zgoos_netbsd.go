@@ -9,6 +9,7 @@ const GoosDarwin = 0
 const GoosDragonfly = 0
 const GoosFreebsd = 0
 const GoosLinux = 0
+const GoosFuchsia = 0
 const GoosNacl = 0
 const GoosNetbsd = 1
 const GoosOpenbsd = 0
