@@ -124,8 +124,16 @@ needtls:
 	JMP ok
 #endif
 
+#ifdef GOOS_fuchsia
+	LEAQ	runtime·g0(SB), CX
+	MOVQ	CX, g(BX)
+	LEAQ	runtime·m0(SB), AX
 	LEAQ	runtime·m0+m_tls(SB), DI
 	CALL	runtime·settls(SB)
+#else
+        LEAQ    runtime·m0+m_tls(SB), DI
+        CALL    runtime·settls(SB)
+#endif
 
 	// store through it, to make sure it works
 	get_tls(BX)
@@ -134,6 +142,7 @@ needtls:
 	CMPQ	AX, $0x123
 	JEQ 2(PC)
 	MOVL	AX, 0	// abort
+
 ok:
 	// set the per-goroutine and per-mach "registers"
 	get_tls(BX)
