@@ -6,7 +6,7 @@ if [ "$SDK" == "" ]; then
 	exit 1
 fi
 
-exec $SDK/toolchains/clang+llvm-x86_64-linux/bin/clang \
+exec $SDK/toolchain/clang+llvm-x86_64-linux/bin/clang \
 	--target=x86_64-fuchsia \
-	--sysroot=$SDK/platforms/x86_64-fuchsia \
+	--sysroot=$SDK/sysroot/x86_64-fuchsia \
 	"$@"
