@@ -4,6 +4,8 @@
 
 package syscall
 
+import "internal/syscall/fuchsia"
+
 var (
 	Stdin  = 0
 	Stdout = 1
@@ -69,7 +71,7 @@ func Getgroups() (gids []int, err error) {
 }
 
 func Exit(code int) {
-	panic("TODO")
+	fuchsia.Sys_exit(code)
 }
 
 func Getpagesize() int { return 4096 }
