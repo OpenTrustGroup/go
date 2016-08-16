@@ -12,7 +12,7 @@ import "unsafe"
 type (
 	Status             int32   // mx_status_t
 	Handle             int32   // mx_handle_t
-	Time               int64   // mx_time_t, nanoseconds
+	Time               uint64  // mx_time_t, nanoseconds
 	Signals            uint32  // mx_signals_t
 	Rights             uint32  // mx_rights_t
 	Vaddr              uintptr // mx_vaddr_t
