@@ -77,28 +77,3 @@ func MessageWrite(handle Handle, data []byte, handles []Handle, flags uint32) St
 	}
 	return Sys_message_write(handle, dataPtr, uint32(len(data)), handlePtr, uint32(len(handles)), flags)
 }
-
-func IoPortCreate(options uint32) (Handle, Status) {
-	handle := Sys_io_port_create(options)
-	if handle <= 0 {
-		return 0, Status(handle)
-	}
-	return handle, ErrOk
-}
-
-func IoPortQueue(handle Handle, packet *MxioPacket, size uint) Status {
-	return Sys_io_port_queue(handle, unsafe.Pointer(packet), size)
-}
-
-func IoPortWait(handle Handle, size uint) (*MxioPacket, Status) {
-	var packet MxioPacket
-	status := Sys_io_port_wait(handle, unsafe.Pointer(&packet), size)
-	if status != ErrOk {
-		return nil, status
-	}
-	return &packet, ErrOk
-}
-
-func IoPortBind(handle Handle, key uint64, source Handle, signals Signals) Status {
-	return Sys_io_port_bind(handle, key, source, signals)
-}

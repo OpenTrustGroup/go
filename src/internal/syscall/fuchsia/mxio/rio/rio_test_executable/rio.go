@@ -1,0 +1,242 @@
+// Copyright 2016 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// +build fuchsia
+
+// TODO(smklein): Convert this program to a go test once we can run `go test` on Magenta.
+package main
+
+import (
+	"bytes"
+
+	"internal/syscall/fuchsia"
+	"internal/syscall/fuchsia/mxio"
+	"internal/syscall/fuchsia/mxio/dispatcher"
+	"internal/syscall/fuchsia/mxio/rio"
+)
+
+// Create a new dispatcher, running a RIO server. It is initialized with no clients.
+func CreateRIOServer() *dispatcher.Dispatcher {
+	d, status := dispatcher.New(rio.Handler)
+	if status < 0 {
+		panic(status)
+	}
+	go d.Serve()
+	return d
+}
+
+// Create a pair of handles, and add one end to the RIO server, along with a RIO Server callback.
+func CreateRIOClient(d *dispatcher.Dispatcher, cb rio.ServerHandler, cookie int64) *rio.RemoteIO {
+	handles, status := fuchsia.MessagePipeCreate(0)
+	if status < 0 {
+		panic(status)
+	}
+
+	status = d.AddHandler(handles[0], cb, cookie)
+	if status < 0 {
+		panic(status)
+	}
+
+	// TODO(smklein): Add 'event' handle to clientHandles when testing 'wait'
+	client, err := rio.New([]fuchsia.Handle{handles[1]})
+	if err != nil {
+		panic(err)
+	}
+	return client
+}
+
+var testData = []struct {
+	// Input messages
+	inOp   uint32  // Operation (always used)
+	inArg  int32   // 'arg', or 0 if ignored
+	inArg2 int64   // 'arg2', or 0 if ignored
+	inData []uint8 // 'data', or 0 if ignored
+
+	// Output messages
+	outRetval  fuchsia.Status   // Expected return value from server
+	outArg2    int64            // 'arg2', or 0 if ignored
+	outData    []uint8          // 'data', or empty if ignored
+	outHandles []fuchsia.Handle // 'handles', or empty if ignored
+}{
+	// IN: Arg: Flags, Arg2: Mode, Data: Name
+	// OUT: Retval: 0, Arg2: Protocol, Handles: Opened object (set elsewhere)
+	{rio.OpOpen, 12, 34, []uint8{'f', 'i', 'l', 'e'}, 0, int64(mxio.ProtocolRemote), []uint8{}, []fuchsia.Handle{}},
+	// IN: Nothing
+	// OUT: Retval: 0, Arg2: Protocol, Handles: Opened object (set elsewhere)
+	{rio.OpClone, 0, 0, []uint8{}, 0, int64(mxio.ProtocolRemote), []uint8{}, []fuchsia.Handle{}},
+	// IN: Arg: Max bytes to read
+	// OUT: Retval: Bytes read, Arg2: New offset, Data: Data read
+	{rio.OpRead, 4, 0, []uint8{}, 4, 5, []uint8{'d', 'a', 't', 'a'}, []fuchsia.Handle{}},
+	// IN: Data: Data to write
+	// OUT: Retval: Bytes read, Arg2: New offset
+	{rio.OpWrite, 0, 0, []uint8{'i', 'n', 'p', 'u', 't'}, 5, 10, []uint8{}, []fuchsia.Handle{}},
+	// IN: Arg: Whence, Arg2: Offset
+	// OUT: Retval: 0, Arg2: Offset
+	{rio.OpSeek, 1, 0x1234567, []uint8{}, 0, 0x7654321, []uint8{}, []fuchsia.Handle{}},
+	// IN: Arg: Max length of "out", Arg2: Opcode (arbitrary), Data: Arbitrary bytes
+	// OUT: Retval: 0, Data: Arbitrary bytes
+	{rio.OpIoctl, rio.MessageChunkSize, 1337, []uint8{'i', 'n'}, 0, 0, []uint8{'o', 'u', 't'}, []fuchsia.Handle{}},
+	// IN: Arg: Max length of "out", Arg2: Opcode (DeviceGetHandle)
+	// OUT: Retval: 0, Handles: Opened object (set elsewhere)
+	{rio.OpIoctl, rio.MessageChunkSize, mxio.IoctlDeviceGetHandle, []uint8{}, 0, 0, []uint8{}, []fuchsia.Handle{}},
+	// IN: Nothing
+	// OUT: Nothing
+	{rio.OpClose, 0, 0, []uint8{}, 0, 0, []uint8{}, []fuchsia.Handle{}},
+}
+
+func checkOpen(client *rio.RemoteIO, opIndex int) {
+	// Create the expected return handle here, since dummy values would be rejected.
+	testHandles, status := fuchsia.MessagePipeCreate(0)
+	if status < 0 {
+		panic(status)
+	}
+	testData[opIndex].outHandles = []fuchsia.Handle{testHandles[0]}
+	_, err := client.Open(string(testData[opIndex].inData), testData[opIndex].inArg, uint32(testData[opIndex].inArg2))
+	if err != nil {
+		panic(err)
+	}
+}
+
+func checkClone(client *rio.RemoteIO, opIndex int) {
+	// Create the expected return handle here, since dummy values would be rejected.
+	testHandles, status := fuchsia.MessagePipeCreate(0)
+	if status < 0 {
+		panic(status)
+	}
+	testData[opIndex].outHandles = []fuchsia.Handle{testHandles[0]}
+	handles, err := client.Clone()
+	if err != nil {
+		panic(err)
+	} else if len(handles) != len(testData[opIndex].outHandles) {
+		panic("Unexpected number of returned handles")
+	} else if handles[0] != testData[opIndex].outHandles[0] {
+		panic("Unexpected returned handle")
+	}
+}
+
+func checkRead(client *rio.RemoteIO, opIndex int) {
+	buf := make([]byte, len(testData[opIndex].outData))
+	count, err := client.Read(buf)
+	if err != nil {
+		panic(err)
+	} else if count != len(buf) {
+		panic("Unexpected read byte count")
+	} else if !bytes.Equal(buf, testData[opIndex].outData) {
+		panic("Unexpected read data")
+	}
+}
+
+func checkWrite(client *rio.RemoteIO, opIndex int) {
+	count, err := client.Write(testData[opIndex].inData)
+	if err != nil {
+		panic(err)
+	} else if count != len(testData[opIndex].inData) {
+		panic("Unexpected write byte count")
+	}
+}
+
+func checkSeek(client *rio.RemoteIO, opIndex int) {
+	off, err := client.Seek(testData[opIndex].inArg2, int(testData[opIndex].inArg))
+	if err != nil {
+		panic(err)
+	} else if off != testData[opIndex].outArg2 {
+		panic("Unexpected result offset from seek")
+	}
+}
+
+func checkIoctl(client *rio.RemoteIO, opIndex int) {
+	if testData[opIndex].inArg2 == mxio.IoctlDeviceGetHandle {
+		// Create the expected return handle here, since dummy values would be rejected.
+		testHandles, status := fuchsia.MessagePipeCreate(0)
+		if status < 0 {
+			panic(status)
+		}
+		testData[opIndex].outHandles = []fuchsia.Handle{testHandles[0]}
+	}
+
+	outData, outHandles, err := client.Ioctl(uint32(testData[opIndex].inArg2), testData[opIndex].inData)
+	if err != nil {
+		panic(err)
+	} else if !bytes.Equal(testData[opIndex].outData, outData) {
+		panic("Unexpected ioctl output data")
+	} else if len(outHandles) != len(testData[opIndex].outHandles) {
+		panic("Unexpected ioctl output handle count")
+	}
+	for i := range outHandles {
+		if outHandles[i] != testData[opIndex].outHandles[i] {
+			panic("Unexpected handle")
+		}
+	}
+}
+
+func checkClose(client *rio.RemoteIO) {
+	if err := client.Close(); err != nil {
+		panic(err)
+	}
+}
+
+func main() {
+	println("Rio Test Executable start... ")
+	testCookie := int64(0x12345678) // Checks callback plumbing
+	opIndex := 0                    // Checks that client / server are in sync
+
+	// This function will be called on the "fake" server. Check that everything is plumbed through
+	// correctly. In a realistic use of RIO, this function might exist in another process
+	// completely.
+	serverCb := func(msg *rio.Msg, rh fuchsia.Handle, cookie int64) fuchsia.Status {
+		// Check incoming message
+		if cookie != testCookie {
+			panic("Unexpected cookie")
+		} else if rh != 0 && msg.Magic != rio.MessageMagic {
+			// The 'magic' value should only be checked if the message was actually sent from the
+			// remote side, and not sent as a 'close' notification.
+			panic("Unexpected Magic")
+		} else if msg.Hcount != 0 {
+			panic("Client unexpectedly sent a handle to the server")
+		} else if testData[opIndex].inOp != msg.Op() {
+			panic("Unexpected Operation")
+		} else if testData[opIndex].inArg != msg.Arg {
+			panic("Unexpected arg")
+		} else if testData[opIndex].inArg2 != msg.Off() {
+			panic("Unexpected 'offset' (arg2)")
+		} else if len(testData[opIndex].inData) != int(msg.Datalen) {
+			panic("Unexpected data length")
+		} else if !bytes.Equal(testData[opIndex].inData, msg.Data[:msg.Datalen]) {
+			panic("Unexpected data")
+		}
+
+		// Prepare outgoing message
+		msg.SetOff(testData[opIndex].outArg2)
+		copy(msg.Data[:], testData[opIndex].outData)
+		msg.Datalen = uint32(len(testData[opIndex].outData))
+		copy(msg.Handle[:], testData[opIndex].outHandles)
+		msg.Hcount = uint32(len(testData[opIndex].outHandles))
+		return testData[opIndex].outRetval
+	}
+
+	d := CreateRIOServer()
+	client := CreateRIOClient(d, serverCb, testCookie)
+	for _ = range testData {
+		switch testData[opIndex].inOp {
+		case rio.OpOpen:
+			checkOpen(client, opIndex)
+		case rio.OpClone:
+			checkClone(client, opIndex)
+		case rio.OpRead:
+			checkRead(client, opIndex)
+		case rio.OpWrite:
+			checkWrite(client, opIndex)
+		case rio.OpSeek:
+			checkSeek(client, opIndex)
+		case rio.OpIoctl:
+			checkIoctl(client, opIndex)
+		case rio.OpClose:
+			checkClose(client)
+		default:
+			panic("Unexpected test operation")
+		}
+		opIndex++
+	}
+	println("... RIO test executable passed")
+}

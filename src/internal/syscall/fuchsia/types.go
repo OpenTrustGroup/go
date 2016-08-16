@@ -6,10 +6,6 @@
 
 package fuchsia
 
-import (
-	"unsafe"
-)
-
 // Allow conversion from status to error
 func (s Status) Error() string {
 	return "errno(" + string(s) + ")"
@@ -99,47 +95,4 @@ const (
 
 const (
 	TimensecInfinite = Time(0xFFFFFFFFFFFFFFFF)
-)
-
-const (
-	MxioPacketSize = uint(unsafe.Sizeof(MxioPacket{}))
-	// MxioMaxHandles is the maximum number of handles which can be transferred in an mxio op.
-	MxioMaxHandles = 3
-	// MxioChunkSize is the largest number of bytes which can be used in a single low-level op.
-	MxioChunkSize = 8192
-	// MxioIoctlMaxInput is the largest acceptable size for an Ioctl op input.
-	MxioIoctlMaxInput = 1024
-	// The operation number of an MXIO ioctl to request a handle.
-	IoctlDeviceGetHandle = 0x7FFF0001
-)
-
-// MxioPacketHeader describes the following packet
-type MxioPacketHeader struct {
-	Key        uint64
-	PacketType uint32
-	Extra      uint32
-}
-
-// MxioPacket describes the unit of communication via an MXIO protocol
-type MxioPacket struct {
-	Hdr       MxioPacketHeader
-	Timestamp Time
-	Bytes     uintptr
-	Signals   Signals
-	Reserved  uint32
-}
-
-// All available MXIO protocols
-const (
-	ProtoclUndefined = iota
-	ProtocolPipe
-	ProtocolRemote
-)
-
-// Other MXIO related constants
-const (
-	// A flag to MessagePipeCreate, identifying that MessageWrite MUST include itself as the last
-	// handle being transferred. Handles[1] will be created as a reply pipe, but Handles[0] will be
-	// a regular pipe.
-	FlagReplyPipe = 1 << 0
 )

@@ -12,6 +12,7 @@ import (
 	"unsafe"
 
 	"internal/syscall/fuchsia"
+	"internal/syscall/fuchsia/mxio/dispatcher"
 )
 
 // Test creating a dispatcher which both sums integers.
@@ -50,7 +51,7 @@ func main() {
 			if status < 0 {
 				if status == fuchsia.ErrBadState {
 					// This error implies there are no messages currently in the pipe
-					return fuchsia.ErrDispatcherNoWork
+					return dispatcher.ErrNoWork
 				}
 				return status
 			} else if numBytes != 8 || numHandles != 0 {
@@ -62,7 +63,7 @@ func main() {
 		return fuchsia.ErrOk
 	}
 
-	d, status := fuchsia.New(dispatcherCb)
+	d, status := dispatcher.New(dispatcherCb)
 	if status < 0 {
 		panic("Could not create dispatcher")
 	}
