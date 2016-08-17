@@ -45,7 +45,7 @@ func HandleWaitMany(handles []Handle, signals []Signals, timeout Time) (uint32, 
 func MessagePipeCreate(flags uint32) ([]Handle, Status) {
 	handles := make([]Handle, 2)
 	status := Sys_message_pipe_create(&handles[0], flags)
-	if status != 0 {
+	if status != ErrOk {
 		return nil, status
 	}
 	return handles, ErrOk
@@ -79,7 +79,7 @@ func IoPortQueue(handle Handle, packet *MxioPacket, size uint) Status {
 func IoPortWait(handle Handle, size uint) (*MxioPacket, Status) {
 	var packet MxioPacket
 	status := Sys_io_port_wait(handle, unsafe.Pointer(&packet), size)
-	if status != 0 {
+	if status != ErrOk {
 		return nil, status
 	}
 	return &packet, ErrOk

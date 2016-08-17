@@ -38,7 +38,7 @@ func main() {
 		log.Fatalf("GOARCH=%s not supported", *goarch)
 	}
 
-	syscallsFile := filepath.Join(*fuchsiaRoot, "/buildtools/sdk/platforms/"+sdkArch+"-fuchsia/include/magenta/syscalls.inc")
+	syscallsFile := filepath.Join(*fuchsiaRoot, "/buildtools/sysroot/"+sdkArch+"-fuchsia/include/magenta/syscalls.inc")
 	if args := flag.Args(); len(args) != 0 {
 		syscallsFile = args[0]
 	}
@@ -173,6 +173,10 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 	for _, t := range call.argTypes {
 		argSize += typeSize(t)
 	}
+	if argSize%8 == 4 {
+		// Force the return argument on the stack to be 8-byte aligned, not 4-byte aligned
+		argSize += 4
+	}
 	retSize := typeSize(call.ret)
 
 	fmt.Fprintf(buf, "TEXT runtime·_magenta_%s(SB),NOSPLIT,$0-%d\n", call.name, argSize+retSize)
@@ -194,7 +198,7 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 		if retSize == 4 {
 			suffix = "L"
 		}
-		fmt.Fprintf(buf, "\tMOV%s AX, ret+%d(FP)\n", suffix, off)
+		fmt.Fprintf(buf, "\tMOV%s AX, ret+%d(FP)\n", suffix, argSize)
 	}
 	fmt.Fprintf(buf, "\tRET\n")
 }

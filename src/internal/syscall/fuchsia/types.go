@@ -16,8 +16,8 @@ func (s Status) Error() string {
 }
 
 const (
-	ErrOk = Status(-iota)
-	ErrInternal
+	ErrOk       = Status(0)
+	ErrInternal = Status(-iota)
 	ErrNotSupported
 	ErrNotFound
 	ErrNoMemory
