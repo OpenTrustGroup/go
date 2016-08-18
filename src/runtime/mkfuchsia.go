@@ -169,8 +169,16 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 	if *goarch != "amd64" {
 		panic(fmt.Sprintf("goarch=%s not supported", *goarch))
 	}
+	// The summed size of all arguments
 	argSize := 0
 	for _, t := range call.argTypes {
+		if typeSize(t) != 4 && typeSize(t) != 8 {
+			panic("Parser can only handle 4-byte and 8-byte syscall arguments")
+		}
+		if typeSize(t) == 8 && argSize%8 == 4 {
+			// Ensure 8-byte arguments have 8-byte alignment
+			argSize += 4
+		}
 		argSize += typeSize(t)
 	}
 	if argSize%8 == 4 {
@@ -187,6 +195,11 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 		if typeSize(t) == 4 {
 			suffix = "L"
 		}
+		if typeSize(t) == 8 && off%8 == 4 {
+			// Ensure 8-byte arguments have 8-byte alignment
+			off += 4
+		}
+
 		reg := amd64RegArgs[i]
 		fmt.Fprintf(buf, "\tMOV%s %s+%d(FP), %s\n", suffix, name, off, reg)
 		off += typeSize(t)

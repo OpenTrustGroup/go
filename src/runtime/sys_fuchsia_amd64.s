@@ -107,11 +107,11 @@ TEXT runtime·_magenta_handle_wait_one(SB),NOSPLIT,$0-28
 // func _magenta_handle_wait_many(count uint32, handles *mxHandle, signals *mxSignals, timeout mxTime, result_index *uint32, signals_states *mxSignalsState) mxStatus
 TEXT runtime·_magenta_handle_wait_many(SB),NOSPLIT,$0-52
 	MOVL count+0(FP), DI
-	MOVQ handles+4(FP), SI
-	MOVQ signals+12(FP), DX
-	MOVQ timeout+20(FP), R10
-	MOVQ result_index+28(FP), R8
-	MOVQ signals_states+36(FP), R9
+	MOVQ handles+8(FP), SI
+	MOVQ signals+16(FP), DX
+	MOVQ timeout+24(FP), R10
+	MOVQ result_index+32(FP), R8
+	MOVQ signals_states+40(FP), R9
 	MOVQ $0xff00ff0000002b, AX // 43
 	SYSCALL
 	MOVL AX, ret+48(FP)
@@ -175,29 +175,29 @@ TEXT runtime·_magenta_message_pipe_create(SB),NOSPLIT,$0-20
 	RET
 
 // func _magenta_message_read(handle mxHandle, bytes unsafe.Pointer, num_bytes *uint32, handles *mxHandle, num_handles *uint32, flags uint32) mxStatus
-TEXT runtime·_magenta_message_read(SB),NOSPLIT,$0-44
+TEXT runtime·_magenta_message_read(SB),NOSPLIT,$0-52
 	MOVL handle+0(FP), DI
-	MOVQ bytes+4(FP), SI
-	MOVQ num_bytes+12(FP), DX
-	MOVQ handles+20(FP), R10
-	MOVQ num_handles+28(FP), R8
-	MOVL flags+36(FP), R9
+	MOVQ bytes+8(FP), SI
+	MOVQ num_bytes+16(FP), DX
+	MOVQ handles+24(FP), R10
+	MOVQ num_handles+32(FP), R8
+	MOVL flags+40(FP), R9
 	MOVQ $0xff00ff0000003d, AX // 61
 	SYSCALL
-	MOVL AX, ret+40(FP)
+	MOVL AX, ret+48(FP)
 	RET
 
 // func _magenta_message_write(handle mxHandle, bytes unsafe.Pointer, num_bytes uint32, handles *mxHandle, num_handles uint32, flags uint32) mxStatus
-TEXT runtime·_magenta_message_write(SB),NOSPLIT,$0-36
+TEXT runtime·_magenta_message_write(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
-	MOVQ bytes+4(FP), SI
-	MOVL num_bytes+12(FP), DX
-	MOVQ handles+16(FP), R10
-	MOVL num_handles+24(FP), R8
-	MOVL flags+28(FP), R9
+	MOVQ bytes+8(FP), SI
+	MOVL num_bytes+16(FP), DX
+	MOVQ handles+24(FP), R10
+	MOVL num_handles+32(FP), R8
+	MOVL flags+36(FP), R9
 	MOVQ $0xff00ff0000003e, AX // 62
 	SYSCALL
-	MOVL AX, ret+32(FP)
+	MOVL AX, ret+40(FP)
 	RET
 
 // func _magenta_process_create(name *uint8, name_len uint32) mxHandle
@@ -235,22 +235,22 @@ TEXT runtime·_magenta_process_vm_map(SB),NOSPLIT,$0-44
 // func _magenta_process_vm_unmap(proc_handle mxHandle, address uintptr, len uint) mxStatus
 TEXT runtime·_magenta_process_vm_unmap(SB),NOSPLIT,$0-28
 	MOVL proc_handle+0(FP), DI
-	MOVQ address+4(FP), SI
-	MOVQ len+12(FP), DX
+	MOVQ address+8(FP), SI
+	MOVQ len+16(FP), DX
 	MOVQ $0xff00ff00000054, AX // 84
 	SYSCALL
 	MOVL AX, ret+24(FP)
 	RET
 
 // func _magenta_process_vm_protect(proc_handle mxHandle, address uintptr, len uint, prot uint32) mxStatus
-TEXT runtime·_magenta_process_vm_protect(SB),NOSPLIT,$0-28
+TEXT runtime·_magenta_process_vm_protect(SB),NOSPLIT,$0-36
 	MOVL proc_handle+0(FP), DI
-	MOVQ address+4(FP), SI
-	MOVQ len+12(FP), DX
-	MOVL prot+20(FP), R10
+	MOVQ address+8(FP), SI
+	MOVQ len+16(FP), DX
+	MOVL prot+24(FP), R10
 	MOVQ $0xff00ff00000055, AX // 85
 	SYSCALL
-	MOVL AX, ret+24(FP)
+	MOVL AX, ret+32(FP)
 	RET
 
 // func _magenta_event_create(options uint32) mxHandle
@@ -297,15 +297,15 @@ TEXT runtime·_magenta_futex_wake(SB),NOSPLIT,$0-20
 	RET
 
 // func _magenta_futex_requeue(wake_ptr *int, wake_count uint32, current_value int, requeue_ptr *int, requeue_count uint32) mxStatus
-TEXT runtime·_magenta_futex_requeue(SB),NOSPLIT,$0-36
+TEXT runtime·_magenta_futex_requeue(SB),NOSPLIT,$0-44
 	MOVQ wake_ptr+0(FP), DI
 	MOVL wake_count+8(FP), SI
-	MOVQ current_value+12(FP), DX
-	MOVQ requeue_ptr+20(FP), R10
-	MOVL requeue_count+28(FP), R8
+	MOVQ current_value+16(FP), DX
+	MOVQ requeue_ptr+24(FP), R10
+	MOVL requeue_count+32(FP), R8
 	MOVQ $0xff00ff0000005f, AX // 95
 	SYSCALL
-	MOVL AX, ret+32(FP)
+	MOVL AX, ret+40(FP)
 	RET
 
 // func _magenta_vm_object_create(size uint64) mxHandle
@@ -319,9 +319,9 @@ TEXT runtime·_magenta_vm_object_create(SB),NOSPLIT,$0-12
 // func _magenta_vm_object_read(handle mxHandle, data unsafe.Pointer, offset uint64, len uint) int
 TEXT runtime·_magenta_vm_object_read(SB),NOSPLIT,$0-40
 	MOVL handle+0(FP), DI
-	MOVQ data+4(FP), SI
-	MOVQ offset+12(FP), DX
-	MOVQ len+20(FP), R10
+	MOVQ data+8(FP), SI
+	MOVQ offset+16(FP), DX
+	MOVQ len+24(FP), R10
 	MOVQ $0xff00ff00000065, AX // 101
 	SYSCALL
 	MOVQ AX, ret+32(FP)
@@ -330,9 +330,9 @@ TEXT runtime·_magenta_vm_object_read(SB),NOSPLIT,$0-40
 // func _magenta_vm_object_write(handle mxHandle, data unsafe.Pointer, offset uint64, len uint) int
 TEXT runtime·_magenta_vm_object_write(SB),NOSPLIT,$0-40
 	MOVL handle+0(FP), DI
-	MOVQ data+4(FP), SI
-	MOVQ offset+12(FP), DX
-	MOVQ len+20(FP), R10
+	MOVQ data+8(FP), SI
+	MOVQ offset+16(FP), DX
+	MOVQ len+24(FP), R10
 	MOVQ $0xff00ff00000066, AX // 102
 	SYSCALL
 	MOVQ AX, ret+32(FP)
@@ -341,7 +341,7 @@ TEXT runtime·_magenta_vm_object_write(SB),NOSPLIT,$0-40
 // func _magenta_vm_object_get_size(handle mxHandle, size *uint64) mxStatus
 TEXT runtime·_magenta_vm_object_get_size(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
-	MOVQ size+4(FP), SI
+	MOVQ size+8(FP), SI
 	MOVQ $0xff00ff00000067, AX // 103
 	SYSCALL
 	MOVL AX, ret+16(FP)
@@ -350,7 +350,7 @@ TEXT runtime·_magenta_vm_object_get_size(SB),NOSPLIT,$0-20
 // func _magenta_vm_object_set_size(handle mxHandle, size uint64) mxStatus
 TEXT runtime·_magenta_vm_object_set_size(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
-	MOVQ size+4(FP), SI
+	MOVQ size+8(FP), SI
 	MOVQ $0xff00ff00000068, AX // 104
 	SYSCALL
 	MOVL AX, ret+16(FP)
@@ -413,8 +413,8 @@ TEXT runtime·_magenta_io_port_create(SB),NOSPLIT,$0-12
 // func _magenta_io_port_queue(handle mxHandle, packet unsafe.Pointer, size uint) mxStatus
 TEXT runtime·_magenta_io_port_queue(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
-	MOVQ packet+4(FP), SI
-	MOVQ size+12(FP), DX
+	MOVQ packet+8(FP), SI
+	MOVQ size+16(FP), DX
 	MOVQ $0xff00ff000000dd, AX // 221
 	SYSCALL
 	MOVL AX, ret+24(FP)
@@ -423,8 +423,8 @@ TEXT runtime·_magenta_io_port_queue(SB),NOSPLIT,$0-28
 // func _magenta_io_port_wait(handle mxHandle, packet unsafe.Pointer, size uint) mxStatus
 TEXT runtime·_magenta_io_port_wait(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
-	MOVQ packet+4(FP), SI
-	MOVQ size+12(FP), DX
+	MOVQ packet+8(FP), SI
+	MOVQ size+16(FP), DX
 	MOVQ $0xff00ff000000de, AX // 222
 	SYSCALL
 	MOVL AX, ret+24(FP)
@@ -433,9 +433,9 @@ TEXT runtime·_magenta_io_port_wait(SB),NOSPLIT,$0-28
 // func _magenta_io_port_bind(handle mxHandle, key uint64, source mxHandle, signals mxSignals) mxStatus
 TEXT runtime·_magenta_io_port_bind(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
-	MOVQ key+4(FP), SI
-	MOVL source+12(FP), DX
-	MOVL signals+16(FP), R10
+	MOVQ key+8(FP), SI
+	MOVL source+16(FP), DX
+	MOVL signals+20(FP), R10
 	MOVQ $0xff00ff000000df, AX // 223
 	SYSCALL
 	MOVL AX, ret+24(FP)
@@ -444,9 +444,9 @@ TEXT runtime·_magenta_io_port_bind(SB),NOSPLIT,$0-28
 // func _magenta_data_pipe_create(options uint32, element_size uint, capacity uint, handle *mxHandle) mxHandle
 TEXT runtime·_magenta_data_pipe_create(SB),NOSPLIT,$0-36
 	MOVL options+0(FP), DI
-	MOVQ element_size+4(FP), SI
-	MOVQ capacity+12(FP), DX
-	MOVQ handle+20(FP), R10
+	MOVQ element_size+8(FP), SI
+	MOVQ capacity+16(FP), DX
+	MOVQ handle+24(FP), R10
 	MOVQ $0xff00ff000000e6, AX // 230
 	SYSCALL
 	MOVL AX, ret+32(FP)
@@ -488,7 +488,7 @@ TEXT runtime·_magenta_data_pipe_begin_write(SB),NOSPLIT,$0-32
 // func _magenta_data_pipe_end_write(handle mxHandle, written uint) mxStatus
 TEXT runtime·_magenta_data_pipe_end_write(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
-	MOVQ written+4(FP), SI
+	MOVQ written+8(FP), SI
 	MOVQ $0xff00ff000000ea, AX // 234
 	SYSCALL
 	MOVL AX, ret+16(FP)
@@ -508,7 +508,7 @@ TEXT runtime·_magenta_data_pipe_begin_read(SB),NOSPLIT,$0-32
 // func _magenta_data_pipe_end_read(handle mxHandle, read uint) mxStatus
 TEXT runtime·_magenta_data_pipe_end_read(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
-	MOVQ read+4(FP), SI
+	MOVQ read+8(FP), SI
 	MOVQ $0xff00ff000000ec, AX // 236
 	SYSCALL
 	MOVL AX, ret+16(FP)
@@ -526,7 +526,7 @@ TEXT runtime·_magenta_wait_set_add(SB),NOSPLIT,$0-28
 	MOVL wait_set_handle+0(FP), DI
 	MOVL handle+4(FP), SI
 	MOVL signals+8(FP), DX
-	MOVQ cookie+12(FP), R10
+	MOVQ cookie+16(FP), R10
 	MOVQ $0xff00ff000000f1, AX // 241
 	SYSCALL
 	MOVL AX, ret+24(FP)
@@ -535,7 +535,7 @@ TEXT runtime·_magenta_wait_set_add(SB),NOSPLIT,$0-28
 // func _magenta_wait_set_remove(wait_set_handle mxHandle, cookie uint64) mxStatus
 TEXT runtime·_magenta_wait_set_remove(SB),NOSPLIT,$0-20
 	MOVL wait_set_handle+0(FP), DI
-	MOVQ cookie+4(FP), SI
+	MOVQ cookie+8(FP), SI
 	MOVQ $0xff00ff000000f2, AX // 242
 	SYSCALL
 	MOVL AX, ret+16(FP)
@@ -544,10 +544,10 @@ TEXT runtime·_magenta_wait_set_remove(SB),NOSPLIT,$0-20
 // func _magenta_wait_set_wait(wait_set_handle mxHandle, timeout mxTime, num_results *uint32, results *mxWaitSetResult, max_results *uint32) mxStatus
 TEXT runtime·_magenta_wait_set_wait(SB),NOSPLIT,$0-44
 	MOVL wait_set_handle+0(FP), DI
-	MOVQ timeout+4(FP), SI
-	MOVQ num_results+12(FP), DX
-	MOVQ results+20(FP), R10
-	MOVQ max_results+28(FP), R8
+	MOVQ timeout+8(FP), SI
+	MOVQ num_results+16(FP), DX
+	MOVQ results+24(FP), R10
+	MOVQ max_results+32(FP), R8
 	MOVQ $0xff00ff000000f3, AX // 243
 	SYSCALL
 	MOVL AX, ret+40(FP)
