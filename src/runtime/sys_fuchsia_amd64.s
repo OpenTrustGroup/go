@@ -95,6 +95,7 @@ TEXT runtime·_magenta_handle_duplicate(SB),NOSPLIT,$0-12
 
 // func _magenta_handle_wait_one(handle mxHandle, signals mxSignals, timeout mxTime, signals_state *mxSignalsState) mxStatus
 TEXT runtime·_magenta_handle_wait_one(SB),NOSPLIT,$0-28
+	CALL runtime·entersyscall(SB)
 	MOVL handle+0(FP), DI
 	MOVL signals+4(FP), SI
 	MOVQ timeout+8(FP), DX
@@ -102,10 +103,12 @@ TEXT runtime·_magenta_handle_wait_one(SB),NOSPLIT,$0-28
 	MOVQ $0xff00ff0000002a, AX // 42
 	SYSCALL
 	MOVL AX, ret+24(FP)
+	CALL runtime·exitsyscall(SB)
 	RET
 
 // func _magenta_handle_wait_many(count uint32, handles *mxHandle, signals *mxSignals, timeout mxTime, result_index *uint32, signals_states *mxSignalsState) mxStatus
 TEXT runtime·_magenta_handle_wait_many(SB),NOSPLIT,$0-52
+	CALL runtime·entersyscall(SB)
 	MOVL count+0(FP), DI
 	MOVQ handles+8(FP), SI
 	MOVQ signals+16(FP), DX
@@ -115,6 +118,7 @@ TEXT runtime·_magenta_handle_wait_many(SB),NOSPLIT,$0-52
 	MOVQ $0xff00ff0000002b, AX // 43
 	SYSCALL
 	MOVL AX, ret+48(FP)
+	CALL runtime·exitsyscall(SB)
 	RET
 
 // func _magenta_handle_get_info(handle mxHandle, topic uint32, info unsafe.Pointer, info_size uint) int
@@ -279,12 +283,14 @@ TEXT runtime·_magenta_event_reset(SB),NOSPLIT,$0-12
 
 // func _magenta_futex_wait(value_ptr *int, current_value int, timeout mxTime) mxStatus
 TEXT runtime·_magenta_futex_wait(SB),NOSPLIT,$0-28
+	CALL runtime·entersyscall(SB)
 	MOVQ value_ptr+0(FP), DI
 	MOVQ current_value+8(FP), SI
 	MOVQ timeout+16(FP), DX
 	MOVQ $0xff00ff0000005d, AX // 93
 	SYSCALL
 	MOVL AX, ret+24(FP)
+	CALL runtime·exitsyscall(SB)
 	RET
 
 // func _magenta_futex_wake(value_ptr *int, count uint32) mxStatus
@@ -422,12 +428,14 @@ TEXT runtime·_magenta_io_port_queue(SB),NOSPLIT,$0-28
 
 // func _magenta_io_port_wait(handle mxHandle, packet unsafe.Pointer, size uint) mxStatus
 TEXT runtime·_magenta_io_port_wait(SB),NOSPLIT,$0-28
+	CALL runtime·entersyscall(SB)
 	MOVL handle+0(FP), DI
 	MOVQ packet+8(FP), SI
 	MOVQ size+16(FP), DX
 	MOVQ $0xff00ff000000de, AX // 222
 	SYSCALL
 	MOVL AX, ret+24(FP)
+	CALL runtime·exitsyscall(SB)
 	RET
 
 // func _magenta_io_port_bind(handle mxHandle, key uint64, source mxHandle, signals mxSignals) mxStatus
@@ -543,6 +551,7 @@ TEXT runtime·_magenta_wait_set_remove(SB),NOSPLIT,$0-20
 
 // func _magenta_wait_set_wait(wait_set_handle mxHandle, timeout mxTime, num_results *uint32, results *mxWaitSetResult, max_results *uint32) mxStatus
 TEXT runtime·_magenta_wait_set_wait(SB),NOSPLIT,$0-44
+	CALL runtime·entersyscall(SB)
 	MOVL wait_set_handle+0(FP), DI
 	MOVQ timeout+8(FP), SI
 	MOVQ num_results+16(FP), DX
@@ -551,6 +560,7 @@ TEXT runtime·_magenta_wait_set_wait(SB),NOSPLIT,$0-44
 	MOVQ $0xff00ff000000f3, AX // 243
 	SYSCALL
 	MOVL AX, ret+40(FP)
+	CALL runtime·exitsyscall(SB)
 	RET
 
 // func _magenta_syscall_test_0() int

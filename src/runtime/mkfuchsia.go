@@ -163,6 +163,15 @@ func printStub(buf *bytes.Buffer, call magentaSyscallDef) {
 // amd64RegArgs is the amd64 registers in function argument calling convention order
 var amd64RegArgs = []string{"DI", "SI", "DX", "R10", "R8", "R9", "R12", "R13"}
 
+// blockingSyscalls is a map of known syscalls which may block.
+var blockingSyscalls = map[string]bool{
+	"futex_wait":       true,
+	"io_port_wait":     true,
+	"handle_wait_one":  true,
+	"handle_wait_many": true,
+	"wait_set_wait":    true,
+}
+
 const MAGENTA_SYSCALL_MAGIC = 0x00ff00ff00000000
 
 func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
@@ -188,6 +197,9 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 	retSize := typeSize(call.ret)
 
 	fmt.Fprintf(buf, "TEXT runtime·_magenta_%s(SB),NOSPLIT,$0-%d\n", call.name, argSize+retSize)
+	if _, ok := blockingSyscalls[call.name]; ok {
+		fmt.Fprintf(buf, "\tCALL runtime·entersyscall(SB)\n")
+	}
 	off := 0
 	for i, t := range call.argTypes {
 		name := call.argNames[i]
@@ -212,6 +224,9 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 			suffix = "L"
 		}
 		fmt.Fprintf(buf, "\tMOV%s AX, ret+%d(FP)\n", suffix, argSize)
+	}
+	if _, ok := blockingSyscalls[call.name]; ok {
+		fmt.Fprintf(buf, "\tCALL runtime·exitsyscall(SB)\n")
 	}
 	fmt.Fprintf(buf, "\tRET\n")
 }

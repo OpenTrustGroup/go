@@ -94,6 +94,7 @@ TEXT ·Sys_handle_duplicate(SB),NOSPLIT,$0-12
 
 // func Sys_handle_wait_one(handle Handle, signals Signals, timeout Time, signals_state *SignalsState) Status
 TEXT ·Sys_handle_wait_one(SB),NOSPLIT,$0-28
+	CALL runtime·entersyscall(SB)
 	MOVL handle+0(FP), DI
 	MOVL signals+4(FP), SI
 	MOVQ timeout+8(FP), DX
@@ -101,10 +102,12 @@ TEXT ·Sys_handle_wait_one(SB),NOSPLIT,$0-28
 	MOVQ $0xff00ff0000002a, AX // 42
 	SYSCALL
 	MOVL AX, ret+24(FP)
+	CALL runtime·exitsyscall(SB)
 	RET
 
 // func Sys_handle_wait_many(count uint32, handles *Handle, signals *Signals, timeout Time, result_index *uint32, signals_states *SignalsState) Status
 TEXT ·Sys_handle_wait_many(SB),NOSPLIT,$0-52
+	CALL runtime·entersyscall(SB)
 	MOVL count+0(FP), DI
 	MOVQ handles+8(FP), SI
 	MOVQ signals+16(FP), DX
@@ -114,6 +117,7 @@ TEXT ·Sys_handle_wait_many(SB),NOSPLIT,$0-52
 	MOVQ $0xff00ff0000002b, AX // 43
 	SYSCALL
 	MOVL AX, ret+48(FP)
+	CALL runtime·exitsyscall(SB)
 	RET
 
 // func Sys_handle_get_info(handle Handle, topic uint32, info unsafe.Pointer, info_size uint) int
@@ -278,12 +282,14 @@ TEXT ·Sys_event_reset(SB),NOSPLIT,$0-12
 
 // func Sys_futex_wait(value_ptr *int, current_value int, timeout Time) Status
 TEXT ·Sys_futex_wait(SB),NOSPLIT,$0-28
+	CALL runtime·entersyscall(SB)
 	MOVQ value_ptr+0(FP), DI
 	MOVQ current_value+8(FP), SI
 	MOVQ timeout+16(FP), DX
 	MOVQ $0xff00ff0000005d, AX // 93
 	SYSCALL
 	MOVL AX, ret+24(FP)
+	CALL runtime·exitsyscall(SB)
 	RET
 
 // func Sys_futex_wake(value_ptr *int, count uint32) Status
@@ -421,12 +427,14 @@ TEXT ·Sys_io_port_queue(SB),NOSPLIT,$0-28
 
 // func Sys_io_port_wait(handle Handle, packet unsafe.Pointer, size uint) Status
 TEXT ·Sys_io_port_wait(SB),NOSPLIT,$0-28
+	CALL runtime·entersyscall(SB)
 	MOVL handle+0(FP), DI
 	MOVQ packet+8(FP), SI
 	MOVQ size+16(FP), DX
 	MOVQ $0xff00ff000000de, AX // 222
 	SYSCALL
 	MOVL AX, ret+24(FP)
+	CALL runtime·exitsyscall(SB)
 	RET
 
 // func Sys_io_port_bind(handle Handle, key uint64, source Handle, signals Signals) Status
@@ -542,6 +550,7 @@ TEXT ·Sys_wait_set_remove(SB),NOSPLIT,$0-20
 
 // func Sys_wait_set_wait(wait_set_handle Handle, timeout Time, num_results *uint32, results *WaitSetResult, max_results *uint32) Status
 TEXT ·Sys_wait_set_wait(SB),NOSPLIT,$0-44
+	CALL runtime·entersyscall(SB)
 	MOVL wait_set_handle+0(FP), DI
 	MOVQ timeout+8(FP), SI
 	MOVQ num_results+16(FP), DX
@@ -550,4 +559,5 @@ TEXT ·Sys_wait_set_wait(SB),NOSPLIT,$0-44
 	MOVQ $0xff00ff000000f3, AX // 243
 	SYSCALL
 	MOVL AX, ret+40(FP)
+	CALL runtime·exitsyscall(SB)
 	RET
