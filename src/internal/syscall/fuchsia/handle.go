@@ -33,7 +33,7 @@ func HandleWaitOne(handle Handle, signals Signals, timeout Time) (SignalsState, 
 }
 
 func HandleWaitMany(handles []Handle, signals []Signals, timeout Time) (uint32, []SignalsState, Status) {
-	if len(handles) != len(signals) {
+	if len(handles) != len(signals) || len(handles) < 1 {
 		return 0, nil, ErrInvalidArgs
 	}
 	var resultIndex uint32
@@ -54,14 +54,28 @@ func MessagePipeCreate(flags uint32) ([]Handle, Status) {
 func MessageRead(handle Handle, data []byte, handles []Handle, flags uint32) (numBytes, numHandles uint32, status Status) {
 	numBytes = uint32(len(data))
 	numHandles = uint32(len(handles))
-	dataPtr := unsafe.Pointer(&data[0])
-	status = Sys_message_read(handle, dataPtr, &numBytes, &handles[0], &numHandles, flags)
+	var dataPtr unsafe.Pointer
+	if len(data) > 0 {
+		dataPtr = unsafe.Pointer(&data[0])
+	}
+	var handlePtr *Handle
+	if len(handles) > 0 {
+		handlePtr = &handles[0]
+	}
+	status = Sys_message_read(handle, dataPtr, &numBytes, handlePtr, &numHandles, flags)
 	return
 }
 
 func MessageWrite(handle Handle, data []byte, handles []Handle, flags uint32) Status {
-	dataPtr := unsafe.Pointer(&data[0])
-	return Sys_message_write(handle, dataPtr, uint32(len(data)), &handles[0], uint32(len(handles)), flags)
+	var dataPtr unsafe.Pointer
+	if len(data) > 0 {
+		dataPtr = unsafe.Pointer(&data[0])
+	}
+	var handlePtr *Handle
+	if len(handles) > 0 {
+		handlePtr = &handles[0]
+	}
+	return Sys_message_write(handle, dataPtr, uint32(len(data)), handlePtr, uint32(len(handles)), flags)
 }
 
 func IoPortCreate(options uint32) (Handle, Status) {
