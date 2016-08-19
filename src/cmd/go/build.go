@@ -365,7 +365,7 @@ func buildModeInit() {
 		ldBuildmode = "c-shared"
 	case "default":
 		switch platform {
-		case "android/arm", "android/arm64", "android/amd64", "android/386":
+		case "android/arm", "android/arm64", "android/amd64", "android/386", "fuchsia/amd64":
 			codegenArg = "-shared"
 			ldBuildmode = "pie"
 		case "darwin/arm", "darwin/arm64":
@@ -382,7 +382,7 @@ func buildModeInit() {
 			fatalf("-buildmode=pie not supported by gccgo")
 		} else {
 			switch platform {
-			case "linux/386", "linux/amd64", "linux/arm", "linux/arm64", "linux/ppc64le", "linux/s390x",
+			case "fuchsia/amd64", "linux/386", "linux/amd64", "linux/arm", "linux/arm64", "linux/ppc64le", "linux/s390x",
 				"android/amd64", "android/arm", "android/arm64", "android/386":
 				codegenArg = "-shared"
 			default:
@@ -3502,7 +3502,12 @@ func (b *builder) collect(p *Package, obj, ofile string, cgoLDFLAGS, outObj []st
 		}
 	}
 
-	ldflags = append(ldflags, "-Wl,-r", "-nostdlib")
+	ldflags = append(ldflags, "-nostdlib")
+	if goos == "fuchsia" {
+		ldflags = append(ldflags, "-r")
+	} else {
+		ldflags = append(ldflags, "-Wl,-r")
+	}
 
 	if b.gccSupportsNoPie() {
 		ldflags = append(ldflags, "-no-pie")

@@ -27,7 +27,7 @@ Then,
 
 * To build a program, junk.go in go/src, use:
   ```
-  GOOS=fuchsia CC=../misc/fuchsia/clangwrap.sh ../bin/go build -ldflags='-linkmode=external -extldflags=-static' junk.go
+  GOOS=fuchsia CC=`pwd`/../misc/fuchsia/clangwrap.sh ../bin/go build junk.go
   ```
   This program can be put in a bootfs and run on qemu with:
   ```
