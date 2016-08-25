@@ -297,7 +297,11 @@ func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []fuchsia.Handle, error)
 	}
 	msg.SetOp(OpIoctl)
 	msg.Datalen = uint32(len(in))
-	msg.Arg = MessageChunkSize
+	if mxio.IoctlKind(op) == mxio.IoctlKindGetHandle {
+		msg.Arg = int32(unsafe.Sizeof(fuchsia.Handle(0)))
+	} else {
+		msg.Arg = MessageChunkSize
+	}
 	msg.SetIoctlOp(op)
 	copy(msg.Data[:], in)
 
@@ -306,8 +310,8 @@ func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []fuchsia.Handle, error)
 		return nil, nil, err
 	}
 
-	switch op {
-	case mxio.IoctlDeviceGetHandle:
+	switch mxio.IoctlKind(op) {
+	case mxio.IoctlKindGetHandle:
 		var outHandles []fuchsia.Handle
 		if msg.Hcount > 0 {
 			outHandles = append(outHandles, msg.Handle[0]) // Give the first handle back to the Ioctl caller

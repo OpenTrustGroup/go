@@ -36,8 +36,6 @@ const (
 	ChunkSize = 8192
 	// IoctlMaxInput is the largest acceptable size for an Ioctl op input.
 	IoctlMaxInput = 1024
-	// The operation number of an MXIO ioctl to request a handle.
-	IoctlDeviceGetHandle = 0x7FFF0001
 )
 
 // PacketHeader describes the following packet
@@ -77,6 +75,32 @@ const (
 	// a regular pipe.
 	FlagReplyPipe = 1 << 0
 )
+
+// MXIO Ioctls
+func IoctlNum(kind, family, number uint32) uint32 {
+	return ((kind & 0xF) << 20) | ((family & 0xFF) << 8) | (number & 0xFF)
+}
+func IoctlKind(ioctl uint32) uint32 {
+	return (ioctl >> 20) & 0xF
+}
+func IoctlFamily(ioctl uint32) uint32 {
+	return (ioctl >> 8) & 0xFF
+}
+func IoctlNumber(ioctl uint32) uint32 {
+	return ioctl & 0xFF
+}
+
+const (
+	IoctlKindGetHandle = 0x1
+)
+
+const (
+	IoctlFamilyReserved = iota
+	IoctlFamilyDevice
+	IoctlFamilyDevmgr
+)
+
+var IoctlDevmgrMountFS = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevmgr, 0)
 
 // IoPortCreate wraps the corresponding syscall
 func IoPortCreate(options uint32) (fuchsia.Handle, error) {

@@ -23,22 +23,24 @@ const (
 	O_WRONLY = 0x1
 	O_RDWR   = 0x2
 
-	O_CREAT     = 0100
-	O_EXCL      = 0200
-	O_NOCTTY    = 0400
-	O_TRUNC     = 01000
-	O_APPEND    = 02000
-	O_NONBLOCK  = 04000
-	O_DSYNC     = 010000
+	O_CREAT     = 00000100
+	O_EXCL      = 00000200
+	O_NOCTTY    = 00000400
+	O_TRUNC     = 00001000
+	O_APPEND    = 00002000
+	O_NONBLOCK  = 00004000
+	O_DSYNC     = 00010000
 	O_SYNC      = 04010000
 	O_RSYNC     = 04010000
-	O_DIRECTORY = 0200000
-	O_NOFOLLOW  = 0400000
+	O_DIRECTORY = 00200000
+	O_NOFOLLOW  = 00400000
 	O_CLOEXEC   = 02000000
 )
 
 const (
+	S_IFMT  = 0000170000
 	S_IFDIR = 0000040000
+	S_IFREG = 0000100000
 )
 
 // TODO(crawshaw): generate a zerrors file once cgo is working
@@ -295,6 +297,13 @@ func Open(path string, mode int, perm uint32) (fd int, err error) {
 	return i + fdsOff, nil
 }
 
+func Ioctl(fd int, op uint32, in []byte) ([]byte, []fuchsia.Handle, error) {
+	fdsMu.Lock()
+	f := fds[fd-fdsOff]
+	fdsMu.Unlock()
+	return f.Ioctl(op, in)
+}
+
 func Fstat(fd int, stat *Stat_t) (err error) {
 	fdsMu.Lock()
 	f := fds[fd-fdsOff]
@@ -341,4 +350,10 @@ func Link(oldpath string, newpath string) (err error) {
 }
 func Symlink(oldpath string, newpath string) (err error) {
 	panic("syscall.Symlink TODO")
+}
+
+type Dirent struct {
+	Size uint32
+	Type uint32
+	Name [1]byte
 }
