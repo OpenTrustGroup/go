@@ -13,6 +13,7 @@ type (
 	mxStatus             int32   // mx_status_t
 	mxHandle             int32   // mx_handle_t
 	mxTime               uint64  // mx_time_t, nanoseconds
+	mxKoid               uint64  // mx_koid_t
 	mxSignals            uint32  // mx_signals_t
 	mxRights             uint32  // mx_rights_t
 	mxVaddr              uintptr // mx_vaddr_t
@@ -60,6 +61,10 @@ func _magenta_num_cpus() uint
 
 //go:noescape
 //go:nosplit
+func _magenta_debug_read_memory(koid uint64, vaddr uintptr, len uint, buffer unsafe.Pointer) int
+
+//go:noescape
+//go:nosplit
 func _magenta_log_create(flags uint32) mxHandle
 
 //go:noescape
@@ -92,11 +97,19 @@ func _magenta_handle_get_info(handle mxHandle, topic uint32, info unsafe.Pointer
 
 //go:noescape
 //go:nosplit
-func _magenta_object_signal(handle mxHandle, set_mask uint32, clear_mask uint32) mxStatus
+func _magenta_handle_replace(handle mxHandle, rights mxRights) mxHandle
 
 //go:noescape
 //go:nosplit
-func _magenta_thread_create(_ unsafe.Pointer, arg unsafe.Pointer, name *uint8, name_len uint32) mxHandle
+func _magenta_object_signal(handle mxHandle, clear_mask uint32, set_mask uint32) mxStatus
+
+//go:noescape
+//go:nosplit
+func _magenta_thread_create(process mxHandle, name *uint8, name_len uint32, flags uint32) mxHandle
+
+//go:noescape
+//go:nosplit
+func _magenta_thread_start(handle mxHandle, thread_entry uintptr, stack uintptr, arg uintptr) mxStatus
 
 //go:noescape
 //go:nosplit
@@ -120,11 +133,11 @@ func _magenta_message_write(handle mxHandle, bytes unsafe.Pointer, num_bytes uin
 
 //go:noescape
 //go:nosplit
-func _magenta_process_create(name *uint8, name_len uint32) mxHandle
+func _magenta_process_create(name *uint8, name_len uint32, flags uint32) mxHandle
 
 //go:noescape
 //go:nosplit
-func _magenta_process_start(handle mxHandle, handle_arg mxHandle, entry mxVaddr) mxStatus
+func _magenta_process_start(process_handle mxHandle, thread_handle mxHandle, entry uintptr, stack uintptr, arg_handle mxHandle, arg2 uintptr) mxStatus
 
 //go:noescape
 //go:nosplit
@@ -141,14 +154,6 @@ func _magenta_process_vm_protect(proc_handle mxHandle, address uintptr, len uint
 //go:noescape
 //go:nosplit
 func _magenta_event_create(options uint32) mxHandle
-
-//go:noescape
-//go:nosplit
-func _magenta_event_signal(handle mxHandle) mxStatus
-
-//go:noescape
-//go:nosplit
-func _magenta_event_reset(handle mxHandle) mxStatus
 
 //go:noescape
 //go:nosplit
@@ -192,15 +197,19 @@ func _magenta_cprng_add_entropy(buffer unsafe.Pointer, len uint) mxStatus
 
 //go:noescape
 //go:nosplit
-func _magenta_set_system_exception_handler(pipe mxHandle, behaviour mxExceptionBehaviour) mxStatus
+func _magenta_set_system_exception_port(eport mxHandle, key uint64, options uint32) mxStatus
 
 //go:noescape
 //go:nosplit
-func _magenta_set_exception_handler(object mxHandle, pipe mxHandle, behaviour mxExceptionBehaviour) mxStatus
+func _magenta_set_exception_port(object mxHandle, eport mxHandle, key uint64, options uint32) mxStatus
 
 //go:noescape
 //go:nosplit
-func _magenta_mark_exception_handled(object mxHandle, status mxExceptionStatus) mxStatus
+func _magenta_mark_exception_handled(process mxHandle, tid mxKoid, status mxExceptionStatus) mxStatus
+
+//go:noescape
+//go:nosplit
+func _magenta_process_debug(handle mxHandle, pid mxKoid) mxHandle
 
 //go:noescape
 //go:nosplit
@@ -261,6 +270,26 @@ func _magenta_wait_set_remove(wait_set_handle mxHandle, cookie uint64) mxStatus
 //go:noescape
 //go:nosplit
 func _magenta_wait_set_wait(wait_set_handle mxHandle, timeout mxTime, num_results *uint32, results *mxWaitSetResult, max_results *uint32) mxStatus
+
+//go:noescape
+//go:nosplit
+func _magenta_object_get_property(handle mxHandle, property uint32, value unsafe.Pointer, size uint) mxStatus
+
+//go:noescape
+//go:nosplit
+func _magenta_object_set_property(handle mxHandle, property uint32, value unsafe.Pointer, size uint) mxStatus
+
+//go:noescape
+//go:nosplit
+func _magenta_socket_create(out_handles *mxHandle, flags uint32) mxStatus
+
+//go:noescape
+//go:nosplit
+func _magenta_socket_write(handle mxHandle, flags uint32, size uint, buffer unsafe.Pointer) int
+
+//go:noescape
+//go:nosplit
+func _magenta_socket_read(handle mxHandle, flags uint32, size uint, buffer unsafe.Pointer) int
 
 //go:noescape
 //go:nosplit

@@ -37,8 +37,9 @@ func main() {
 	default:
 		log.Fatalf("GOARCH=%s not supported", *goarch)
 	}
+	_ = sdkArch
 
-	syscallsFile := filepath.Join(*fuchsiaRoot, "/buildtools/sysroot/"+sdkArch+"-fuchsia/include/magenta/syscalls.inc")
+	syscallsFile := filepath.Join(*fuchsiaRoot, "/magenta/system/ulib/magenta/include/magenta/syscalls.inc")
 	if args := flag.Args(); len(args) != 0 {
 		syscallsFile = args[0]
 	}
@@ -101,6 +102,7 @@ type (
 	mxStatus             int32   // mx_status_t
 	mxHandle             int32   // mx_handle_t
 	mxTime               uint64  // mx_time_t, nanoseconds
+	mxKoid               uint64  // mx_koid_t
 	mxSignals            uint32  // mx_signals_t
 	mxRights             uint32  // mx_rights_t
 	mxVaddr              uintptr // mx_vaddr_t
@@ -258,6 +260,8 @@ func typeSize(t magentaType) int {
 		return 4
 	case mx_time_t:
 		return 8
+	case mx_koid_t:
+		return 8
 	case mx_handle_t:
 		return 4
 	case mx_signals_t:
@@ -308,6 +312,8 @@ func printGoType(buf *bytes.Buffer, t magentaType) {
 		fmt.Fprint(buf, "mxStatus")
 	case mx_time_t:
 		fmt.Fprint(buf, "mxTime")
+	case mx_koid_t:
+		fmt.Fprint(buf, "mxKoid")
 	case mx_handle_t:
 		fmt.Fprint(buf, "mxHandle")
 	case mx_signals_t:
@@ -666,6 +672,7 @@ const (
 	mx_uintptr_t
 	mx_status_t
 	mx_time_t
+	mx_koid_t
 	mx_handle_t
 	mx_signals_t
 	mx_signals_state_t
@@ -693,6 +700,7 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"uintptr_t":                mx_uintptr_t,
 	"mx_status_t":              mx_status_t, // int32_t
 	"mx_time_t":                mx_time_t,   // uint64_t nanoseconds
+	"mx_koid_t":                mx_koid_t,
 	"mx_handle_t":              mx_handle_t, // int32_t
 	"mx_signals_t":             mx_signals_t,
 	"mx_signals_state_t":       mx_signals_state_t,

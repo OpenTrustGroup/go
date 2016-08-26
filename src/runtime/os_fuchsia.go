@@ -96,10 +96,16 @@ var gothreadname = []byte("gothread")
 
 //go:nowritebarrier
 func newosproc(mp *m, stk unsafe.Pointer) {
-	// TODO: println("newosproc __proc_info__.magic=", hex(__proc_info__.magic))
-	h := _magenta_thread_create(unsafe.Pointer(funcPC(threadinit)), unsafe.Pointer(mp), &gothreadname[0], uint32(len(gothreadname)))
+	p := mxHandle(0) // TODO: only works due to temporary hack in magenta
+	h := _magenta_thread_create(p, &gothreadname[0], uint32(len(gothreadname)), 0)
 	if h < 0 {
-		println("runtime: newosproc failed err=", h)
+		println("runtime: newosproc _magenta_thread_create failed:", h)
+		exit(2)
+	}
+
+	status := _magenta_thread_start(h, funcPC(threadinit), uintptr(stk), uintptr(unsafe.Pointer(mp)))
+	if status < 0 {
+		println("runtime: newosproc _magenta_thread_start failed:", h)
 		exit(2)
 	}
 }

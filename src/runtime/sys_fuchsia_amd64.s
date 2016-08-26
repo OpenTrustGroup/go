@@ -46,6 +46,17 @@ TEXT runtime·_magenta_num_cpus(SB),NOSPLIT,$0-8
 	MOVQ AX, ret+0(FP)
 	RET
 
+// func _magenta_debug_read_memory(koid uint64, vaddr uintptr, len uint, buffer unsafe.Pointer) int
+TEXT runtime·_magenta_debug_read_memory(SB),NOSPLIT,$0-40
+	MOVQ koid+0(FP), DI
+	MOVQ vaddr+8(FP), SI
+	MOVQ len+16(FP), DX
+	MOVQ buffer+24(FP), R10
+	MOVQ $0xff00ff00000007, AX // 7
+	SYSCALL
+	MOVQ AX, ret+32(FP)
+	RET
+
 // func _magenta_log_create(flags uint32) mxHandle
 TEXT runtime·_magenta_log_create(SB),NOSPLIT,$0-12
 	MOVL flags+0(FP), DI
@@ -132,30 +143,50 @@ TEXT runtime·_magenta_handle_get_info(SB),NOSPLIT,$0-32
 	MOVQ AX, ret+24(FP)
 	RET
 
-// func _magenta_object_signal(handle mxHandle, set_mask uint32, clear_mask uint32) mxStatus
+// func _magenta_handle_replace(handle mxHandle, rights mxRights) mxHandle
+TEXT runtime·_magenta_handle_replace(SB),NOSPLIT,$0-12
+	MOVL handle+0(FP), DI
+	MOVL rights+4(FP), SI
+	MOVQ $0xff00ff0000002d, AX // 45
+	SYSCALL
+	MOVL AX, ret+8(FP)
+	RET
+
+// func _magenta_object_signal(handle mxHandle, clear_mask uint32, set_mask uint32) mxStatus
 TEXT runtime·_magenta_object_signal(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
-	MOVL set_mask+4(FP), SI
-	MOVL clear_mask+8(FP), DX
+	MOVL clear_mask+4(FP), SI
+	MOVL set_mask+8(FP), DX
 	MOVQ $0xff00ff0000002e, AX // 46
 	SYSCALL
 	MOVL AX, ret+16(FP)
 	RET
 
-// func _magenta_thread_create(_ unsafe.Pointer, arg unsafe.Pointer, name *uint8, name_len uint32) mxHandle
-TEXT runtime·_magenta_thread_create(SB),NOSPLIT,$0-36
-	MOVQ _+0(FP), DI
-	MOVQ arg+8(FP), SI
-	MOVQ name+16(FP), DX
-	MOVL name_len+24(FP), R10
+// func _magenta_thread_create(process mxHandle, name *uint8, name_len uint32, flags uint32) mxHandle
+TEXT runtime·_magenta_thread_create(SB),NOSPLIT,$0-28
+	MOVL process+0(FP), DI
+	MOVQ name+8(FP), SI
+	MOVL name_len+16(FP), DX
+	MOVL flags+20(FP), R10
 	MOVQ $0xff00ff00000032, AX // 50
+	SYSCALL
+	MOVL AX, ret+24(FP)
+	RET
+
+// func _magenta_thread_start(handle mxHandle, thread_entry uintptr, stack uintptr, arg uintptr) mxStatus
+TEXT runtime·_magenta_thread_start(SB),NOSPLIT,$0-36
+	MOVL handle+0(FP), DI
+	MOVQ thread_entry+8(FP), SI
+	MOVQ stack+16(FP), DX
+	MOVQ arg+24(FP), R10
+	MOVQ $0xff00ff00000033, AX // 51
 	SYSCALL
 	MOVL AX, ret+32(FP)
 	RET
 
 // func _magenta_thread_exit()
 TEXT runtime·_magenta_thread_exit(SB),NOSPLIT,$0-0
-	MOVQ $0xff00ff00000033, AX // 51
+	MOVQ $0xff00ff00000034, AX // 52
 	SYSCALL
 	RET
 
@@ -164,7 +195,7 @@ TEXT runtime·_magenta_thread_arch_prctl(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVL op+4(FP), SI
 	MOVQ value_ptr+8(FP), DX
-	MOVQ $0xff00ff00000034, AX // 52
+	MOVQ $0xff00ff00000035, AX // 53
 	SYSCALL
 	MOVL AX, ret+16(FP)
 	RET
@@ -204,23 +235,27 @@ TEXT runtime·_magenta_message_write(SB),NOSPLIT,$0-44
 	MOVL AX, ret+40(FP)
 	RET
 
-// func _magenta_process_create(name *uint8, name_len uint32) mxHandle
+// func _magenta_process_create(name *uint8, name_len uint32, flags uint32) mxHandle
 TEXT runtime·_magenta_process_create(SB),NOSPLIT,$0-20
 	MOVQ name+0(FP), DI
 	MOVL name_len+8(FP), SI
+	MOVL flags+12(FP), DX
 	MOVQ $0xff00ff00000050, AX // 80
 	SYSCALL
 	MOVL AX, ret+16(FP)
 	RET
 
-// func _magenta_process_start(handle mxHandle, handle_arg mxHandle, entry mxVaddr) mxStatus
-TEXT runtime·_magenta_process_start(SB),NOSPLIT,$0-20
-	MOVL handle+0(FP), DI
-	MOVL handle_arg+4(FP), SI
+// func _magenta_process_start(process_handle mxHandle, thread_handle mxHandle, entry uintptr, stack uintptr, arg_handle mxHandle, arg2 uintptr) mxStatus
+TEXT runtime·_magenta_process_start(SB),NOSPLIT,$0-44
+	MOVL process_handle+0(FP), DI
+	MOVL thread_handle+4(FP), SI
 	MOVQ entry+8(FP), DX
+	MOVQ stack+16(FP), R10
+	MOVL arg_handle+24(FP), R8
+	MOVQ arg2+32(FP), R9
 	MOVQ $0xff00ff00000052, AX // 82
 	SYSCALL
-	MOVL AX, ret+16(FP)
+	MOVL AX, ret+40(FP)
 	RET
 
 // func _magenta_process_vm_map(proc_handle mxHandle, vmo_handle mxHandle, offset uint64, len uint, ptr *uintptr, flags uint32) mxStatus
@@ -261,22 +296,6 @@ TEXT runtime·_magenta_process_vm_protect(SB),NOSPLIT,$0-36
 TEXT runtime·_magenta_event_create(SB),NOSPLIT,$0-12
 	MOVL options+0(FP), DI
 	MOVQ $0xff00ff0000005a, AX // 90
-	SYSCALL
-	MOVL AX, ret+8(FP)
-	RET
-
-// func _magenta_event_signal(handle mxHandle) mxStatus
-TEXT runtime·_magenta_event_signal(SB),NOSPLIT,$0-12
-	MOVL handle+0(FP), DI
-	MOVQ $0xff00ff0000005b, AX // 91
-	SYSCALL
-	MOVL AX, ret+8(FP)
-	RET
-
-// func _magenta_event_reset(handle mxHandle) mxStatus
-TEXT runtime·_magenta_event_reset(SB),NOSPLIT,$0-12
-	MOVL handle+0(FP), DI
-	MOVQ $0xff00ff0000005c, AX // 92
 	SYSCALL
 	MOVL AX, ret+8(FP)
 	RET
@@ -380,32 +399,44 @@ TEXT runtime·_magenta_cprng_add_entropy(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func _magenta_set_system_exception_handler(pipe mxHandle, behaviour mxExceptionBehaviour) mxStatus
-TEXT runtime·_magenta_set_system_exception_handler(SB),NOSPLIT,$0-12
-	MOVL pipe+0(FP), DI
-	MOVL behaviour+4(FP), SI
+// func _magenta_set_system_exception_port(eport mxHandle, key uint64, options uint32) mxStatus
+TEXT runtime·_magenta_set_system_exception_port(SB),NOSPLIT,$0-28
+	MOVL eport+0(FP), DI
+	MOVQ key+8(FP), SI
+	MOVL options+16(FP), DX
 	MOVQ $0xff00ff000000d2, AX // 210
 	SYSCALL
-	MOVL AX, ret+8(FP)
+	MOVL AX, ret+24(FP)
 	RET
 
-// func _magenta_set_exception_handler(object mxHandle, pipe mxHandle, behaviour mxExceptionBehaviour) mxStatus
-TEXT runtime·_magenta_set_exception_handler(SB),NOSPLIT,$0-20
+// func _magenta_set_exception_port(object mxHandle, eport mxHandle, key uint64, options uint32) mxStatus
+TEXT runtime·_magenta_set_exception_port(SB),NOSPLIT,$0-28
 	MOVL object+0(FP), DI
-	MOVL pipe+4(FP), SI
-	MOVL behaviour+8(FP), DX
+	MOVL eport+4(FP), SI
+	MOVQ key+8(FP), DX
+	MOVL options+16(FP), R10
 	MOVQ $0xff00ff000000d3, AX // 211
 	SYSCALL
-	MOVL AX, ret+16(FP)
+	MOVL AX, ret+24(FP)
 	RET
 
-// func _magenta_mark_exception_handled(object mxHandle, status mxExceptionStatus) mxStatus
-TEXT runtime·_magenta_mark_exception_handled(SB),NOSPLIT,$0-12
-	MOVL object+0(FP), DI
-	MOVL status+4(FP), SI
+// func _magenta_mark_exception_handled(process mxHandle, tid mxKoid, status mxExceptionStatus) mxStatus
+TEXT runtime·_magenta_mark_exception_handled(SB),NOSPLIT,$0-28
+	MOVL process+0(FP), DI
+	MOVQ tid+8(FP), SI
+	MOVL status+16(FP), DX
 	MOVQ $0xff00ff000000d4, AX // 212
 	SYSCALL
-	MOVL AX, ret+8(FP)
+	MOVL AX, ret+24(FP)
+	RET
+
+// func _magenta_process_debug(handle mxHandle, pid mxKoid) mxHandle
+TEXT runtime·_magenta_process_debug(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVQ pid+8(FP), SI
+	MOVQ $0xff00ff000000d5, AX // 213
+	SYSCALL
+	MOVL AX, ret+16(FP)
 	RET
 
 // func _magenta_io_port_create(options uint32) mxHandle
@@ -561,6 +592,59 @@ TEXT runtime·_magenta_wait_set_wait(SB),NOSPLIT,$0-44
 	SYSCALL
 	MOVL AX, ret+40(FP)
 	CALL runtime·exitsyscall(SB)
+	RET
+
+// func _magenta_object_get_property(handle mxHandle, property uint32, value unsafe.Pointer, size uint) mxStatus
+TEXT runtime·_magenta_object_get_property(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVL property+4(FP), SI
+	MOVQ value+8(FP), DX
+	MOVQ size+16(FP), R10
+	MOVQ $0xff00ff000000fa, AX // 250
+	SYSCALL
+	MOVL AX, ret+24(FP)
+	RET
+
+// func _magenta_object_set_property(handle mxHandle, property uint32, value unsafe.Pointer, size uint) mxStatus
+TEXT runtime·_magenta_object_set_property(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVL property+4(FP), SI
+	MOVQ value+8(FP), DX
+	MOVQ size+16(FP), R10
+	MOVQ $0xff00ff000000fb, AX // 251
+	SYSCALL
+	MOVL AX, ret+24(FP)
+	RET
+
+// func _magenta_socket_create(out_handles *mxHandle, flags uint32) mxStatus
+TEXT runtime·_magenta_socket_create(SB),NOSPLIT,$0-20
+	MOVQ out_handles+0(FP), DI
+	MOVL flags+8(FP), SI
+	MOVQ $0xff00ff00000118, AX // 280
+	SYSCALL
+	MOVL AX, ret+16(FP)
+	RET
+
+// func _magenta_socket_write(handle mxHandle, flags uint32, size uint, buffer unsafe.Pointer) int
+TEXT runtime·_magenta_socket_write(SB),NOSPLIT,$0-32
+	MOVL handle+0(FP), DI
+	MOVL flags+4(FP), SI
+	MOVQ size+8(FP), DX
+	MOVQ buffer+16(FP), R10
+	MOVQ $0xff00ff00000119, AX // 281
+	SYSCALL
+	MOVQ AX, ret+24(FP)
+	RET
+
+// func _magenta_socket_read(handle mxHandle, flags uint32, size uint, buffer unsafe.Pointer) int
+TEXT runtime·_magenta_socket_read(SB),NOSPLIT,$0-32
+	MOVL handle+0(FP), DI
+	MOVL flags+4(FP), SI
+	MOVQ size+8(FP), DX
+	MOVQ buffer+16(FP), R10
+	MOVQ $0xff00ff0000011a, AX // 282
+	SYSCALL
+	MOVQ AX, ret+24(FP)
 	RET
 
 // func _magenta_syscall_test_0() int
