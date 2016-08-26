@@ -1,3 +1,4 @@
+
 // Copyright 2016 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -43,6 +44,17 @@ TEXT ·Sys_num_cpus(SB),NOSPLIT,$0-8
 	MOVQ $0xff00ff00000006, AX // 6
 	SYSCALL
 	MOVQ AX, ret+0(FP)
+	RET
+
+// func Sys_debug_read_memory(koid uint64, vaddr uintptr, len uint, buffer unsafe.Pointer) int
+TEXT ·Sys_debug_read_memory(SB),NOSPLIT,$0-40
+	MOVQ koid+0(FP), DI
+	MOVQ vaddr+8(FP), SI
+	MOVQ len+16(FP), DX
+	MOVQ buffer+24(FP), R10
+	MOVQ $0xff00ff00000007, AX // 7
+	SYSCALL
+	MOVQ AX, ret+32(FP)
 	RET
 
 // func Sys_log_create(flags uint32) Handle
@@ -131,30 +143,50 @@ TEXT ·Sys_handle_get_info(SB),NOSPLIT,$0-32
 	MOVQ AX, ret+24(FP)
 	RET
 
-// func Sys_object_signal(handle Handle, set_mask uint32, clear_mask uint32) Status
+// func Sys_handle_replace(handle Handle, rights Rights) Handle
+TEXT ·Sys_handle_replace(SB),NOSPLIT,$0-12
+	MOVL handle+0(FP), DI
+	MOVL rights+4(FP), SI
+	MOVQ $0xff00ff0000002d, AX // 45
+	SYSCALL
+	MOVL AX, ret+8(FP)
+	RET
+
+// func Sys_object_signal(handle Handle, clear_mask uint32, set_mask uint32) Status
 TEXT ·Sys_object_signal(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
-	MOVL set_mask+4(FP), SI
-	MOVL clear_mask+8(FP), DX
+	MOVL clear_mask+4(FP), SI
+	MOVL set_mask+8(FP), DX
 	MOVQ $0xff00ff0000002e, AX // 46
 	SYSCALL
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_thread_create(_ unsafe.Pointer, arg unsafe.Pointer, name *uint8, name_len uint32) Handle
-TEXT ·Sys_thread_create(SB),NOSPLIT,$0-36
-	MOVQ _+0(FP), DI
-	MOVQ arg+8(FP), SI
-	MOVQ name+16(FP), DX
-	MOVL name_len+24(FP), R10
+// func Sys_thread_create(process Handle, name *uint8, name_len uint32, flags uint32) Handle
+TEXT ·Sys_thread_create(SB),NOSPLIT,$0-28
+	MOVL process+0(FP), DI
+	MOVQ name+8(FP), SI
+	MOVL name_len+16(FP), DX
+	MOVL flags+20(FP), R10
 	MOVQ $0xff00ff00000032, AX // 50
+	SYSCALL
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_thread_start(handle Handle, thread_entry uintptr, stack uintptr, arg uintptr) Status
+TEXT ·Sys_thread_start(SB),NOSPLIT,$0-36
+	MOVL handle+0(FP), DI
+	MOVQ thread_entry+8(FP), SI
+	MOVQ stack+16(FP), DX
+	MOVQ arg+24(FP), R10
+	MOVQ $0xff00ff00000033, AX // 51
 	SYSCALL
 	MOVL AX, ret+32(FP)
 	RET
 
 // func Sys_thread_exit()
 TEXT ·Sys_thread_exit(SB),NOSPLIT,$0-0
-	MOVQ $0xff00ff00000033, AX // 51
+	MOVQ $0xff00ff00000034, AX // 52
 	SYSCALL
 	RET
 
@@ -163,7 +195,7 @@ TEXT ·Sys_thread_arch_prctl(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVL op+4(FP), SI
 	MOVQ value_ptr+8(FP), DX
-	MOVQ $0xff00ff00000034, AX // 52
+	MOVQ $0xff00ff00000035, AX // 53
 	SYSCALL
 	MOVL AX, ret+16(FP)
 	RET
@@ -203,23 +235,27 @@ TEXT ·Sys_message_write(SB),NOSPLIT,$0-44
 	MOVL AX, ret+40(FP)
 	RET
 
-// func Sys_process_create(name *uint8, name_len uint32) Handle
+// func Sys_process_create(name *uint8, name_len uint32, flags uint32) Handle
 TEXT ·Sys_process_create(SB),NOSPLIT,$0-20
 	MOVQ name+0(FP), DI
 	MOVL name_len+8(FP), SI
+	MOVL flags+12(FP), DX
 	MOVQ $0xff00ff00000050, AX // 80
 	SYSCALL
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_process_start(handle Handle, handle_arg Handle, entry Vaddr) Status
-TEXT ·Sys_process_start(SB),NOSPLIT,$0-20
-	MOVL handle+0(FP), DI
-	MOVL handle_arg+4(FP), SI
+// func Sys_process_start(process_handle Handle, thread_handle Handle, entry uintptr, stack uintptr, arg_handle Handle, arg2 uintptr) Status
+TEXT ·Sys_process_start(SB),NOSPLIT,$0-44
+	MOVL process_handle+0(FP), DI
+	MOVL thread_handle+4(FP), SI
 	MOVQ entry+8(FP), DX
+	MOVQ stack+16(FP), R10
+	MOVL arg_handle+24(FP), R8
+	MOVQ arg2+32(FP), R9
 	MOVQ $0xff00ff00000052, AX // 82
 	SYSCALL
-	MOVL AX, ret+16(FP)
+	MOVL AX, ret+40(FP)
 	RET
 
 // func Sys_process_vm_map(proc_handle Handle, vmo_handle Handle, offset uint64, len uint, ptr *uintptr, flags uint32) Status
@@ -260,22 +296,6 @@ TEXT ·Sys_process_vm_protect(SB),NOSPLIT,$0-36
 TEXT ·Sys_event_create(SB),NOSPLIT,$0-12
 	MOVL options+0(FP), DI
 	MOVQ $0xff00ff0000005a, AX // 90
-	SYSCALL
-	MOVL AX, ret+8(FP)
-	RET
-
-// func Sys_event_signal(handle Handle) Status
-TEXT ·Sys_event_signal(SB),NOSPLIT,$0-12
-	MOVL handle+0(FP), DI
-	MOVQ $0xff00ff0000005b, AX // 91
-	SYSCALL
-	MOVL AX, ret+8(FP)
-	RET
-
-// func Sys_event_reset(handle Handle) Status
-TEXT ·Sys_event_reset(SB),NOSPLIT,$0-12
-	MOVL handle+0(FP), DI
-	MOVQ $0xff00ff0000005c, AX // 92
 	SYSCALL
 	MOVL AX, ret+8(FP)
 	RET
@@ -379,32 +399,44 @@ TEXT ·Sys_cprng_add_entropy(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_set_system_exception_handler(pipe Handle, behaviour ExceptionBehaviour) Status
-TEXT ·Sys_set_system_exception_handler(SB),NOSPLIT,$0-12
-	MOVL pipe+0(FP), DI
-	MOVL behaviour+4(FP), SI
+// func Sys_set_system_exception_port(eport Handle, key uint64, options uint32) Status
+TEXT ·Sys_set_system_exception_port(SB),NOSPLIT,$0-28
+	MOVL eport+0(FP), DI
+	MOVQ key+8(FP), SI
+	MOVL options+16(FP), DX
 	MOVQ $0xff00ff000000d2, AX // 210
 	SYSCALL
-	MOVL AX, ret+8(FP)
+	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_set_exception_handler(object Handle, pipe Handle, behaviour ExceptionBehaviour) Status
-TEXT ·Sys_set_exception_handler(SB),NOSPLIT,$0-20
+// func Sys_set_exception_port(object Handle, eport Handle, key uint64, options uint32) Status
+TEXT ·Sys_set_exception_port(SB),NOSPLIT,$0-28
 	MOVL object+0(FP), DI
-	MOVL pipe+4(FP), SI
-	MOVL behaviour+8(FP), DX
+	MOVL eport+4(FP), SI
+	MOVQ key+8(FP), DX
+	MOVL options+16(FP), R10
 	MOVQ $0xff00ff000000d3, AX // 211
 	SYSCALL
-	MOVL AX, ret+16(FP)
+	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_mark_exception_handled(object Handle, status ExceptionStatus) Status
-TEXT ·Sys_mark_exception_handled(SB),NOSPLIT,$0-12
-	MOVL object+0(FP), DI
-	MOVL status+4(FP), SI
+// func Sys_mark_exception_handled(process Handle, tid Koid, status ExceptionStatus) Status
+TEXT ·Sys_mark_exception_handled(SB),NOSPLIT,$0-28
+	MOVL process+0(FP), DI
+	MOVQ tid+8(FP), SI
+	MOVL status+16(FP), DX
 	MOVQ $0xff00ff000000d4, AX // 212
 	SYSCALL
-	MOVL AX, ret+8(FP)
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_process_debug(handle Handle, pid Koid) Handle
+TEXT ·Sys_process_debug(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVQ pid+8(FP), SI
+	MOVQ $0xff00ff000000d5, AX // 213
+	SYSCALL
+	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_io_port_create(options uint32) Handle
@@ -561,3 +593,57 @@ TEXT ·Sys_wait_set_wait(SB),NOSPLIT,$0-44
 	MOVL AX, ret+40(FP)
 	CALL runtime·exitsyscall(SB)
 	RET
+
+// func Sys_object_get_property(handle Handle, property uint32, value unsafe.Pointer, size uint) Status
+TEXT ·Sys_object_get_property(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVL property+4(FP), SI
+	MOVQ value+8(FP), DX
+	MOVQ size+16(FP), R10
+	MOVQ $0xff00ff000000fa, AX // 250
+	SYSCALL
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_object_set_property(handle Handle, property uint32, value unsafe.Pointer, size uint) Status
+TEXT ·Sys_object_set_property(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVL property+4(FP), SI
+	MOVQ value+8(FP), DX
+	MOVQ size+16(FP), R10
+	MOVQ $0xff00ff000000fb, AX // 251
+	SYSCALL
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_socket_create(out_handles *Handle, flags uint32) Status
+TEXT ·Sys_socket_create(SB),NOSPLIT,$0-20
+	MOVQ out_handles+0(FP), DI
+	MOVL flags+8(FP), SI
+	MOVQ $0xff00ff00000118, AX // 280
+	SYSCALL
+	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_socket_write(handle Handle, flags uint32, size uint, buffer unsafe.Pointer) int
+TEXT ·Sys_socket_write(SB),NOSPLIT,$0-32
+	MOVL handle+0(FP), DI
+	MOVL flags+4(FP), SI
+	MOVQ size+8(FP), DX
+	MOVQ buffer+16(FP), R10
+	MOVQ $0xff00ff00000119, AX // 281
+	SYSCALL
+	MOVQ AX, ret+24(FP)
+	RET
+
+// func Sys_socket_read(handle Handle, flags uint32, size uint, buffer unsafe.Pointer) int
+TEXT ·Sys_socket_read(SB),NOSPLIT,$0-32
+	MOVL handle+0(FP), DI
+	MOVL flags+4(FP), SI
+	MOVQ size+8(FP), DX
+	MOVQ buffer+16(FP), R10
+	MOVQ $0xff00ff0000011a, AX // 282
+	SYSCALL
+	MOVQ AX, ret+24(FP)
+	RET
+

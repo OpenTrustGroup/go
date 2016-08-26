@@ -1,3 +1,4 @@
+
 // Copyright 2016 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -13,6 +14,7 @@ type (
 	Status             int32   // mx_status_t
 	Handle             int32   // mx_handle_t
 	Time               uint64  // mx_time_t, nanoseconds
+	Koid               uint64  // mx_koid_t
 	Signals            uint32  // mx_signals_t
 	Rights             uint32  // mx_rights_t
 	Vaddr              uintptr // mx_vaddr_t
@@ -60,6 +62,10 @@ func Sys_num_cpus() uint
 
 //go:noescape
 //go:nosplit
+func Sys_debug_read_memory(koid uint64, vaddr uintptr, len uint, buffer unsafe.Pointer) int
+
+//go:noescape
+//go:nosplit
 func Sys_log_create(flags uint32) Handle
 
 //go:noescape
@@ -92,11 +98,19 @@ func Sys_handle_get_info(handle Handle, topic uint32, info unsafe.Pointer, info_
 
 //go:noescape
 //go:nosplit
-func Sys_object_signal(handle Handle, set_mask uint32, clear_mask uint32) Status
+func Sys_handle_replace(handle Handle, rights Rights) Handle
 
 //go:noescape
 //go:nosplit
-func Sys_thread_create(_ unsafe.Pointer, arg unsafe.Pointer, name *uint8, name_len uint32) Handle
+func Sys_object_signal(handle Handle, clear_mask uint32, set_mask uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_thread_create(process Handle, name *uint8, name_len uint32, flags uint32) Handle
+
+//go:noescape
+//go:nosplit
+func Sys_thread_start(handle Handle, thread_entry uintptr, stack uintptr, arg uintptr) Status
 
 //go:noescape
 //go:nosplit
@@ -120,11 +134,11 @@ func Sys_message_write(handle Handle, bytes unsafe.Pointer, num_bytes uint32, ha
 
 //go:noescape
 //go:nosplit
-func Sys_process_create(name *uint8, name_len uint32) Handle
+func Sys_process_create(name *uint8, name_len uint32, flags uint32) Handle
 
 //go:noescape
 //go:nosplit
-func Sys_process_start(handle Handle, handle_arg Handle, entry Vaddr) Status
+func Sys_process_start(process_handle Handle, thread_handle Handle, entry uintptr, stack uintptr, arg_handle Handle, arg2 uintptr) Status
 
 //go:noescape
 //go:nosplit
@@ -141,14 +155,6 @@ func Sys_process_vm_protect(proc_handle Handle, address uintptr, len uint, prot 
 //go:noescape
 //go:nosplit
 func Sys_event_create(options uint32) Handle
-
-//go:noescape
-//go:nosplit
-func Sys_event_signal(handle Handle) Status
-
-//go:noescape
-//go:nosplit
-func Sys_event_reset(handle Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -192,15 +198,19 @@ func Sys_cprng_add_entropy(buffer unsafe.Pointer, len uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_set_system_exception_handler(pipe Handle, behaviour ExceptionBehaviour) Status
+func Sys_set_system_exception_port(eport Handle, key uint64, options uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_set_exception_handler(object Handle, pipe Handle, behaviour ExceptionBehaviour) Status
+func Sys_set_exception_port(object Handle, eport Handle, key uint64, options uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_mark_exception_handled(object Handle, status ExceptionStatus) Status
+func Sys_mark_exception_handled(process Handle, tid Koid, status ExceptionStatus) Status
+
+//go:noescape
+//go:nosplit
+func Sys_process_debug(handle Handle, pid Koid) Handle
 
 //go:noescape
 //go:nosplit
@@ -261,3 +271,24 @@ func Sys_wait_set_remove(wait_set_handle Handle, cookie uint64) Status
 //go:noescape
 //go:nosplit
 func Sys_wait_set_wait(wait_set_handle Handle, timeout Time, num_results *uint32, results *WaitSetResult, max_results *uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_object_get_property(handle Handle, property uint32, value unsafe.Pointer, size uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_object_set_property(handle Handle, property uint32, value unsafe.Pointer, size uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_socket_create(out_handles *Handle, flags uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_socket_write(handle Handle, flags uint32, size uint, buffer unsafe.Pointer) int
+
+//go:noescape
+//go:nosplit
+func Sys_socket_read(handle Handle, flags uint32, size uint, buffer unsafe.Pointer) int
+

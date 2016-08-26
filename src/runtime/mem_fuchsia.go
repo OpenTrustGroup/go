@@ -4,7 +4,10 @@
 
 package runtime
 
-import "unsafe"
+import (
+	"internal/syscall/fuchsia"
+	"unsafe"
+)
 
 //go:nosplit
 func sysAlloc(n uintptr, sysStat *uint64) unsafe.Pointer {
@@ -31,9 +34,9 @@ func sysFree(v unsafe.Pointer, n uintptr, sysStat *uint64) {
 }
 
 func sysMmap(ptr unsafe.Pointer, len uintptr, flags uint32) {
-	vmo := _magenta_vm_object_create(uint64(len))
+	vmo := fuchsia.Sys_vm_object_create(uint64(len))
 	if vmo < 0 {
-		println("runtime: _magenta_vm_object_create failed, len=", len, " err=", vmo)
+		println("runtime: fuchsia.Sys_vm_object_create failed, len=", len, " err=", vmo)
 		exit(2)
 	}
 	const (
@@ -41,10 +44,10 @@ func sysMmap(ptr unsafe.Pointer, len uintptr, flags uint32) {
 		MX_VM_FLAG_PERM_WRITE = 1 << 2
 	)
 	mxFlags := uint32(MX_VM_FLAG_PERM_READ | MX_VM_FLAG_PERM_WRITE)
-	status := _magenta_process_vm_map(0, vmo, 0, uint(len), (*uintptr)(ptr), mxFlags)
-	_magenta_handle_close(vmo)
+	status := fuchsia.Sys_process_vm_map(0, vmo, 0, uint(len), (*uintptr)(ptr), mxFlags)
+	fuchsia.Sys_handle_close(vmo)
 	if status < 0 {
-		println("runtime: _magenta_process_vm_map failed, err=", status)
+		println("runtime: fuchsia.Sys_process_vm_map failed, err=", status)
 		exit(2)
 	}
 }

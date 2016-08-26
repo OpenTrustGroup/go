@@ -5,7 +5,7 @@
 package runtime
 
 import (
-	//	"runtime/internal/sys"
+	"internal/syscall/fuchsia"
 	"unsafe"
 )
 
@@ -96,16 +96,16 @@ var gothreadname = []byte("gothread")
 
 //go:nowritebarrier
 func newosproc(mp *m, stk unsafe.Pointer) {
-	p := mxHandle(0) // TODO: only works due to temporary hack in magenta
-	h := _magenta_thread_create(p, &gothreadname[0], uint32(len(gothreadname)), 0)
+	p := fuchsia.Handle(0) // TODO: only works due to temporary hack in magenta
+	h := fuchsia.Sys_thread_create(p, &gothreadname[0], uint32(len(gothreadname)), 0)
 	if h < 0 {
-		println("runtime: newosproc _magenta_thread_create failed:", h)
+		println("runtime: newosproc fuchsia.Sys_thread_create failed:", h)
 		exit(2)
 	}
 
-	status := _magenta_thread_start(h, funcPC(threadinit), uintptr(stk), uintptr(unsafe.Pointer(mp)))
+	status := fuchsia.Sys_thread_start(h, funcPC(threadinit), uintptr(stk), uintptr(unsafe.Pointer(mp)))
 	if status < 0 {
-		println("runtime: newosproc _magenta_thread_start failed:", h)
+		println("runtime: newosproc fuchsia.Sys_thread_start failed:", h)
 		exit(2)
 	}
 }
@@ -123,7 +123,7 @@ type mx_proc_info struct {
 	version       uint32
 	next_tls_slot uint32
 	proc_args     *mx_proc_args
-	handle        *mxHandle
+	handle        *fuchsia.Handle
 	handle_info   *uint32
 	handle_count  int32
 	argv          **byte
@@ -154,13 +154,13 @@ var _cgo_unsetenv unsafe.Pointer // pointer to C function
 
 //go:nosplit
 func nanotime() int64 {
-	return int64(_magenta_current_time())
+	return int64(fuchsia.Sys_current_time())
 }
 
 //go:nosplit
 func write(fd uintptr, buf unsafe.Pointer, n int32) int32 {
 	if fd == 1 || fd == 2 {
-		_magenta_debug_write(buf, uint32(n))
+		fuchsia.Sys_debug_write(buf, uint32(n))
 	}
 	// TODO
 	return n
@@ -168,12 +168,12 @@ func write(fd uintptr, buf unsafe.Pointer, n int32) int32 {
 
 //go:nosplit
 func exit(code int32) {
-	_magenta_exit(int(code))
+	fuchsia.Sys_exit(int(code))
 }
 
 //go:nosplit
 func usleep(usec uint32) {
-	_magenta_nanosleep(mxTime(usec * 1000))
+	fuchsia.Sys_nanosleep(fuchsia.Time(usec * 1000))
 }
 
 func signame(sig uint32) string {
@@ -189,7 +189,7 @@ func magenta_mktls() {
 //go:nosplit
 func magenta_settls(val uintptr) {
 	const ARCH_SET_FS = 0
-	status := _magenta_thread_arch_prctl(0, ARCH_SET_FS, &val)
+	status := fuchsia.Sys_thread_arch_prctl(0, ARCH_SET_FS, &val)
 	if status < 0 {
 		println("runtime: thread_arch_prctl failed err=", status)
 		exit(2)

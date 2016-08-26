@@ -54,7 +54,7 @@ TEXT runtime·threadinit(SB),NOSPLIT,$0
 
 	CALL	runtime·stackcheck(SB)	// clobbers AX,CX
 	CALL	runtime·mstart(SB)
-	CALL	runtime·_magenta_thread_exit(SB)
+	// TODO CALL	internal/syscall/fuchsia·Sys_magenta_thread_exit(SB)
 	RET
 
 // set tls base to DI
