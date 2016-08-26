@@ -168,7 +168,6 @@ var amd64RegArgs = []string{"DI", "SI", "DX", "R10", "R8", "R9", "R12", "R13"}
 
 // blockingSyscalls is a map of known syscalls which may block.
 var blockingSyscalls = map[string]bool{
-	"futex_wait":       true,
 	"io_port_wait":     true,
 	"handle_wait_one":  true,
 	"handle_wait_many": true,

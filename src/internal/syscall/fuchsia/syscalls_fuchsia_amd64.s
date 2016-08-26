@@ -302,14 +302,12 @@ TEXT ·Sys_event_create(SB),NOSPLIT,$0-12
 
 // func Sys_futex_wait(value_ptr *int, current_value int, timeout Time) Status
 TEXT ·Sys_futex_wait(SB),NOSPLIT,$0-28
-	CALL runtime·entersyscall(SB)
 	MOVQ value_ptr+0(FP), DI
 	MOVQ current_value+8(FP), SI
 	MOVQ timeout+16(FP), DX
 	MOVQ $0xff00ff0000005d, AX // 93
 	SYSCALL
 	MOVL AX, ret+24(FP)
-	CALL runtime·exitsyscall(SB)
 	RET
 
 // func Sys_futex_wake(value_ptr *int, count uint32) Status

@@ -20,22 +20,25 @@ func getRandomData(r []byte) {
 
 //go:nosplit
 func futexsleep(addr *uint32, val uint32, ns int64) {
-	// TODO
+	timeout := fuchsia.Time(ns)
+	if ns < 0 {
+		timeout = fuchsia.TimensecInfinite
+	}
+	fuchsia.Sys_futex_wait((*int)(unsafe.Pointer(addr)), int(val), timeout)
 }
 
 //go:nosplit
 func futexwakeup(addr *uint32, cnt uint32) {
-	// TODO
+	fuchsia.Sys_futex_wake((*int)(unsafe.Pointer(addr)), cnt)
 }
 
 //go:nosplit
 func osyield() {
-	// TODO
+	fuchsia.Sys_nanosleep(0)
 }
 
 func osinit() {
-	ncpu = 1
-	// TODO
+	ncpu = int32(fuchsia.Sys_num_cpus())
 }
 
 func minit() {
