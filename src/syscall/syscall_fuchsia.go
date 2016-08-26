@@ -43,31 +43,31 @@ type Stat_t struct {
 }
 
 func Getpid() (pid int) {
-	panic("TODO")
+	panic("syscall.Getpid TODO")
 }
 
 func Getppid() (ppid int) {
-	panic("TODO")
+	panic("syscall.Getppid TODO")
 }
 
 func Getuid() (uid int) {
-	panic("TODO")
+	panic("syscall.Getuid TODO")
 }
 
 func Geteuid() (uid int) {
-	panic("TODO")
+	panic("syscall.Geteuid TODO")
 }
 
 func Getgid() (uid int) {
-	panic("TODO")
+	panic("syscall.Getgid TODO")
 }
 
 func Getegid() (uid int) {
-	panic("TODO")
+	panic("syscall.Getegid TODO")
 }
 
 func Getgroups() (gids []int, err error) {
-	panic("TODO")
+	panic("syscall.Getgroups TODO")
 }
 
 func Exit(code int) {
@@ -79,24 +79,24 @@ func Getpagesize() int { return 4096 }
 const ImplementsGetwd = true
 
 func Getwd() (wd string, err error) {
-	panic("TODO")
+	panic("syscall.Getwd TODO")
 }
 
 func Chdir(path string) (err error) {
-	panic("TODO")
+	panic("syscall.Chdir TODO")
 }
 func Mkdir(path string, mode uint32) (err error) {
-	panic("TODO")
+	panic("syscall.Mkdir TODO")
 }
 func Rmdir(path string) (err error) {
-	panic("TODO")
+	panic("syscall.Rmdir TODO")
 }
 func Unlink(path string) (err error) {
-	panic("TODO")
+	panic("syscall.Unlink TODO")
 }
 func Rename(oldpath, newpath string) (err error) {
-	panic("TODO")
+	panic("syscall.Rename TODO")
 }
 func Fchdir(fd int) (err error) {
-	panic("TODO")
+	panic("syscall.Fchdir TODO")
 }

@@ -5,21 +5,22 @@
 package syscall
 
 func Unsetenv(key string) error {
-	panic("TODO")
+	panic("syscall.Unsetenv TODO")
 }
 
 func Getenv(key string) (value string, found bool) {
-	panic("TODO")
+	println("syscall.Getenv TODO")
+	return "", false
 }
 
 func Setenv(key, value string) error {
-	panic("TODO")
+	panic("syscall.Setenv TODO")
 }
 
 func Clearenv() {
-	panic("TODO")
+	panic("syscall.Clearenv TODO")
 }
 
 func Environ() []string {
-	panic("TODO")
+	panic("syscall.Environ TODO")
 }
