@@ -17,11 +17,18 @@ const (
 	O_WRONLY = 0x1
 	O_RDWR   = 0x2
 
-	O_APPEND = 0x8
-	O_CREAT  = 0x200
-	O_EXCL   = 0x800
-	O_SYNC   = 0x80
-	O_TRUNC  = 0x400
+	O_CREAT     = 0100
+	O_EXCL      = 0200
+	O_NOCTTY    = 0400
+	O_TRUNC     = 01000
+	O_APPEND    = 02000
+	O_NONBLOCK  = 04000
+	O_DSYNC     = 010000
+	O_SYNC      = 04010000
+	O_RSYNC     = 04010000
+	O_DIRECTORY = 0200000
+	O_NOFOLLOW  = 0400000
+	O_CLOEXEC   = 02000000
 )
 
 // TODO(crawshaw): generate a zerrors file once cgo is working
