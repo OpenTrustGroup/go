@@ -18,9 +18,9 @@ import (
 
 // Create a new dispatcher, running a RIO server. It is initialized with no clients.
 func CreateRIOServer() *dispatcher.Dispatcher {
-	d, status := dispatcher.New(rio.Handler)
-	if status < 0 {
-		panic(status)
+	d, err := dispatcher.New(rio.Handler)
+	if err != nil {
+		panic(err)
 	}
 	go d.Serve()
 	return d
@@ -28,14 +28,13 @@ func CreateRIOServer() *dispatcher.Dispatcher {
 
 // Create a pair of handles, and add one end to the RIO server, along with a RIO Server callback.
 func CreateRIOClient(d *dispatcher.Dispatcher, cb rio.ServerHandler, cookie int64) *rio.RemoteIO {
-	handles, status := fuchsia.MessagePipeCreate(0)
-	if status < 0 {
-		panic(status)
+	handles, err := fuchsia.MessagePipeCreate(0)
+	if err != nil {
+		panic(err)
 	}
 
-	status = d.AddHandler(handles[0], cb, cookie)
-	if status < 0 {
-		panic(status)
+	if err := d.AddHandler(handles[0], cb, cookie); err != nil {
+		panic(err)
 	}
 
 	// TODO(smklein): Add 'event' handle to clientHandles when testing 'wait'
@@ -87,12 +86,12 @@ var testData = []struct {
 
 func checkOpen(client *rio.RemoteIO, opIndex int) {
 	// Create the expected return handle here, since dummy values would be rejected.
-	testHandles, status := fuchsia.MessagePipeCreate(0)
-	if status < 0 {
-		panic(status)
+	testHandles, err := fuchsia.MessagePipeCreate(0)
+	if err != nil {
+		panic(err)
 	}
 	testData[opIndex].outHandles = []fuchsia.Handle{testHandles[0]}
-	_, err := client.Open(string(testData[opIndex].inData), testData[opIndex].inArg, uint32(testData[opIndex].inArg2))
+	_, err = client.Open(string(testData[opIndex].inData), testData[opIndex].inArg, uint32(testData[opIndex].inArg2))
 	if err != nil {
 		panic(err)
 	}
@@ -100,9 +99,9 @@ func checkOpen(client *rio.RemoteIO, opIndex int) {
 
 func checkClone(client *rio.RemoteIO, opIndex int) {
 	// Create the expected return handle here, since dummy values would be rejected.
-	testHandles, status := fuchsia.MessagePipeCreate(0)
-	if status < 0 {
-		panic(status)
+	testHandles, err := fuchsia.MessagePipeCreate(0)
+	if err != nil {
+		panic(err)
 	}
 	testData[opIndex].outHandles = []fuchsia.Handle{testHandles[0]}
 	handles, err := client.Clone()
@@ -148,9 +147,9 @@ func checkSeek(client *rio.RemoteIO, opIndex int) {
 func checkIoctl(client *rio.RemoteIO, opIndex int) {
 	if testData[opIndex].inArg2 == mxio.IoctlDeviceGetHandle {
 		// Create the expected return handle here, since dummy values would be rejected.
-		testHandles, status := fuchsia.MessagePipeCreate(0)
-		if status < 0 {
-			panic(status)
+		testHandles, err := fuchsia.MessagePipeCreate(0)
+		if err != nil {
+			panic(err)
 		}
 		testData[opIndex].outHandles = []fuchsia.Handle{testHandles[0]}
 	}

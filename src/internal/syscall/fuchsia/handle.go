@@ -10,48 +10,53 @@ import (
 	"unsafe"
 )
 
-func HandleClose(handle Handle) Status {
-	errno := Sys_handle_close(handle)
-	if errno != 0 {
-		return errno
+func HandleClose(handle Handle) error {
+	if status := Sys_handle_close(handle); status != ErrOk {
+		return status
 	}
-	return ErrOk
+	return nil
 }
 
-func HandleDuplicate(handle Handle, rights Rights) (Handle, Status) {
+func HandleDuplicate(handle Handle, rights Rights) (Handle, error) {
 	dupHandle := Sys_handle_duplicate(handle, rights)
 	if dupHandle <= 0 {
 		return 0, Status(dupHandle)
 	}
-	return dupHandle, ErrOk
+	return dupHandle, nil
 }
 
-func HandleWaitOne(handle Handle, signals Signals, timeout Time) (SignalsState, Status) {
+func HandleWaitOne(handle Handle, signals Signals, timeout Time) (SignalsState, error) {
 	var sigState SignalsState
 	status := Sys_handle_wait_one(handle, signals, timeout, &sigState)
-	return sigState, status
+	if status != ErrOk {
+		return sigState, status
+	}
+	return sigState, nil
 }
 
-func HandleWaitMany(handles []Handle, signals []Signals, timeout Time) (uint32, []SignalsState, Status) {
+func HandleWaitMany(handles []Handle, signals []Signals, timeout Time) (uint32, []SignalsState, error) {
 	if len(handles) != len(signals) || len(handles) < 1 {
 		return 0, nil, ErrInvalidArgs
 	}
 	var resultIndex uint32
 	resultSignals := make([]SignalsState, len(handles))
 	status := Sys_handle_wait_many(uint32(len(handles)), &handles[0], &signals[0], timeout, &resultIndex, &resultSignals[0])
-	return resultIndex, resultSignals, status
+	if status != ErrOk {
+		return resultIndex, resultSignals, status
+	}
+	return resultIndex, resultSignals, nil
 }
 
-func MessagePipeCreate(flags uint32) ([]Handle, Status) {
+func MessagePipeCreate(flags uint32) ([]Handle, error) {
 	handles := make([]Handle, 2)
 	status := Sys_message_pipe_create(&handles[0], flags)
 	if status != ErrOk {
 		return nil, status
 	}
-	return handles, ErrOk
+	return handles, nil
 }
 
-func MessageRead(handle Handle, data []byte, handles []Handle, flags uint32) (numBytes, numHandles uint32, status Status) {
+func MessageRead(handle Handle, data []byte, handles []Handle, flags uint32) (numBytes, numHandles uint32, err error) {
 	numBytes = uint32(len(data))
 	numHandles = uint32(len(handles))
 	var dataPtr unsafe.Pointer
@@ -62,11 +67,13 @@ func MessageRead(handle Handle, data []byte, handles []Handle, flags uint32) (nu
 	if len(handles) > 0 {
 		handlePtr = &handles[0]
 	}
-	status = Sys_message_read(handle, dataPtr, &numBytes, handlePtr, &numHandles, flags)
+	if status := Sys_message_read(handle, dataPtr, &numBytes, handlePtr, &numHandles, flags); status != ErrOk {
+		err = status
+	}
 	return
 }
 
-func MessageWrite(handle Handle, data []byte, handles []Handle, flags uint32) Status {
+func MessageWrite(handle Handle, data []byte, handles []Handle, flags uint32) error {
 	var dataPtr unsafe.Pointer
 	if len(data) > 0 {
 		dataPtr = unsafe.Pointer(&data[0])
@@ -75,5 +82,9 @@ func MessageWrite(handle Handle, data []byte, handles []Handle, flags uint32) St
 	if len(handles) > 0 {
 		handlePtr = &handles[0]
 	}
-	return Sys_message_write(handle, dataPtr, uint32(len(data)), handlePtr, uint32(len(handles)), flags)
+	status := Sys_message_write(handle, dataPtr, uint32(len(data)), handlePtr, uint32(len(handles)), flags)
+	if status != ErrOk {
+		return status
+	}
+	return nil
 }

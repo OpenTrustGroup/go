@@ -17,11 +17,11 @@ import (
 // A DispatcherCallback is called when the handle is readable or closed.
 // Passing '0' to this callback as a handle indicates that the handle has been closed.
 //
-// A return value of ErrOk causes another callback on the same handle.
+// A return value of err == nil causes another callback on the same handle.
 // A return value of ErrNoWork causes the message draining to end.
-// A POSITIVE return value disconnects the handler WITHOUT a callback.
-// A NEGATIVE return value disconnects the handler WITH a final callback on an empty handle.
-type DispatcherCallback func(h fuchsia.Handle, callback interface{}, cookie int64) fuchsia.Status
+// A return value of ErrDisconnectNoCallback disconnects the handler WITHOUT a callback.
+// Any other error as a return value disconnects the handler WITH a final callback on an empty handle.
+type DispatcherCallback func(h fuchsia.Handle, callback interface{}, cookie int64) error
 
 type handler struct {
 	h        fuchsia.Handle
@@ -48,24 +48,27 @@ type Dispatcher struct {
 
 // Custom dispatcher errors
 const (
+	// If returned from dispatcher callback, indicates that the dispatcher should immediately
+	// disconnect with no additional callbacks.
+	ErrDisconnectNoCallback = fuchsia.Status(1)
 	// If returned from dispatcher callback, indicates that there are no more messages to read.
-	ErrNoWork = -9999
+	ErrNoWork = fuchsia.Status(-9999)
 	// If returned from dispatcher callback, indicates that the message was handed to another
 	// server.
-	ErrIndirect = -9998
+	ErrIndirect = fuchsia.Status(-9998)
 )
 
 // New creates a new dispatcher.
-func New(callback DispatcherCallback) (*Dispatcher, fuchsia.Status) {
-	ioport, status := mxio.IoPortCreate(0)
-	if status != fuchsia.ErrOk {
-		return nil, status
+func New(callback DispatcherCallback) (*Dispatcher, error) {
+	ioport, err := mxio.IoPortCreate(0)
+	if err != nil {
+		return nil, err
 	}
 	return &Dispatcher{
 		ioport:   ioport,
 		callback: callback,
 		handlers: make(map[uint64]*handler),
-	}, fuchsia.ErrOk
+	}, nil
 }
 
 // Closes a dispatcher, shutting down all handles added to the dispatcher and preventing additional
@@ -97,12 +100,12 @@ func (d *Dispatcher) closeHandler(hr *handler, handlerID uint64) {
 // drainAllMessages calls the dispatcher callback on each readable message on the specific handle.
 func (d *Dispatcher) drainAllMessages(hr *handler, handlerID uint64) (disconnected bool) {
 	for {
-		if r := d.callback(hr.h, hr.callback, hr.cookie); r != fuchsia.ErrOk {
-			if r == ErrNoWork {
+		if err := d.callback(hr.h, hr.callback, hr.cookie); err != nil {
+			if err == ErrNoWork {
 				// No more messages to read
 				return false
 			}
-			if r < 0 {
+			if err != ErrDisconnectNoCallback {
 				// Synthesize a close
 				d.callback(0, hr.callback, hr.cookie)
 			}
@@ -118,8 +121,8 @@ func (d *Dispatcher) drainAllMessages(hr *handler, handlerID uint64) (disconnect
 func (d *Dispatcher) Serve() {
 	for {
 		// Wait for any handler to be ready
-		packet, status := mxio.IoPortWait(d.ioport, mxio.PacketSize)
-		if status != fuchsia.ErrOk {
+		packet, err := mxio.IoPortWait(d.ioport, mxio.PacketSize)
+		if err != nil {
 			d.close()
 			return
 		}
@@ -152,7 +155,7 @@ func (d *Dispatcher) Serve() {
 
 // AddHandler adds a handle to the dispatcher, with an associated callback.  The callback will be
 // called by the dispatcher server, as soon as h becomes readable or closed.
-func (d *Dispatcher) AddHandler(h fuchsia.Handle, callback interface{}, cookie int64) fuchsia.Status {
+func (d *Dispatcher) AddHandler(h fuchsia.Handle, callback interface{}, cookie int64) error {
 	hr := &handler{
 		h:        h,
 		flags:    0,

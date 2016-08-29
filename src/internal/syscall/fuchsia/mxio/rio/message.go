@@ -68,15 +68,15 @@ type Msg struct {
 }
 
 // ReadMsg reads a message from a handle
-func (m *Msg) ReadMsg(h fuchsia.Handle) (numBytes, numHandles uint32, status fuchsia.Status) {
+func (m *Msg) ReadMsg(h fuchsia.Handle) (numBytes, numHandles uint32, err error) {
 	msgBytes := (*[MessageSizeMax]byte)(unsafe.Pointer(m))
-	numBytes, numHandles, status = fuchsia.MessageRead(h, msgBytes[:], m.Handle[:], 0)
+	numBytes, numHandles, err = fuchsia.MessageRead(h, msgBytes[:], m.Handle[:], 0)
 	m.Hcount = numHandles
 	return
 }
 
 // WriteMsg writes a message to a handle
-func (m *Msg) WriteMsg(h fuchsia.Handle) fuchsia.Status {
+func (m *Msg) WriteMsg(h fuchsia.Handle) error {
 	msgBytes := (*[MessageSizeMax]byte)(unsafe.Pointer(m))
 
 	data := msgBytes[:MessageHeaderSize+m.Datalen]

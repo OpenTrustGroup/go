@@ -74,30 +74,36 @@ const (
 )
 
 // IoPortCreate wraps the corresponding syscall
-func IoPortCreate(options uint32) (fuchsia.Handle, fuchsia.Status) {
+func IoPortCreate(options uint32) (fuchsia.Handle, error) {
 	handle := fuchsia.Sys_io_port_create(options)
 	if handle <= 0 {
 		return 0, fuchsia.Status(handle)
 	}
-	return handle, fuchsia.ErrOk
+	return handle, nil
 }
 
 // IoPortQueue wraps the corresponding syscall
-func IoPortQueue(handle fuchsia.Handle, packet *Packet, size uint) fuchsia.Status {
-	return fuchsia.Sys_io_port_queue(handle, unsafe.Pointer(packet), size)
+func IoPortQueue(handle fuchsia.Handle, packet *Packet, size uint) error {
+	if status := fuchsia.Sys_io_port_queue(handle, unsafe.Pointer(packet), size); status != fuchsia.ErrOk {
+		return status
+	}
+	return nil
 }
 
 // IoPortWait wraps the corresponding syscall
-func IoPortWait(handle fuchsia.Handle, size uint) (*Packet, fuchsia.Status) {
+func IoPortWait(handle fuchsia.Handle, size uint) (*Packet, error) {
 	var packet Packet
 	status := fuchsia.Sys_io_port_wait(handle, unsafe.Pointer(&packet), size)
 	if status != fuchsia.ErrOk {
 		return nil, status
 	}
-	return &packet, fuchsia.ErrOk
+	return &packet, nil
 }
 
 // IoPortBind wraps the corresponding syscall
-func IoPortBind(handle fuchsia.Handle, key uint64, source fuchsia.Handle, signals fuchsia.Signals) fuchsia.Status {
-	return fuchsia.Sys_io_port_bind(handle, key, source, signals)
+func IoPortBind(handle fuchsia.Handle, key uint64, source fuchsia.Handle, signals fuchsia.Signals) error {
+	if status := fuchsia.Sys_io_port_bind(handle, key, source, signals); status != fuchsia.ErrOk {
+		return status
+	}
+	return nil
 }

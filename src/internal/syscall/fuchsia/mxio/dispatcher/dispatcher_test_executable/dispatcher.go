@@ -31,7 +31,7 @@ func main() {
 
 	expectedCookie := int64(1234)
 
-	dispatcherCb := func(h fuchsia.Handle, cb interface{}, cookie int64) fuchsia.Status {
+	dispatcherCb := func(h fuchsia.Handle, cb interface{}, cookie int64) error {
 		if cookie != expectedCookie {
 			panic("Unexpected cookie")
 		}
@@ -47,36 +47,36 @@ func main() {
 			handlerCb(-1)
 		} else {
 			data := make([]byte, 8)
-			numBytes, numHandles, status := fuchsia.MessageRead(h, data, nil, 0)
-			if status < 0 {
-				if status == fuchsia.ErrBadState {
+			numBytes, numHandles, err := fuchsia.MessageRead(h, data, nil, 0)
+			if err != nil {
+				if err == fuchsia.ErrBadState {
 					// This error implies there are no messages currently in the pipe
 					return dispatcher.ErrNoWork
 				}
-				return status
+				return err
 			} else if numBytes != 8 || numHandles != 0 {
 				panic("Unexpected message read in dispatcher callback")
 			}
 			val := *(*int64)(unsafe.Pointer(&data[0]))
 			handlerCb(val)
 		}
-		return fuchsia.ErrOk
+		return nil
 	}
 
-	d, status := dispatcher.New(dispatcherCb)
-	if status < 0 {
-		panic("Could not create dispatcher")
+	d, err := dispatcher.New(dispatcherCb)
+	if err != nil {
+		panic(err)
 	}
 	go d.Serve()
-	handles, status := fuchsia.MessagePipeCreate(0)
-	if status < 0 {
-		panic("Could not create message pipe")
+	handles, err := fuchsia.MessagePipeCreate(0)
+	if err != nil {
+		panic(err)
 	} else if len(handles) != 2 {
 		panic("Unexpected number of handles")
 	}
 
-	if status = d.AddHandler(handles[0], sumCb, expectedCookie); status < 0 {
-		panic("Could not add handle to dispatcher")
+	if err := d.AddHandler(handles[0], sumCb, expectedCookie); err != nil {
+		panic(err)
 	}
 
 	if sum != 0 {
@@ -85,8 +85,8 @@ func main() {
 
 	writeMessageVerifySum := func(val, expectedSum int64) {
 		buf := (*[8]byte)(unsafe.Pointer(&val))[:]
-		if status = fuchsia.MessageWrite(handles[1], buf, nil, 0); status < 0 {
-			panic("Could not write value to handle")
+		if err := fuchsia.MessageWrite(handles[1], buf, nil, 0); err != nil {
+			panic(err)
 		}
 		seenSum := <-c
 		if sum != seenSum || seenSum != expectedSum {
@@ -98,8 +98,8 @@ func main() {
 	writeMessageVerifySum(6, 10)
 	writeMessageVerifySum(15, 25)
 
-	if status := fuchsia.HandleClose(handles[1]); status < 0 {
-		panic("Error closing handle to summation callback")
+	if err := fuchsia.HandleClose(handles[1]); err != nil {
+		panic(err)
 	}
 
 	// Closing the handle should decrease the sum by 1.

@@ -35,14 +35,14 @@ func New(handle []fuchsia.Handle) (*RemoteIO, error) {
 // txn completes the client-side part of the RIO transaction.
 // It creates a message pipe, writes msg (+ reply pipe), waits for a response, reads the
 // response back into msg, and signals an error if anything goes wrong along the way.
-func (r *RemoteIO) txn(msg *Msg) fuchsia.Status {
+func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 	msg.Magic = MessageMagic
 	if !msg.IsValid() {
-		return fuchsia.ErrInvalidArgs
+		return 0, fuchsia.ErrInvalidArgs
 	}
-	rpipe, status := fuchsia.MessagePipeCreate(mxio.FlagReplyPipe)
-	if status < 0 {
-		return status
+	rpipe, err := fuchsia.MessagePipeCreate(mxio.FlagReplyPipe)
+	if err != nil {
+		return 0, err
 	}
 
 	// Package the reply pipe into the message itself
@@ -53,18 +53,18 @@ func (r *RemoteIO) txn(msg *Msg) fuchsia.Status {
 	defer fuchsia.HandleClose(rh) // Our end of the reply pipe -- close it before returning
 
 	// Send the message (containing the reply pipe) over the RIO handle
-	if status = msg.WriteMsg(r.h); status < 0 {
+	if err := msg.WriteMsg(r.h); err != nil {
 		msg.DiscardHandles() // If we can't transmit these handles, drop them
-		return status
+		return 0, err
 	}
 
 	// Wait for a response on the reply pipe
-	signals, status := fuchsia.HandleWaitOne(rh, fuchsia.SignalReadable|fuchsia.SignalPeerClosed, fuchsia.TimensecInfinite)
-	if status < 0 {
-		return status
+	signals, err := fuchsia.HandleWaitOne(rh, fuchsia.SignalReadable|fuchsia.SignalPeerClosed, fuchsia.TimensecInfinite)
+	if err != nil {
+		return 0, err
 	} else if (signals.Satisfied&fuchsia.SignalPeerClosed != 0) &&
 		(signals.Satisfied&fuchsia.SignalReadable == 0) {
-		return fuchsia.ErrChannelClosed
+		return 0, fuchsia.ErrChannelClosed
 	}
 
 	// Set the Handle count to the maximum possible value. This is just a conservative mechanism; if
@@ -73,9 +73,9 @@ func (r *RemoteIO) txn(msg *Msg) fuchsia.Status {
 	msg.Hcount = MessageMaxHandles + 1
 
 	// Read the response which is ready on the handle
-	numBytes, _, status := msg.ReadMsg(rh)
-	if status < 0 {
-		return status
+	numBytes, _, err := msg.ReadMsg(rh)
+	if err != nil {
+		return 0, err
 	}
 	// The kernel ensures that the reply pipe endpoint is the last handle returned
 	msg.Hcount--
@@ -83,24 +83,25 @@ func (r *RemoteIO) txn(msg *Msg) fuchsia.Status {
 
 	if !msg.IsValidIncoming(numBytes) || msg.Op() != OpStatus {
 		msg.DiscardHandles() // If these handles were transmitted poorly, drop them
-		return fuchsia.ErrIO
+		return 0, fuchsia.ErrIO
 	}
 
 	// Check for remote error
-	if status = fuchsia.Status(msg.Arg); status >= 0 {
-		return status
+	status := fuchsia.Status(msg.Arg)
+	if status < 0 {
+		msg.DiscardHandles() // Throw away any remaining handles; no one else will see them
+		return 0, status
 	}
 
-	msg.DiscardHandles() // Throw away any remaining handles; no one else will see them
-	return status
+	return uint32(status), nil
 }
 
 func (r *RemoteIO) Read(out []byte) (int, error) {
 	var status fuchsia.Status
-	size := len(out)
+	size := uint32(len(out))
 	xferTotal := 0
 	for size > 0 {
-		xfer := MessageChunkSize // Read to out in chunks
+		xfer := uint32(MessageChunkSize) // Read to out in chunks
 		if size < xfer {
 			xfer = size
 		}
@@ -109,18 +110,18 @@ func (r *RemoteIO) Read(out []byte) (int, error) {
 		msg.SetOp(OpRead)
 		msg.Arg = int32(xfer)
 
-		if status = r.txn(&msg); status < 0 {
+		transferred, err := r.txn(&msg)
+		if err != nil {
 			break
 		}
-		transferred := int(status)
 		msg.DiscardHandles()
 
-		if transferred > int(msg.Datalen) || transferred > xfer {
+		if transferred > msg.Datalen || transferred > xfer {
 			status = fuchsia.ErrIO
 			break
 		}
-		copy(out[xferTotal:xferTotal+transferred], msg.Data[:transferred])
-		xferTotal += transferred
+		copy(out[xferTotal:uint32(xferTotal)+transferred], msg.Data[:transferred])
+		xferTotal += int(transferred)
 		size -= transferred
 	}
 
@@ -134,26 +135,26 @@ func (r *RemoteIO) Write(p []byte) (int, error) {
 	var status fuchsia.Status
 	xferTotal := 0
 	for len(p) > 0 {
-		xfer := MessageChunkSize // Write p in chunks
-		if len(p) < xfer {
-			xfer = len(p)
+		xfer := uint32(MessageChunkSize) // Write p in chunks
+		if uint32(len(p)) < xfer {
+			xfer = uint32(len(p))
 		}
 
 		var msg Msg
 		msg.SetOp(OpWrite)
-		msg.Datalen = uint32(xfer)
-		copy(msg.Data[:xfer], p[xferTotal:xferTotal+xfer])
+		msg.Datalen = xfer
+		copy(msg.Data[:xfer], p[xferTotal:uint32(xferTotal)+xfer])
 
-		if status = r.txn(&msg); status < 0 {
+		transferred, err := r.txn(&msg)
+		if err != nil {
 			break
 		}
-		transferred := int(status) // status actually means 'bytes transferred'
-		msg.DiscardHandles()       // We shouldn't be receiving handles
+		msg.DiscardHandles() // We shouldn't be receiving handles
 		if transferred > xfer {
 			status = fuchsia.ErrIO
 			break
 		}
-		xferTotal += transferred
+		xferTotal += int(transferred)
 		p = p[transferred:]
 		if transferred < xfer { // Short write
 			status = fuchsia.ErrIO
@@ -173,8 +174,8 @@ func (r *RemoteIO) Seek(offset int64, whence int) (int64, error) {
 	msg.SetOff(offset)
 	msg.Arg = int32(whence)
 
-	if status := r.txn(&msg); status < 0 {
-		return 0, status
+	if _, err := r.txn(&msg); err != nil {
+		return 0, err
 	}
 	msg.DiscardHandles()
 	return msg.Off(), nil
@@ -183,8 +184,9 @@ func (r *RemoteIO) Seek(offset int64, whence int) (int64, error) {
 func (r *RemoteIO) Close() error {
 	var msg Msg
 	msg.SetOp(OpClose)
-	var status fuchsia.Status
-	if status = r.txn(&msg); status >= 0 {
+
+	ret, err := r.txn(&msg)
+	if ret >= 0 {
 		msg.DiscardHandles()
 	}
 
@@ -197,8 +199,8 @@ func (r *RemoteIO) Close() error {
 		fuchsia.HandleClose(rioHandle)
 	}
 
-	if status < 0 {
-		return status
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -215,8 +217,8 @@ func (r *RemoteIO) getObject(op uint32, name string, flags int32, mode uint32) (
 	msg.SetMode(mode)
 	copy(msg.Data[:], name)
 
-	if status := r.txn(&msg); status < 0 {
-		return nil, mxio.ProtocolUndefined, status
+	if _, err := r.txn(&msg); err != nil {
+		return nil, mxio.ProtocolUndefined, err
 	}
 	return msg.Handle[:msg.Hcount], msg.Protocol(), nil
 }
@@ -260,9 +262,9 @@ func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []fuchsia.Handle, error)
 	msg.SetIoctlOp(op)
 	copy(msg.Data[:], in)
 
-	status := r.txn(&msg)
-	if status < 0 {
-		return nil, nil, status
+	_, err := r.txn(&msg)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	switch op {

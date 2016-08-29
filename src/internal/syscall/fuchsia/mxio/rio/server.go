@@ -19,7 +19,7 @@ type ServerHandler func(msg *Msg, rh fuchsia.Handle, cookie int64) fuchsia.Statu
 
 // Handler reads a single RIO message from the handle h. If the message is valid, the callback
 // cb is invoked. If the callback is successful, a response may be sent back on handle h.
-func Handler(h fuchsia.Handle, cb interface{}, cookie int64) fuchsia.Status {
+func Handler(h fuchsia.Handle, cb interface{}, cookie int64) error {
 	var msg Msg
 
 	serverCb := cb.(ServerHandler)
@@ -30,15 +30,15 @@ func Handler(h fuchsia.Handle, cb interface{}, cookie int64) fuchsia.Status {
 		msg.Datalen = 0
 		msg.Hcount = 0
 		serverCb(&msg, 0, cookie)
-		return fuchsia.ErrOk
+		return nil
 	}
 	msg.Hcount = MessageMaxHandles + 1
-	numBytes, _, status := msg.ReadMsg(h)
-	if status < 0 {
-		if status == fuchsia.ErrBadState {
+	numBytes, _, err := msg.ReadMsg(h)
+	if err != nil {
+		if err == fuchsia.ErrBadState {
 			return dispatcher.ErrNoWork
 		}
-		return status
+		return err
 	}
 	if !msg.IsValidIncoming(numBytes) {
 		msg.DiscardHandles()
@@ -59,11 +59,11 @@ func Handler(h fuchsia.Handle, cb interface{}, cookie int64) fuchsia.Status {
 	if rh != h {
 		handleToSend = rh
 	}
-	status = serverCb(&msg, handleToSend, cookie)
+	status := serverCb(&msg, handleToSend, cookie)
 	msg.Arg = int32(status)
-	if msg.Arg == dispatcher.ErrIndirect {
+	if fuchsia.Status(msg.Arg) == dispatcher.ErrIndirect {
 		// The callback is handling the reply itself, and it took ownership of the reply handle
-		return fuchsia.ErrOk
+		return nil
 	} else if status < 0 || !msg.IsValid() {
 		// fuchsia.Error case
 		msg.DiscardHandles()
@@ -83,20 +83,21 @@ func Handler(h fuchsia.Handle, cb interface{}, cookie int64) fuchsia.Status {
 		msg.Hcount++
 	}
 	msg.SetOp(OpStatus)
-	if status = msg.WriteMsg(rh); status < 0 {
+	err = msg.WriteMsg(rh)
+	if err != nil {
 		msg.DiscardHandles()
 	}
 	if isClose {
 		// Signals that a close callback is not necessary -- the op has already completed
-		return 1
+		return dispatcher.ErrDisconnectNoCallback
 	}
-	return status
+	return err
 }
 
 // TxnHandoff passes a message to srv along with a reply handle rh.
 // The other server will reply using rh, and this call will return immediately.
 // rh is not closed on error.
-func TxnHandoff(srv, rh fuchsia.Handle, msg *Msg) fuchsia.Status {
+func TxnHandoff(srv, rh fuchsia.Handle, msg *Msg) error {
 	msg.Magic = MessageMagic
 	msg.Handle[0] = rh
 	msg.Hcount = 1
@@ -105,9 +106,5 @@ func TxnHandoff(srv, rh fuchsia.Handle, msg *Msg) fuchsia.Status {
 	if !msg.IsValid() {
 		return fuchsia.ErrInvalidArgs
 	}
-
-	if r := msg.WriteMsg(srv); r < 0 {
-		return r
-	}
-	return 0
+	return msg.WriteMsg(srv)
 }
