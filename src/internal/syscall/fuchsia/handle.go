@@ -10,6 +10,9 @@ import (
 	"unsafe"
 )
 
+// RootHandle is set by the runtime on initialization.
+var RootHandle Handle
+
 func HandleClose(handle Handle) error {
 	if status := Sys_handle_close(handle); status != ErrOk {
 		return status

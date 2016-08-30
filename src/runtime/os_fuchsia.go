@@ -39,7 +39,17 @@ func osyield() {
 
 func osinit() {
 	ncpu = int32(fuchsia.Sys_num_cpus())
+
+	if _cgo_get_mxio_root != nil {
+		var handle int32
+		arg := [1]unsafe.Pointer{unsafe.Pointer(&handle)}
+		asmcgocall(_cgo_get_mxio_root, unsafe.Pointer(&arg))
+		fuchsia.RootHandle = fuchsia.Handle(handle)
+	}
 }
+
+// Filled in by runtime/cgo when linked into binary.
+var _cgo_get_mxio_root unsafe.Pointer // pointer to C function
 
 func minit() {
 	// TODO
