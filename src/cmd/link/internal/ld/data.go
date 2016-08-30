@@ -449,7 +449,7 @@ func relocsym(ctxt *Link, s *Symbol) {
 		case obj.R_TLS_LE:
 			isAndroidX86 := obj.GOOS == "android" && (SysArch.InFamily(sys.AMD64, sys.I386))
 
-			if Linkmode == LinkExternal && Iself && Headtype != obj.Hopenbsd && !isAndroidX86 && Headtype != obj.Hfuchsia {
+			if Linkmode == LinkExternal && Iself && Headtype != obj.Hopenbsd && !isAndroidX86 {
 				r.Done = 0
 				if r.Sym == nil {
 					r.Sym = ctxt.Tlsg
@@ -472,11 +472,9 @@ func relocsym(ctxt *Link, s *Symbol) {
 				// related to the fact that our own TLS storage happens
 				// to take up 8 bytes.
 				o = 8 + r.Sym.Value
-			} else if Headtype == obj.Hfuchsia && SysArch.InFamily(sys.AMD64) {
-				o = 0 + r.Add
 			} else if Iself || Headtype == obj.Hplan9 || Headtype == obj.Hdarwin || isAndroidX86 {
 				o = int64(ctxt.Tlsoffset) + r.Add
-			} else if Headtype == obj.Hwindows || Headtype == obj.Hwindowsgui {
+			} else if Headtype == obj.Hwindows {
 				o = r.Add
 			} else {
 				log.Fatalf("unexpected R_TLS_LE relocation for %v", Headtype)

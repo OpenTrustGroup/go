@@ -10,10 +10,6 @@ TEXT _rt0_amd64_fuchsia(SB),NOSPLIT,$-8
 	MOVQ	$main(SB), AX
 	JMP	AX
 
-TEXT _start(SB),NOSPLIT,$-8
-	MOVQ	$main(SB), AX
-	JMP	AX
-
 TEXT main(SB),NOSPLIT,$-8
 	MOVQ	$runtime·rt0_go(SB), AX
 	JMP	AX

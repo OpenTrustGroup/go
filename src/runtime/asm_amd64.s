@@ -124,16 +124,8 @@ needtls:
 	JMP ok
 #endif
 
-#ifdef GOOS_fuchsia
-	LEAQ	runtime·g0(SB), CX
-	MOVQ	CX, g(BX)
-	LEAQ	runtime·m0(SB), AX
-	LEAQ	runtime·m0+m_tls(SB), DI
-	CALL	runtime·settls(SB)
-#else
-        LEAQ    runtime·m0+m_tls(SB), DI
-        CALL    runtime·settls(SB)
-#endif
+	LEAQ    runtime·m0+m_tls(SB), DI
+	CALL    runtime·settls(SB)
 
 	// store through it, to make sure it works
 	get_tls(BX)

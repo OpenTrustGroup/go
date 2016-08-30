@@ -2172,9 +2172,11 @@ func prefixof(ctxt *obj.Link, p *obj.Prog, a *obj.Addr) int {
 					return 0x64 // FS
 				}
 
+			case obj.Hfuchsia:
+				log.Fatalf("unknown TLS base register, fuchsia requires PIC code")
+
 			case obj.Hdragonfly,
 				obj.Hfreebsd,
-				obj.Hfuchsia,
 				obj.Hnetbsd,
 				obj.Hopenbsd,
 				obj.Hsolaris:
@@ -4080,6 +4082,9 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 						r.Siz = 4
 						r.Add = -4
 						ctxt.AsmBuf.PutInt32(0)
+
+					case obj.Hfuchsia:
+						log.Fatalf("unknown TLS base register, fuchsia requires PIC code")
 
 					case obj.Hplan9:
 						if ctxt.Plan9privates == nil {

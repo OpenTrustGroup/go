@@ -68,6 +68,8 @@ func CanUse1InsnTLS(ctxt *obj.Link) bool {
 		return false
 	case obj.Hlinux:
 		return !ctxt.Flag_shared
+	case obj.Hfuchsia:
+		return false
 	}
 
 	return true

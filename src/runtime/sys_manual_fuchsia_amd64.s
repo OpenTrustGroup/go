@@ -24,48 +24,52 @@ TEXT time·now(SB),NOSPLIT,$8-12
 	RET
 
 TEXT runtime·threadinit(SB),NOSPLIT,$0
-	MOVQ	DI, CX
+	MOVQ	DI, R8
 
-	MOVQ	m_g0(CX), DX		// g
-	MOVQ	CX, g_m(DX)
+	MOVQ	m_g0(R8), DX		// g
+	MOVQ	R8, g_m(DX)
 
 	// Layout new m scheduler stack on os stack.
+	// TODO: which os stack? do we need to make a new vmo?
 	LEAQ	(-8*1024+104)(SP), BX
 	MOVQ	BX, g_stackguard0(DX)
 	MOVQ	BX, g_stackguard1(DX)
 	MOVQ	BX, (g_stack+stack_lo)(DX)
 	MOVQ	SP, (g_stack+stack_hi)(DX)
 
+	PUSHQ	R8
+
 	// Set up tls.
-	PUSHQ 	CX
-	LEAQ	m_tls(CX), DI
-	PUSHQ 	DI
-	CALL 	runtime·magenta_settls(SB)
-	POPQ 	DI
-	POPQ 	CX
+	LEAQ	m_tls(R8), DI
+	CALL 	runtime·settls(SB)
 
 	get_tls(CX)
 
-	LEAQ	m_tls(CX), DI
-	MOVQ	m_g0(CX), DX
-	MOVQ	DX, g(DI)
+	POPQ	R8
+	MOVQ	m_g0(R8), DX
+	MOVQ	DX, g(CX)
 
 	CLD				// convention is D is always left cleared
-
 	CALL	runtime·stackcheck(SB)	// clobbers AX,CX
 	CALL	runtime·mstart(SB)
 	// TODO CALL	internal/syscall/fuchsia·Sys_magenta_thread_exit(SB)
 	RET
 
 // set tls base to DI
+// Note that this code is only used when CGO_ENABLED=0.
+// Not using internal/syscall/fuchsia so we can avoid setting up a G.
+//
+// TODO: make VSDO call directly here, avoid the syscall.
 TEXT runtime·settls(SB),NOSPLIT,$8
-	// TODO If there is no cgo, create the mx_tls_root object.
-        //MOVD    _cgo_init(SB), R12
-        //CMP     $0, R12
-        //BEQ     nocgo
-
-	//SUBQ	$0x88, DI // random slot, known to linker
-	PUSHQ 	DI
-	CALL runtime·magenta_settls(SB)
-	POPQ 	DI
+	ADDQ   $8, DI	// ELF wants to use -8(FS)
+	PUSHQ  DI
+	LEAQ   0(SP), DX // prctl on magenta takes a pointer, not the value
+	MOVQ $0, DI
+	MOVQ $0, SI
+	MOVQ $0xff00ff00000035, AX // MAGENTA_SYSCALL_MAGIC | thread_arch_prctl (53)
+	SYSCALL
+	CMPQ	AX, $0xfffffffffffff001
+	JLS	2(PC)
+	MOVL	$0xf1, 0xf1  // crash
+	POPQ  DI
 	RET

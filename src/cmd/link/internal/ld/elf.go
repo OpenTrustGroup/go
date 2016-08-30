@@ -2303,6 +2303,9 @@ func Asmbelf(ctxt *Link, symo int64) {
 			case obj.Hfreebsd:
 				interpreter = Thearch.Freebsddynld
 
+			case obj.Hfuchsia:
+				interpreter = "lib/ld.so.1"
+
 			case obj.Hnetbsd:
 				interpreter = Thearch.Netbsddynld
 
@@ -2545,7 +2548,7 @@ func Asmbelf(ctxt *Link, symo int64) {
 		}
 	}
 
-	if Headtype == obj.Hlinux {
+	if Headtype == obj.Hlinux || Headtype == obj.Hfuchsia {
 		ph := newElfPhdr()
 		ph.type_ = PT_GNU_STACK
 		ph.flags = PF_W + PF_R
