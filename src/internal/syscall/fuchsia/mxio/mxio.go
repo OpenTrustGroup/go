@@ -16,7 +16,9 @@ import (
 // MXIO provides classic unix-style IO over various transports
 type MXIO interface {
 	Read(data []byte) (int, error)
+	ReadAt(data []byte, off int64) (int, error)
 	Write(data []byte) (int, error)
+	WriteAt(data []byte, off int64) (int, error)
 	Seek(offset int64, whence int) (int64, error)
 	Close() error
 	Open(path string, flags int32, mode uint32) (MXIO, error)

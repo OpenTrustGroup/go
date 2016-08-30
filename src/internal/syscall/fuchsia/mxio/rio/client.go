@@ -97,6 +97,14 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 }
 
 func (r *RemoteIO) Read(out []byte) (int, error) {
+	return r.read(OpRead, out, -1)
+}
+
+func (r *RemoteIO) ReadAt(out []byte, off int64) (int, error) {
+	return r.read(OpReadAt, out, off)
+}
+
+func (r *RemoteIO) read(op uint32, out []byte, off int64) (int, error) {
 	var status fuchsia.Status
 	size := uint32(len(out))
 	xferTotal := 0
@@ -107,8 +115,11 @@ func (r *RemoteIO) Read(out []byte) (int, error) {
 		}
 
 		var msg Msg
-		msg.SetOp(OpRead)
+		msg.SetOp(op)
 		msg.Arg = int32(xfer)
+		if op == OpReadAt {
+			msg.SetOff(off)
+		}
 
 		transferred, err := r.txn(&msg)
 		if err != nil {
@@ -123,6 +134,9 @@ func (r *RemoteIO) Read(out []byte) (int, error) {
 		copy(out[xferTotal:uint32(xferTotal)+transferred], msg.Data[:transferred])
 		xferTotal += int(transferred)
 		size -= transferred
+		if op == OpReadAt {
+			off += int64(transferred)
+		}
 	}
 
 	if xferTotal != len(out) {
@@ -132,6 +146,12 @@ func (r *RemoteIO) Read(out []byte) (int, error) {
 }
 
 func (r *RemoteIO) Write(p []byte) (int, error) {
+	return r.write(OpWrite, p, -1)
+}
+func (r *RemoteIO) WriteAt(p []byte, off int64) (int, error) {
+	return r.write(OpWriteAt, p, off)
+}
+func (r *RemoteIO) write(op uint32, p []byte, off int64) (int, error) {
 	var status fuchsia.Status
 	xferTotal := 0
 	for len(p) > 0 {
@@ -141,8 +161,11 @@ func (r *RemoteIO) Write(p []byte) (int, error) {
 		}
 
 		var msg Msg
-		msg.SetOp(OpWrite)
+		msg.SetOp(op)
 		msg.Datalen = xfer
+		if op == OpWriteAt {
+			msg.SetOff(off)
+		}
 		copy(msg.Data[:xfer], p[xferTotal:uint32(xferTotal)+xfer])
 
 		transferred, err := r.txn(&msg)
@@ -156,6 +179,9 @@ func (r *RemoteIO) Write(p []byte) (int, error) {
 		}
 		xferTotal += int(transferred)
 		p = p[transferred:]
+		if op == OpWriteAt {
+			off += int64(transferred)
+		}
 		if transferred < xfer { // Short write
 			status = fuchsia.ErrIO
 			break
