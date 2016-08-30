@@ -4060,7 +4060,7 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 					default:
 						log.Fatalf("unknown TLS base location for %v", ctxt.Headtype)
 
-					case obj.Hlinux:
+					case obj.Hlinux, obj.Hfuchsia:
 						if !ctxt.Flag_shared {
 							log.Fatalf("unknown TLS base location for linux without -shared")
 						}
@@ -4082,9 +4082,6 @@ func doasm(ctxt *obj.Link, p *obj.Prog) {
 						r.Siz = 4
 						r.Add = -4
 						ctxt.AsmBuf.PutInt32(0)
-
-					case obj.Hfuchsia:
-						log.Fatalf("unknown TLS base register, fuchsia requires PIC code")
 
 					case obj.Hplan9:
 						if ctxt.Plan9privates == nil {
