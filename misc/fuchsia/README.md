@@ -27,7 +27,7 @@ Then,
 
 * To build a program, junk.go in go/src, use:
   ```
-  GOOS=fuchsia CC=`pwd`/../misc/fuchsia/clangwrap.sh ../bin/go build junk.go
+  GOOS=fuchsia ../bin/go build junk.go
   ```
   This program can be put in a bootfs and run on qemu with:
   ```
@@ -35,3 +35,13 @@ Then,
   fuchsia/buildtools/mkbootfs -o junk.bootfs junk.manifest
   ./scripts/run-magenta-x86-64 -x path/to/fuchsia/third_party/go/src/junk.bootfs
   ```
+  A cgo variant can be build by adding CGO_ENABLED=1 to both
+  the make.bash command and the go build command.
+
+* To build a program using just the magenta prebuild toolchain
+  (useful for debugging if the fuchsia sysroot is out of sync
+  with your magenta) set the environment variable MAGENTA to
+  the location of your magenta and build with the gccwrap.sh
+  script:
+  ```
+  MAGENTA=$HOME/magenta CGO_ENABLED=1 CC_FOR_TARGET=$(pwd)/../misc/fuchsia/gccwrap.sh GOOS=fuchsia ./make.bash

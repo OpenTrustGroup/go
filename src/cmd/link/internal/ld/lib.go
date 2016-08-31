@@ -1113,7 +1113,10 @@ func (l *Link) hostlink() {
 	}
 
 	// Force global symbols to be exported for dlopen, etc.
-	if Iself {
+	if Headtype == obj.Hfuchsia && !strings.Contains(argv[0], "clang") {
+		// Find libgcc
+		argv = append(argv, l.findLibPathCmd("--print-libgcc-file-name", "libgcc"))
+	} else if Iself {
 		argv = append(argv, "-rdynamic")
 	}
 
@@ -1204,7 +1207,7 @@ func (l *Link) hostlink() {
 		argv = append(argv, "-Wl,--start-group", "-lmingwex", "-lmingw32", "-Wl,--end-group")
 		argv = append(argv, peimporteddlls()...)
 	}
-	if Headtype == obj.Hfuchsia {
+	if Headtype == obj.Hfuchsia && strings.Contains(argv[0], "clang") {
 		argv = append(argv, "-lruntime", "-lmagenta", "-lmxio")
 	}
 

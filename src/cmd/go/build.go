@@ -3133,6 +3133,7 @@ func (b *builder) ccompilerCmd(envvar, defcmd, objdir string) []string {
 		switch goos {
 		case "windows":
 			a = append(a, "-mthreads")
+		case "fuchsia":
 		default:
 			a = append(a, "-pthread")
 		}
