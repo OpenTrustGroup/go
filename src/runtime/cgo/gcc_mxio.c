@@ -9,7 +9,6 @@
 
 #include <stdlib.h>
 #include <magenta/processargs.h>
-#include <magenta/syscalls.h>
 #include <mxio/io.h>
 #include <mxio/util.h>
 
@@ -27,10 +26,7 @@ x_cgo_get_mxio_root(mx_handle_t *h)
 	mx_status_t r;
 	r = mxio_clone_root(h, &type);
 	if (r <= 0 || type != MX_HND_TYPE_MXIO_ROOT) {
-		static char debugmsg[] = "runtime/cgo: mxio_clone_root failed\n";
-		mx_debug_write(debugmsg, sizeof(debugmsg));
+		printf("runtime/cgo: mxio_clone_root failed: %d\n", r);
 		*h = 0;
 	}
-	// TODO: why is printf not working? probably why clone fails.
-	printf("fuchsia x_cgo_get_mxio_root\n");
 }

@@ -42,8 +42,7 @@ func osinit() {
 
 	if _cgo_get_mxio_root != nil {
 		var handle int32
-		arg := [1]unsafe.Pointer{unsafe.Pointer(&handle)}
-		asmcgocall(_cgo_get_mxio_root, unsafe.Pointer(&arg))
+		asmcgocall(_cgo_get_mxio_root, unsafe.Pointer(&handle))
 		fuchsia.RootHandle = fuchsia.Handle(handle)
 	}
 }
