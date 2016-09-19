@@ -6,7 +6,7 @@ if [ "$MAGENTA" == "" ]; then
 	exit 1
 fi
 
-gccbin="$MAGENTA/prebuilt/downloads/x86_64-elf-6.1.0-Linux-x86_64/bin/x86_64-elf-gcc"
+gccbin="$MAGENTA/prebuilt/downloads/x86_64-elf-6.2.0-Linux-x86_64/bin/x86_64-elf-gcc"
 magentabuild="$MAGENTA/build-magenta-pc-x86-64"
 
 compiler=false
