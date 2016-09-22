@@ -8,12 +8,13 @@
 #include "libcgo.h"
 
 #include <stdlib.h>
+#include <magenta/process.h>
 #include <magenta/processargs.h>
 #include <mxio/io.h>
 #include <mxio/util.h>
 
 void
-x_cgo_get_mxio_root(mx_handle_t *h)
+x_cgo_get_mxio_root(mx_handle_t *handles)
 {
 	// When running with cgo support, there are two MXIO libraries in the
 	// same process. We let the C MXIO start first, then clone its root
@@ -24,9 +25,11 @@ x_cgo_get_mxio_root(mx_handle_t *h)
 
 	uint32_t type;
 	mx_status_t r;
-	r = mxio_clone_root(h, &type);
+	r = mxio_clone_root(&handles[0], &type);
 	if (r <= 0 || type != MX_HND_TYPE_MXIO_ROOT) {
 		printf("runtime/cgo: mxio_clone_root failed: %d\n", r);
-		*h = 0;
+		handles[0] = 0;
 	}
+
+	handles[1] = mx_process_self();
 }

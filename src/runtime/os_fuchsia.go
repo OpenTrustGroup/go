@@ -37,13 +37,23 @@ func osyield() {
 	fuchsia.Sys_nanosleep(0)
 }
 
+var fuchsiaProcHandle fuchsia.Handle
+
 func osinit() {
 	ncpu = int32(fuchsia.Sys_num_cpus())
 
 	if _cgo_get_mxio_root != nil {
-		var handle int32
-		asmcgocall(_cgo_get_mxio_root, unsafe.Pointer(&handle))
-		fuchsia.RootHandle = fuchsia.Handle(handle)
+		var handles struct {
+			rootClone   int32
+			processSelf int32
+		}
+		asmcgocall(_cgo_get_mxio_root, unsafe.Pointer(&handles))
+		fuchsia.RootHandle = fuchsia.Handle(handles.rootClone)
+		fuchsiaProcHandle = fuchsia.Handle(handles.processSelf)
+	} else {
+		// TODO: implement cgo-less init
+		println("runtime: no fuchsia process handle without cgo yet")
+		exit(2)
 	}
 }
 
