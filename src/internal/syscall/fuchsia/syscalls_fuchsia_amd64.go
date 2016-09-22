@@ -37,12 +37,16 @@ type (
 		WaitResult   Status
 		Reserved     uint32
 		SignalsState SignalsState
-	} // mx_wait_set_result_t
+	} // mx_waitset_result_t
 )
 
 //go:noescape
 //go:nosplit
 func Sys_exit(retcode int)
+
+//go:noescape
+//go:nosplit
+func Sys_debug_read(_ Handle, buffer unsafe.Pointer, length uint32) int
 
 //go:noescape
 //go:nosplit
@@ -58,11 +62,35 @@ func Sys_current_time() Time
 
 //go:noescape
 //go:nosplit
+func Sys_debug_send_command(_ Handle, buffer unsafe.Pointer, length uint32) int
+
+//go:noescape
+//go:nosplit
 func Sys_num_cpus() uint
 
 //go:noescape
 //go:nosplit
-func Sys_debug_read_memory(koid uint64, vaddr uintptr, len uint, buffer unsafe.Pointer) int
+func Sys_debug_task_get_child(handle Handle, koid uint64) Handle
+
+//go:noescape
+//go:nosplit
+func Sys_debug_transfer_handle(proc Handle, handle Handle) Handle
+
+//go:noescape
+//go:nosplit
+func Sys_debug_read_memory(proc Handle, vaddr uintptr, len uint, buffer unsafe.Pointer) int
+
+//go:noescape
+//go:nosplit
+func Sys_debug_write_memory(proc Handle, vaddr uintptr, len uint, buffer unsafe.Pointer) int
+
+//go:noescape
+//go:nosplit
+func Sys_ktrace_read(handle Handle, ptr unsafe.Pointer, off uint32, len uint32) int
+
+//go:noescape
+//go:nosplit
+func Sys_ktrace_control(handle Handle, action uint32, options uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -94,10 +122,6 @@ func Sys_handle_wait_many(count uint32, handles *Handle, signals *Signals, timeo
 
 //go:noescape
 //go:nosplit
-func Sys_handle_get_info(handle Handle, topic uint32, info unsafe.Pointer, info_size uint) int
-
-//go:noescape
-//go:nosplit
 func Sys_handle_replace(handle Handle, rights Rights) Handle
 
 //go:noescape
@@ -106,11 +130,15 @@ func Sys_object_signal(handle Handle, clear_mask uint32, set_mask uint32) Status
 
 //go:noescape
 //go:nosplit
+func Sys_object_get_info(handle Handle, topic uint32, topic_size uint16, buffer unsafe.Pointer, buffer_size uint) int
+
+//go:noescape
+//go:nosplit
 func Sys_thread_create(process Handle, name *uint8, name_len uint32, flags uint32) Handle
 
 //go:noescape
 //go:nosplit
-func Sys_thread_start(handle Handle, thread_entry uintptr, stack uintptr, arg uintptr) Status
+func Sys_thread_start(handle Handle, thread_entry uintptr, stack uintptr, arg1 uintptr, arg2 uintptr) Status
 
 //go:noescape
 //go:nosplit
@@ -122,15 +150,23 @@ func Sys_thread_arch_prctl(handle Handle, op uint32, value_ptr *uintptr) Status
 
 //go:noescape
 //go:nosplit
-func Sys_message_pipe_create(out_handles *Handle, flags uint32) Status
+func Sys_msgpipe_create(out_handles *Handle, flags uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_message_read(handle Handle, bytes unsafe.Pointer, num_bytes *uint32, handles *Handle, num_handles *uint32, flags uint32) Status
+func Sys_msgpipe_read(handle Handle, bytes unsafe.Pointer, num_bytes *uint32, handles *Handle, num_handles *uint32, flags uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_message_write(handle Handle, bytes unsafe.Pointer, num_bytes uint32, handles *Handle, num_handles uint32, flags uint32) Status
+func Sys_msgpipe_write(handle Handle, bytes unsafe.Pointer, num_bytes uint32, handles *Handle, num_handles uint32, flags uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_interrupt_create(handle Handle, vector uint32, flags uint32) Handle
+
+//go:noescape
+//go:nosplit
+func Sys_interrupt_complete(handle Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -142,19 +178,31 @@ func Sys_process_start(process_handle Handle, thread_handle Handle, entry uintpt
 
 //go:noescape
 //go:nosplit
-func Sys_process_vm_map(proc_handle Handle, vmo_handle Handle, offset uint64, len uint, ptr *uintptr, flags uint32) Status
+func Sys_process_map_vm(proc_handle Handle, vmo_handle Handle, offset uint64, len uint, ptr *uintptr, flags uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_process_vm_unmap(proc_handle Handle, address uintptr, len uint) Status
+func Sys_process_unmap_vm(proc_handle Handle, address uintptr, len uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_process_vm_protect(proc_handle Handle, address uintptr, len uint, prot uint32) Status
+func Sys_process_protect_vm(proc_handle Handle, address uintptr, len uint, prot uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_task_resume(task_handle Handle, options uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_task_kill(task_handle Handle) Status
 
 //go:noescape
 //go:nosplit
 func Sys_event_create(options uint32) Handle
+
+//go:noescape
+//go:nosplit
+func Sys_eventpair_create(out_handles *Handle, flags uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -170,23 +218,39 @@ func Sys_futex_requeue(wake_ptr *int, wake_count uint32, current_value int, requ
 
 //go:noescape
 //go:nosplit
-func Sys_vm_object_create(size uint64) Handle
+func Sys_vmo_create(size uint64) Handle
 
 //go:noescape
 //go:nosplit
-func Sys_vm_object_read(handle Handle, data unsafe.Pointer, offset uint64, len uint) int
+func Sys_vmo_read(handle Handle, data unsafe.Pointer, offset uint64, len uint) int
 
 //go:noescape
 //go:nosplit
-func Sys_vm_object_write(handle Handle, data unsafe.Pointer, offset uint64, len uint) int
+func Sys_vmo_write(handle Handle, data unsafe.Pointer, offset uint64, len uint) int
 
 //go:noescape
 //go:nosplit
-func Sys_vm_object_get_size(handle Handle, size *uint64) Status
+func Sys_vmo_get_size(handle Handle, size *uint64) Status
 
 //go:noescape
 //go:nosplit
-func Sys_vm_object_set_size(handle Handle, size uint64) Status
+func Sys_vmo_set_size(handle Handle, size uint64) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmo_op_range(handle Handle, op uint32, offset uint64, size uint64, buffer unsafe.Pointer, buffer_size uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_mmap_device_io(handle Handle, io_addr uint32, len uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_mmap_device_memory(handle Handle, paddr Paddr, len uint32, cache_policy int, out_vaddr unsafe.Pointer) Status
+
+//go:noescape
+//go:nosplit
+func Sys_alloc_device_memory(handle Handle, len uint32, out_paddr *Paddr, out_vaddr unsafe.Pointer) Status
 
 //go:noescape
 //go:nosplit
@@ -198,79 +262,127 @@ func Sys_cprng_add_entropy(buffer unsafe.Pointer, len uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_set_system_exception_port(eport Handle, key uint64, options uint32) Status
+func Sys_bootloader_fb_get_info(format *uint32, width *uint32, height *uint32, stride *uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_set_exception_port(object Handle, eport Handle, key uint64, options uint32) Status
+func Sys_set_framebuffer(handle Handle, vaddr unsafe.Pointer, len uint32, format uint32, width uint32, height uint32, stride uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_mark_exception_handled(process Handle, tid Koid, status ExceptionStatus) Status
+func Sys_pci_get_nth_device(handle Handle, index uint32, out_info *int) Handle
 
 //go:noescape
 //go:nosplit
-func Sys_process_debug(handle Handle, pid Koid) Handle
+func Sys_pci_claim_device(handle Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_io_port_create(options uint32) Handle
+func Sys_pci_enable_bus_master(handle Handle, enable bool) Status
 
 //go:noescape
 //go:nosplit
-func Sys_io_port_queue(handle Handle, packet unsafe.Pointer, size uint) Status
+func Sys_pci_reset_device(handle Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_io_port_wait(handle Handle, packet unsafe.Pointer, size uint) Status
+func Sys_pci_map_mmio(handle Handle, bar_num uint32, cache_policy int) Handle
 
 //go:noescape
 //go:nosplit
-func Sys_io_port_bind(handle Handle, key uint64, source Handle, signals Signals) Status
+func Sys_pci_io_write(handle Handle, bar_num uint32, offset uint32, len uint32, value uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_data_pipe_create(options uint32, element_size uint, capacity uint, handle *Handle) Handle
+func Sys_pci_io_read(handle Handle, bar_num uint32, offset uint32, len uint32, out_value *uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_data_pipe_write(handle Handle, flags uint32, requested uint, buffer unsafe.Pointer) int
+func Sys_pci_map_interrupt(handle Handle, which_irq int32) Handle
 
 //go:noescape
 //go:nosplit
-func Sys_data_pipe_read(handle Handle, flags uint32, requested uint, buffer unsafe.Pointer) int
+func Sys_pci_map_config(handle Handle) Handle
 
 //go:noescape
 //go:nosplit
-func Sys_data_pipe_begin_write(handle Handle, flags uint32, requested uint, buffer *uintptr) int
+func Sys_pci_query_irq_mode_caps(handle Handle, mode int, out_max_irqs *uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_data_pipe_end_write(handle Handle, written uint) Status
+func Sys_pci_set_irq_mode(handle Handle, mode int, requested_irq_count uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_data_pipe_begin_read(handle Handle, flags uint32, requested uint, buffer *uintptr) int
+func Sys_pci_init(handle Handle, init_buf *int, len uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_data_pipe_end_read(handle Handle, read uint) Status
+func Sys_io_mapping_get_info(handle Handle, out_vaddr unsafe.Pointer, out_size *uint64) Status
 
 //go:noescape
 //go:nosplit
-func Sys_wait_set_create() Handle
+func Sys_object_bind_exception_port(object Handle, eport Handle, key uint64, options uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_wait_set_add(wait_set_handle Handle, handle Handle, signals Signals, cookie uint64) Status
+func Sys_port_create(options uint32) Handle
 
 //go:noescape
 //go:nosplit
-func Sys_wait_set_remove(wait_set_handle Handle, cookie uint64) Status
+func Sys_port_queue(handle Handle, packet unsafe.Pointer, size uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_wait_set_wait(wait_set_handle Handle, timeout Time, num_results *uint32, results *WaitSetResult, max_results *uint32) Status
+func Sys_port_wait(handle Handle, packet unsafe.Pointer, size uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_port_bind(handle Handle, key uint64, source Handle, signals Signals) Status
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_create(options uint32, element_size uint, capacity uint, handle *Handle) Handle
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_write(handle Handle, flags uint32, requested uint, buffer unsafe.Pointer) int
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_read(handle Handle, flags uint32, requested uint, buffer unsafe.Pointer) int
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_begin_write(handle Handle, flags uint32, buffer *uintptr) int
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_end_write(handle Handle, written uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_begin_read(handle Handle, flags uint32, buffer *uintptr) int
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_end_read(handle Handle, read uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_waitset_create() Handle
+
+//go:noescape
+//go:nosplit
+func Sys_waitset_add(waitset_handle Handle, handle Handle, signals Signals, cookie uint64) Status
+
+//go:noescape
+//go:nosplit
+func Sys_waitset_remove(waitset_handle Handle, cookie uint64) Status
+
+//go:noescape
+//go:nosplit
+func Sys_waitset_wait(waitset_handle Handle, timeout Time, num_results *uint32, results *WaitSetResult, max_results *uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -279,6 +391,14 @@ func Sys_object_get_property(handle Handle, property uint32, value unsafe.Pointe
 //go:noescape
 //go:nosplit
 func Sys_object_set_property(handle Handle, property uint32, value unsafe.Pointer, size uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_acpi_uefi_rsdp(handle Handle) uint32
+
+//go:noescape
+//go:nosplit
+func Sys_acpi_cache_flush(handle Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -291,4 +411,12 @@ func Sys_socket_write(handle Handle, flags uint32, size uint, buffer unsafe.Poin
 //go:noescape
 //go:nosplit
 func Sys_socket_read(handle Handle, flags uint32, size uint, buffer unsafe.Pointer) int
+
+//go:noescape
+//go:nosplit
+func Sys_thread_read_state(handle Handle, kind uint32, buffer unsafe.Pointer, buffer_len *uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_thread_write_state(handle Handle, kind uint32, buffer unsafe.Pointer, buffer_len uint32) Status
 

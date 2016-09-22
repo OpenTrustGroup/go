@@ -40,7 +40,7 @@ func main() {
 	}
 	_ = sdkArch
 
-	syscallsFile := filepath.Join(*fuchsiaRoot, "/magenta/system/ulib/magenta/include/magenta/syscalls.inc")
+	syscallsFile := filepath.Join(*fuchsiaRoot, "/magenta/system/public/magenta/syscalls.inc")
 	if args := flag.Args(); len(args) != 0 {
 		syscallsFile = args[0]
 	}
@@ -126,7 +126,7 @@ type (
 		WaitResult   Status
 		Reserved     uint32
 		SignalsState SignalsState
-	} // mx_wait_set_result_t
+	} // mx_waitset_result_t
 )
 
 `
@@ -168,10 +168,10 @@ var amd64RegArgs = []string{"DI", "SI", "DX", "R10", "R8", "R9", "R12", "R13"}
 
 // blockingSyscalls is a map of known syscalls which may block.
 var blockingSyscalls = map[string]bool{
-	"io_port_wait":     true,
+	"port_wait":        true,
 	"handle_wait_one":  true,
 	"handle_wait_many": true,
-	"wait_set_wait":    true,
+	"waitset_wait":     true,
 }
 
 const MAGENTA_SYSCALL_MAGIC = 0x00ff00ff00000000
@@ -183,12 +183,9 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 	// The summed size of all arguments
 	argSize := 0
 	for _, t := range call.argTypes {
-		if typeSize(t) != 4 && typeSize(t) != 8 {
-			panic("Parser can only handle 4-byte and 8-byte syscall arguments")
-		}
-		if typeSize(t) == 8 && argSize%8 == 4 {
-			// Ensure 8-byte arguments have 8-byte alignment
-			argSize += 4
+		for argSize%typeSize(t) != 0 {
+			// Add padding until the 'argSize' is aligned to the type we are adding
+			argSize++
 		}
 		argSize += typeSize(t)
 	}
@@ -209,9 +206,9 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 		if typeSize(t) == 4 {
 			suffix = "L"
 		}
-		if typeSize(t) == 8 && off%8 == 4 {
-			// Ensure 8-byte arguments have 8-byte alignment
-			off += 4
+		for off%typeSize(t) != 0 {
+			// Add padding until the offset is aligned to the type we are accessing
+			off++
 		}
 
 		reg := amd64RegArgs[i]
@@ -252,6 +249,8 @@ func typeSize(t magentaType) int {
 		return regSize
 	case mx_char:
 		return 1
+	case mx_int16_t, mx_uint16_t:
+		return 2
 	case mx_int32_t, mx_uint32_t:
 		return 4
 	case mx_uint64_t:
@@ -300,6 +299,10 @@ func printGoType(buf *bytes.Buffer, t magentaType) {
 		fmt.Fprint(buf, "int")
 	case mx_char:
 		fmt.Fprint(buf, "uint8")
+	case mx_int16_t:
+		fmt.Fprint(buf, "int16")
+	case mx_uint16_t:
+		fmt.Fprint(buf, "uint16")
 	case mx_int32_t:
 		fmt.Fprint(buf, "int32")
 	case mx_uint32_t:
@@ -320,7 +323,7 @@ func printGoType(buf *bytes.Buffer, t magentaType) {
 		fmt.Fprint(buf, "Signals")
 	case mx_signals_state_t:
 		fmt.Fprint(buf, "SignalsState")
-	case mx_wait_set_result_t:
+	case mx_waitset_result_t:
 		fmt.Fprint(buf, "WaitSetResult")
 	case mx_rights_t:
 		fmt.Fprint(buf, "Rights")
@@ -669,6 +672,8 @@ const (
 	mx_uint
 	mx_int
 	mx_char
+	mx_int16_t
+	mx_uint16_t
 	mx_int32_t
 	mx_uint32_t
 	mx_uint64_t
@@ -679,7 +684,7 @@ const (
 	mx_handle_t
 	mx_signals_t
 	mx_signals_state_t
-	mx_wait_set_result_t
+	mx_waitset_result_t
 	mx_rights_t
 	mx_vaddr_t
 	mx_paddr_t
@@ -698,6 +703,8 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"int":                      mx_int,
 	"char":                     mx_char,
 	"int32_t":                  mx_int32_t,
+	"int16_t":                  mx_int16_t,
+	"uint16_t":                 mx_uint16_t,
 	"uint32_t":                 mx_uint32_t,
 	"uint64_t":                 mx_uint64_t,
 	"uintptr_t":                mx_uintptr_t,
@@ -707,7 +714,7 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"mx_handle_t":              mx_handle_t, // int32_t
 	"mx_signals_t":             mx_signals_t,
 	"mx_signals_state_t":       mx_signals_state_t,
-	"mx_wait_set_result_t":     mx_wait_set_result_t,
+	"mx_waitset_result_t":      mx_waitset_result_t,
 	"mx_rights_t":              mx_rights_t,
 	"mx_vaddr_t":               mx_vaddr_t,
 	"mx_paddr_t":               mx_paddr_t,
@@ -717,4 +724,10 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"mx_exception_status_t":    mx_exception_status_t,
 	"mx_exception_behaviour_t": mx_exception_behaviour_t,
 	"mx_function_pointer":      mx_function_pointer,
+	// TODO(smklein): Remove the following temporary types. They could be blacklisted, but this is
+	// easier.
+	"mx_pcie_get_nth_info_t": mx_int,
+	"mx_cache_policy_t":      mx_int,
+	"mx_pci_irq_mode_t":      mx_int,
+	"mx_pci_init_arg_t":      mx_int,
 }

@@ -15,6 +15,16 @@ TEXT ·Sys_exit(SB),NOSPLIT,$0-8
 	SYSCALL
 	RET
 
+// func Sys_debug_read(_ Handle, buffer unsafe.Pointer, length uint32) int
+TEXT ·Sys_debug_read(SB),NOSPLIT,$0-32
+	MOVL _+0(FP), DI
+	MOVQ buffer+8(FP), SI
+	MOVL length+16(FP), DX
+	MOVQ $0xff00ff00000001, AX // 1
+	SYSCALL
+	MOVQ AX, ret+24(FP)
+	RET
+
 // func Sys_debug_write(buffer unsafe.Pointer, length uint32) int
 TEXT ·Sys_debug_write(SB),NOSPLIT,$0-24
 	MOVQ buffer+0(FP), DI
@@ -39,6 +49,16 @@ TEXT ·Sys_current_time(SB),NOSPLIT,$0-8
 	MOVQ AX, ret+0(FP)
 	RET
 
+// func Sys_debug_send_command(_ Handle, buffer unsafe.Pointer, length uint32) int
+TEXT ·Sys_debug_send_command(SB),NOSPLIT,$0-32
+	MOVL _+0(FP), DI
+	MOVQ buffer+8(FP), SI
+	MOVL length+16(FP), DX
+	MOVQ $0xff00ff00000005, AX // 5
+	SYSCALL
+	MOVQ AX, ret+24(FP)
+	RET
+
 // func Sys_num_cpus() uint
 TEXT ·Sys_num_cpus(SB),NOSPLIT,$0-8
 	MOVQ $0xff00ff00000006, AX // 6
@@ -46,15 +66,65 @@ TEXT ·Sys_num_cpus(SB),NOSPLIT,$0-8
 	MOVQ AX, ret+0(FP)
 	RET
 
-// func Sys_debug_read_memory(koid uint64, vaddr uintptr, len uint, buffer unsafe.Pointer) int
+// func Sys_debug_task_get_child(handle Handle, koid uint64) Handle
+TEXT ·Sys_debug_task_get_child(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVQ koid+8(FP), SI
+	MOVQ $0xff00ff00000007, AX // 7
+	SYSCALL
+	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_debug_transfer_handle(proc Handle, handle Handle) Handle
+TEXT ·Sys_debug_transfer_handle(SB),NOSPLIT,$0-12
+	MOVL proc+0(FP), DI
+	MOVL handle+4(FP), SI
+	MOVQ $0xff00ff00000008, AX // 8
+	SYSCALL
+	MOVL AX, ret+8(FP)
+	RET
+
+// func Sys_debug_read_memory(proc Handle, vaddr uintptr, len uint, buffer unsafe.Pointer) int
 TEXT ·Sys_debug_read_memory(SB),NOSPLIT,$0-40
-	MOVQ koid+0(FP), DI
+	MOVL proc+0(FP), DI
 	MOVQ vaddr+8(FP), SI
 	MOVQ len+16(FP), DX
 	MOVQ buffer+24(FP), R10
-	MOVQ $0xff00ff00000007, AX // 7
+	MOVQ $0xff00ff00000009, AX // 9
 	SYSCALL
 	MOVQ AX, ret+32(FP)
+	RET
+
+// func Sys_debug_write_memory(proc Handle, vaddr uintptr, len uint, buffer unsafe.Pointer) int
+TEXT ·Sys_debug_write_memory(SB),NOSPLIT,$0-40
+	MOVL proc+0(FP), DI
+	MOVQ vaddr+8(FP), SI
+	MOVQ len+16(FP), DX
+	MOVQ buffer+24(FP), R10
+	MOVQ $0xff00ff0000000a, AX // 10
+	SYSCALL
+	MOVQ AX, ret+32(FP)
+	RET
+
+// func Sys_ktrace_read(handle Handle, ptr unsafe.Pointer, off uint32, len uint32) int
+TEXT ·Sys_ktrace_read(SB),NOSPLIT,$0-32
+	MOVL handle+0(FP), DI
+	MOVQ ptr+8(FP), SI
+	MOVL off+16(FP), DX
+	MOVL len+20(FP), R10
+	MOVQ $0xff00ff0000000b, AX // 11
+	SYSCALL
+	MOVQ AX, ret+24(FP)
+	RET
+
+// func Sys_ktrace_control(handle Handle, action uint32, options uint32) Status
+TEXT ·Sys_ktrace_control(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVL action+4(FP), SI
+	MOVL options+8(FP), DX
+	MOVQ $0xff00ff0000000c, AX // 12
+	SYSCALL
+	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_log_create(flags uint32) Handle
@@ -132,22 +202,11 @@ TEXT ·Sys_handle_wait_many(SB),NOSPLIT,$0-52
 	CALL runtime·exitsyscall(SB)
 	RET
 
-// func Sys_handle_get_info(handle Handle, topic uint32, info unsafe.Pointer, info_size uint) int
-TEXT ·Sys_handle_get_info(SB),NOSPLIT,$0-32
-	MOVL handle+0(FP), DI
-	MOVL topic+4(FP), SI
-	MOVQ info+8(FP), DX
-	MOVQ info_size+16(FP), R10
-	MOVQ $0xff00ff0000002c, AX // 44
-	SYSCALL
-	MOVQ AX, ret+24(FP)
-	RET
-
 // func Sys_handle_replace(handle Handle, rights Rights) Handle
 TEXT ·Sys_handle_replace(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
 	MOVL rights+4(FP), SI
-	MOVQ $0xff00ff0000002d, AX // 45
+	MOVQ $0xff00ff0000002c, AX // 44
 	SYSCALL
 	MOVL AX, ret+8(FP)
 	RET
@@ -157,9 +216,21 @@ TEXT ·Sys_object_signal(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVL clear_mask+4(FP), SI
 	MOVL set_mask+8(FP), DX
-	MOVQ $0xff00ff0000002e, AX // 46
+	MOVQ $0xff00ff0000002d, AX // 45
 	SYSCALL
 	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_object_get_info(handle Handle, topic uint32, topic_size uint16, buffer unsafe.Pointer, buffer_size uint) int
+TEXT ·Sys_object_get_info(SB),NOSPLIT,$0-40
+	MOVL handle+0(FP), DI
+	MOVL topic+4(FP), SI
+	MOVQ topic_size+8(FP), DX
+	MOVQ buffer+16(FP), R10
+	MOVQ buffer_size+24(FP), R8
+	MOVQ $0xff00ff0000002e, AX // 46
+	SYSCALL
+	MOVQ AX, ret+32(FP)
 	RET
 
 // func Sys_thread_create(process Handle, name *uint8, name_len uint32, flags uint32) Handle
@@ -173,15 +244,16 @@ TEXT ·Sys_thread_create(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_thread_start(handle Handle, thread_entry uintptr, stack uintptr, arg uintptr) Status
-TEXT ·Sys_thread_start(SB),NOSPLIT,$0-36
+// func Sys_thread_start(handle Handle, thread_entry uintptr, stack uintptr, arg1 uintptr, arg2 uintptr) Status
+TEXT ·Sys_thread_start(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
 	MOVQ thread_entry+8(FP), SI
 	MOVQ stack+16(FP), DX
-	MOVQ arg+24(FP), R10
+	MOVQ arg1+24(FP), R10
+	MOVQ arg2+32(FP), R8
 	MOVQ $0xff00ff00000033, AX // 51
 	SYSCALL
-	MOVL AX, ret+32(FP)
+	MOVL AX, ret+40(FP)
 	RET
 
 // func Sys_thread_exit()
@@ -200,8 +272,8 @@ TEXT ·Sys_thread_arch_prctl(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_message_pipe_create(out_handles *Handle, flags uint32) Status
-TEXT ·Sys_message_pipe_create(SB),NOSPLIT,$0-20
+// func Sys_msgpipe_create(out_handles *Handle, flags uint32) Status
+TEXT ·Sys_msgpipe_create(SB),NOSPLIT,$0-20
 	MOVQ out_handles+0(FP), DI
 	MOVL flags+8(FP), SI
 	MOVQ $0xff00ff0000003c, AX // 60
@@ -209,8 +281,8 @@ TEXT ·Sys_message_pipe_create(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_message_read(handle Handle, bytes unsafe.Pointer, num_bytes *uint32, handles *Handle, num_handles *uint32, flags uint32) Status
-TEXT ·Sys_message_read(SB),NOSPLIT,$0-52
+// func Sys_msgpipe_read(handle Handle, bytes unsafe.Pointer, num_bytes *uint32, handles *Handle, num_handles *uint32, flags uint32) Status
+TEXT ·Sys_msgpipe_read(SB),NOSPLIT,$0-52
 	MOVL handle+0(FP), DI
 	MOVQ bytes+8(FP), SI
 	MOVQ num_bytes+16(FP), DX
@@ -222,8 +294,8 @@ TEXT ·Sys_message_read(SB),NOSPLIT,$0-52
 	MOVL AX, ret+48(FP)
 	RET
 
-// func Sys_message_write(handle Handle, bytes unsafe.Pointer, num_bytes uint32, handles *Handle, num_handles uint32, flags uint32) Status
-TEXT ·Sys_message_write(SB),NOSPLIT,$0-44
+// func Sys_msgpipe_write(handle Handle, bytes unsafe.Pointer, num_bytes uint32, handles *Handle, num_handles uint32, flags uint32) Status
+TEXT ·Sys_msgpipe_write(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
 	MOVQ bytes+8(FP), SI
 	MOVL num_bytes+16(FP), DX
@@ -233,6 +305,24 @@ TEXT ·Sys_message_write(SB),NOSPLIT,$0-44
 	MOVQ $0xff00ff0000003e, AX // 62
 	SYSCALL
 	MOVL AX, ret+40(FP)
+	RET
+
+// func Sys_interrupt_create(handle Handle, vector uint32, flags uint32) Handle
+TEXT ·Sys_interrupt_create(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVL vector+4(FP), SI
+	MOVL flags+8(FP), DX
+	MOVQ $0xff00ff00000046, AX // 70
+	SYSCALL
+	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_interrupt_complete(handle Handle) Status
+TEXT ·Sys_interrupt_complete(SB),NOSPLIT,$0-12
+	MOVL handle+0(FP), DI
+	MOVQ $0xff00ff00000047, AX // 71
+	SYSCALL
+	MOVL AX, ret+8(FP)
 	RET
 
 // func Sys_process_create(name *uint8, name_len uint32, flags uint32) Handle
@@ -258,8 +348,8 @@ TEXT ·Sys_process_start(SB),NOSPLIT,$0-44
 	MOVL AX, ret+40(FP)
 	RET
 
-// func Sys_process_vm_map(proc_handle Handle, vmo_handle Handle, offset uint64, len uint, ptr *uintptr, flags uint32) Status
-TEXT ·Sys_process_vm_map(SB),NOSPLIT,$0-44
+// func Sys_process_map_vm(proc_handle Handle, vmo_handle Handle, offset uint64, len uint, ptr *uintptr, flags uint32) Status
+TEXT ·Sys_process_map_vm(SB),NOSPLIT,$0-44
 	MOVL proc_handle+0(FP), DI
 	MOVL vmo_handle+4(FP), SI
 	MOVQ offset+8(FP), DX
@@ -271,8 +361,8 @@ TEXT ·Sys_process_vm_map(SB),NOSPLIT,$0-44
 	MOVL AX, ret+40(FP)
 	RET
 
-// func Sys_process_vm_unmap(proc_handle Handle, address uintptr, len uint) Status
-TEXT ·Sys_process_vm_unmap(SB),NOSPLIT,$0-28
+// func Sys_process_unmap_vm(proc_handle Handle, address uintptr, len uint) Status
+TEXT ·Sys_process_unmap_vm(SB),NOSPLIT,$0-28
 	MOVL proc_handle+0(FP), DI
 	MOVQ address+8(FP), SI
 	MOVQ len+16(FP), DX
@@ -281,8 +371,8 @@ TEXT ·Sys_process_vm_unmap(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_process_vm_protect(proc_handle Handle, address uintptr, len uint, prot uint32) Status
-TEXT ·Sys_process_vm_protect(SB),NOSPLIT,$0-36
+// func Sys_process_protect_vm(proc_handle Handle, address uintptr, len uint, prot uint32) Status
+TEXT ·Sys_process_protect_vm(SB),NOSPLIT,$0-36
 	MOVL proc_handle+0(FP), DI
 	MOVQ address+8(FP), SI
 	MOVQ len+16(FP), DX
@@ -292,12 +382,38 @@ TEXT ·Sys_process_vm_protect(SB),NOSPLIT,$0-36
 	MOVL AX, ret+32(FP)
 	RET
 
+// func Sys_task_resume(task_handle Handle, options uint32) Status
+TEXT ·Sys_task_resume(SB),NOSPLIT,$0-12
+	MOVL task_handle+0(FP), DI
+	MOVL options+4(FP), SI
+	MOVQ $0xff00ff00000056, AX // 86
+	SYSCALL
+	MOVL AX, ret+8(FP)
+	RET
+
+// func Sys_task_kill(task_handle Handle) Status
+TEXT ·Sys_task_kill(SB),NOSPLIT,$0-12
+	MOVL task_handle+0(FP), DI
+	MOVQ $0xff00ff00000057, AX // 87
+	SYSCALL
+	MOVL AX, ret+8(FP)
+	RET
+
 // func Sys_event_create(options uint32) Handle
 TEXT ·Sys_event_create(SB),NOSPLIT,$0-12
 	MOVL options+0(FP), DI
 	MOVQ $0xff00ff0000005a, AX // 90
 	SYSCALL
 	MOVL AX, ret+8(FP)
+	RET
+
+// func Sys_eventpair_create(out_handles *Handle, flags uint32) Status
+TEXT ·Sys_eventpair_create(SB),NOSPLIT,$0-20
+	MOVQ out_handles+0(FP), DI
+	MOVL flags+8(FP), SI
+	MOVQ $0xff00ff0000005b, AX // 91
+	SYSCALL
+	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_futex_wait(value_ptr *int, current_value int, timeout Time) Status
@@ -331,16 +447,16 @@ TEXT ·Sys_futex_requeue(SB),NOSPLIT,$0-44
 	MOVL AX, ret+40(FP)
 	RET
 
-// func Sys_vm_object_create(size uint64) Handle
-TEXT ·Sys_vm_object_create(SB),NOSPLIT,$0-12
+// func Sys_vmo_create(size uint64) Handle
+TEXT ·Sys_vmo_create(SB),NOSPLIT,$0-12
 	MOVQ size+0(FP), DI
 	MOVQ $0xff00ff00000064, AX // 100
 	SYSCALL
 	MOVL AX, ret+8(FP)
 	RET
 
-// func Sys_vm_object_read(handle Handle, data unsafe.Pointer, offset uint64, len uint) int
-TEXT ·Sys_vm_object_read(SB),NOSPLIT,$0-40
+// func Sys_vmo_read(handle Handle, data unsafe.Pointer, offset uint64, len uint) int
+TEXT ·Sys_vmo_read(SB),NOSPLIT,$0-40
 	MOVL handle+0(FP), DI
 	MOVQ data+8(FP), SI
 	MOVQ offset+16(FP), DX
@@ -350,8 +466,8 @@ TEXT ·Sys_vm_object_read(SB),NOSPLIT,$0-40
 	MOVQ AX, ret+32(FP)
 	RET
 
-// func Sys_vm_object_write(handle Handle, data unsafe.Pointer, offset uint64, len uint) int
-TEXT ·Sys_vm_object_write(SB),NOSPLIT,$0-40
+// func Sys_vmo_write(handle Handle, data unsafe.Pointer, offset uint64, len uint) int
+TEXT ·Sys_vmo_write(SB),NOSPLIT,$0-40
 	MOVL handle+0(FP), DI
 	MOVQ data+8(FP), SI
 	MOVQ offset+16(FP), DX
@@ -361,8 +477,8 @@ TEXT ·Sys_vm_object_write(SB),NOSPLIT,$0-40
 	MOVQ AX, ret+32(FP)
 	RET
 
-// func Sys_vm_object_get_size(handle Handle, size *uint64) Status
-TEXT ·Sys_vm_object_get_size(SB),NOSPLIT,$0-20
+// func Sys_vmo_get_size(handle Handle, size *uint64) Status
+TEXT ·Sys_vmo_get_size(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVQ size+8(FP), SI
 	MOVQ $0xff00ff00000067, AX // 103
@@ -370,13 +486,59 @@ TEXT ·Sys_vm_object_get_size(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_vm_object_set_size(handle Handle, size uint64) Status
-TEXT ·Sys_vm_object_set_size(SB),NOSPLIT,$0-20
+// func Sys_vmo_set_size(handle Handle, size uint64) Status
+TEXT ·Sys_vmo_set_size(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVQ size+8(FP), SI
 	MOVQ $0xff00ff00000068, AX // 104
 	SYSCALL
 	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_vmo_op_range(handle Handle, op uint32, offset uint64, size uint64, buffer unsafe.Pointer, buffer_size uint) Status
+TEXT ·Sys_vmo_op_range(SB),NOSPLIT,$0-44
+	MOVL handle+0(FP), DI
+	MOVL op+4(FP), SI
+	MOVQ offset+8(FP), DX
+	MOVQ size+16(FP), R10
+	MOVQ buffer+24(FP), R8
+	MOVQ buffer_size+32(FP), R9
+	MOVQ $0xff00ff00000069, AX // 105
+	SYSCALL
+	MOVL AX, ret+40(FP)
+	RET
+
+// func Sys_mmap_device_io(handle Handle, io_addr uint32, len uint32) Status
+TEXT ·Sys_mmap_device_io(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVL io_addr+4(FP), SI
+	MOVL len+8(FP), DX
+	MOVQ $0xff00ff0000006e, AX // 110
+	SYSCALL
+	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_mmap_device_memory(handle Handle, paddr Paddr, len uint32, cache_policy int, out_vaddr unsafe.Pointer) Status
+TEXT ·Sys_mmap_device_memory(SB),NOSPLIT,$0-44
+	MOVL handle+0(FP), DI
+	MOVQ paddr+8(FP), SI
+	MOVL len+16(FP), DX
+	MOVQ cache_policy+24(FP), R10
+	MOVQ out_vaddr+32(FP), R8
+	MOVQ $0xff00ff0000006f, AX // 111
+	SYSCALL
+	MOVL AX, ret+40(FP)
+	RET
+
+// func Sys_alloc_device_memory(handle Handle, len uint32, out_paddr *Paddr, out_vaddr unsafe.Pointer) Status
+TEXT ·Sys_alloc_device_memory(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVL len+4(FP), SI
+	MOVQ out_paddr+8(FP), DX
+	MOVQ out_vaddr+16(FP), R10
+	MOVQ $0xff00ff00000070, AX // 112
+	SYSCALL
+	MOVL AX, ret+24(FP)
 	RET
 
 // func Sys_cprng_draw(buffer unsafe.Pointer, len uint) int
@@ -397,18 +559,159 @@ TEXT ·Sys_cprng_add_entropy(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_set_system_exception_port(eport Handle, key uint64, options uint32) Status
-TEXT ·Sys_set_system_exception_port(SB),NOSPLIT,$0-28
-	MOVL eport+0(FP), DI
-	MOVQ key+8(FP), SI
-	MOVL options+16(FP), DX
-	MOVQ $0xff00ff000000d2, AX // 210
+// func Sys_bootloader_fb_get_info(format *uint32, width *uint32, height *uint32, stride *uint32) Status
+TEXT ·Sys_bootloader_fb_get_info(SB),NOSPLIT,$0-36
+	MOVQ format+0(FP), DI
+	MOVQ width+8(FP), SI
+	MOVQ height+16(FP), DX
+	MOVQ stride+24(FP), R10
+	MOVQ $0xff00ff000000aa, AX // 170
+	SYSCALL
+	MOVL AX, ret+32(FP)
+	RET
+
+// func Sys_set_framebuffer(handle Handle, vaddr unsafe.Pointer, len uint32, format uint32, width uint32, height uint32, stride uint32) Status
+TEXT ·Sys_set_framebuffer(SB),NOSPLIT,$0-44
+	MOVL handle+0(FP), DI
+	MOVQ vaddr+8(FP), SI
+	MOVL len+16(FP), DX
+	MOVL format+20(FP), R10
+	MOVL width+24(FP), R8
+	MOVL height+28(FP), R9
+	MOVL stride+32(FP), R12
+	MOVQ $0xff00ff000000ab, AX // 171
+	SYSCALL
+	MOVL AX, ret+40(FP)
+	RET
+
+// func Sys_pci_get_nth_device(handle Handle, index uint32, out_info *int) Handle
+TEXT ·Sys_pci_get_nth_device(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVL index+4(FP), SI
+	MOVQ out_info+8(FP), DX
+	MOVQ $0xff00ff000000b4, AX // 180
+	SYSCALL
+	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_pci_claim_device(handle Handle) Status
+TEXT ·Sys_pci_claim_device(SB),NOSPLIT,$0-12
+	MOVL handle+0(FP), DI
+	MOVQ $0xff00ff000000b5, AX // 181
+	SYSCALL
+	MOVL AX, ret+8(FP)
+	RET
+
+// func Sys_pci_enable_bus_master(handle Handle, enable bool) Status
+TEXT ·Sys_pci_enable_bus_master(SB),NOSPLIT,$0-9
+	MOVL handle+0(FP), DI
+	MOVQ enable+4(FP), SI
+	MOVQ $0xff00ff000000b6, AX // 182
+	SYSCALL
+	MOVL AX, ret+5(FP)
+	RET
+
+// func Sys_pci_reset_device(handle Handle) Status
+TEXT ·Sys_pci_reset_device(SB),NOSPLIT,$0-12
+	MOVL handle+0(FP), DI
+	MOVQ $0xff00ff000000b7, AX // 183
+	SYSCALL
+	MOVL AX, ret+8(FP)
+	RET
+
+// func Sys_pci_map_mmio(handle Handle, bar_num uint32, cache_policy int) Handle
+TEXT ·Sys_pci_map_mmio(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVL bar_num+4(FP), SI
+	MOVQ cache_policy+8(FP), DX
+	MOVQ $0xff00ff000000b8, AX // 184
+	SYSCALL
+	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_pci_io_write(handle Handle, bar_num uint32, offset uint32, len uint32, value uint32) Status
+TEXT ·Sys_pci_io_write(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVL bar_num+4(FP), SI
+	MOVL offset+8(FP), DX
+	MOVL len+12(FP), R10
+	MOVL value+16(FP), R8
+	MOVQ $0xff00ff000000b9, AX // 185
 	SYSCALL
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_set_exception_port(object Handle, eport Handle, key uint64, options uint32) Status
-TEXT ·Sys_set_exception_port(SB),NOSPLIT,$0-28
+// func Sys_pci_io_read(handle Handle, bar_num uint32, offset uint32, len uint32, out_value *uint32) Status
+TEXT ·Sys_pci_io_read(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVL bar_num+4(FP), SI
+	MOVL offset+8(FP), DX
+	MOVL len+12(FP), R10
+	MOVQ out_value+16(FP), R8
+	MOVQ $0xff00ff000000ba, AX // 186
+	SYSCALL
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_pci_map_interrupt(handle Handle, which_irq int32) Handle
+TEXT ·Sys_pci_map_interrupt(SB),NOSPLIT,$0-12
+	MOVL handle+0(FP), DI
+	MOVL which_irq+4(FP), SI
+	MOVQ $0xff00ff000000bb, AX // 187
+	SYSCALL
+	MOVL AX, ret+8(FP)
+	RET
+
+// func Sys_pci_map_config(handle Handle) Handle
+TEXT ·Sys_pci_map_config(SB),NOSPLIT,$0-12
+	MOVL handle+0(FP), DI
+	MOVQ $0xff00ff000000bc, AX // 188
+	SYSCALL
+	MOVL AX, ret+8(FP)
+	RET
+
+// func Sys_pci_query_irq_mode_caps(handle Handle, mode int, out_max_irqs *uint32) Status
+TEXT ·Sys_pci_query_irq_mode_caps(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVQ mode+8(FP), SI
+	MOVQ out_max_irqs+16(FP), DX
+	MOVQ $0xff00ff000000bd, AX // 189
+	SYSCALL
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_pci_set_irq_mode(handle Handle, mode int, requested_irq_count uint32) Status
+TEXT ·Sys_pci_set_irq_mode(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVQ mode+8(FP), SI
+	MOVL requested_irq_count+16(FP), DX
+	MOVQ $0xff00ff000000be, AX // 190
+	SYSCALL
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_pci_init(handle Handle, init_buf *int, len uint32) Status
+TEXT ·Sys_pci_init(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVQ init_buf+8(FP), SI
+	MOVL len+16(FP), DX
+	MOVQ $0xff00ff000000bf, AX // 191
+	SYSCALL
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_io_mapping_get_info(handle Handle, out_vaddr unsafe.Pointer, out_size *uint64) Status
+TEXT ·Sys_io_mapping_get_info(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVQ out_vaddr+8(FP), SI
+	MOVQ out_size+16(FP), DX
+	MOVQ $0xff00ff000000c8, AX // 200
+	SYSCALL
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_object_bind_exception_port(object Handle, eport Handle, key uint64, options uint32) Status
+TEXT ·Sys_object_bind_exception_port(SB),NOSPLIT,$0-28
 	MOVL object+0(FP), DI
 	MOVL eport+4(FP), SI
 	MOVQ key+8(FP), DX
@@ -418,35 +721,16 @@ TEXT ·Sys_set_exception_port(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_mark_exception_handled(process Handle, tid Koid, status ExceptionStatus) Status
-TEXT ·Sys_mark_exception_handled(SB),NOSPLIT,$0-28
-	MOVL process+0(FP), DI
-	MOVQ tid+8(FP), SI
-	MOVL status+16(FP), DX
-	MOVQ $0xff00ff000000d4, AX // 212
-	SYSCALL
-	MOVL AX, ret+24(FP)
-	RET
-
-// func Sys_process_debug(handle Handle, pid Koid) Handle
-TEXT ·Sys_process_debug(SB),NOSPLIT,$0-20
-	MOVL handle+0(FP), DI
-	MOVQ pid+8(FP), SI
-	MOVQ $0xff00ff000000d5, AX // 213
-	SYSCALL
-	MOVL AX, ret+16(FP)
-	RET
-
-// func Sys_io_port_create(options uint32) Handle
-TEXT ·Sys_io_port_create(SB),NOSPLIT,$0-12
+// func Sys_port_create(options uint32) Handle
+TEXT ·Sys_port_create(SB),NOSPLIT,$0-12
 	MOVL options+0(FP), DI
 	MOVQ $0xff00ff000000dc, AX // 220
 	SYSCALL
 	MOVL AX, ret+8(FP)
 	RET
 
-// func Sys_io_port_queue(handle Handle, packet unsafe.Pointer, size uint) Status
-TEXT ·Sys_io_port_queue(SB),NOSPLIT,$0-28
+// func Sys_port_queue(handle Handle, packet unsafe.Pointer, size uint) Status
+TEXT ·Sys_port_queue(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVQ packet+8(FP), SI
 	MOVQ size+16(FP), DX
@@ -455,8 +739,8 @@ TEXT ·Sys_io_port_queue(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_io_port_wait(handle Handle, packet unsafe.Pointer, size uint) Status
-TEXT ·Sys_io_port_wait(SB),NOSPLIT,$0-28
+// func Sys_port_wait(handle Handle, packet unsafe.Pointer, size uint) Status
+TEXT ·Sys_port_wait(SB),NOSPLIT,$0-28
 	CALL runtime·entersyscall(SB)
 	MOVL handle+0(FP), DI
 	MOVQ packet+8(FP), SI
@@ -467,8 +751,8 @@ TEXT ·Sys_io_port_wait(SB),NOSPLIT,$0-28
 	CALL runtime·exitsyscall(SB)
 	RET
 
-// func Sys_io_port_bind(handle Handle, key uint64, source Handle, signals Signals) Status
-TEXT ·Sys_io_port_bind(SB),NOSPLIT,$0-28
+// func Sys_port_bind(handle Handle, key uint64, source Handle, signals Signals) Status
+TEXT ·Sys_port_bind(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVQ key+8(FP), SI
 	MOVL source+16(FP), DX
@@ -478,8 +762,8 @@ TEXT ·Sys_io_port_bind(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_data_pipe_create(options uint32, element_size uint, capacity uint, handle *Handle) Handle
-TEXT ·Sys_data_pipe_create(SB),NOSPLIT,$0-36
+// func Sys_datapipe_create(options uint32, element_size uint, capacity uint, handle *Handle) Handle
+TEXT ·Sys_datapipe_create(SB),NOSPLIT,$0-36
 	MOVL options+0(FP), DI
 	MOVQ element_size+8(FP), SI
 	MOVQ capacity+16(FP), DX
@@ -489,8 +773,8 @@ TEXT ·Sys_data_pipe_create(SB),NOSPLIT,$0-36
 	MOVL AX, ret+32(FP)
 	RET
 
-// func Sys_data_pipe_write(handle Handle, flags uint32, requested uint, buffer unsafe.Pointer) int
-TEXT ·Sys_data_pipe_write(SB),NOSPLIT,$0-32
+// func Sys_datapipe_write(handle Handle, flags uint32, requested uint, buffer unsafe.Pointer) int
+TEXT ·Sys_datapipe_write(SB),NOSPLIT,$0-32
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
 	MOVQ requested+8(FP), DX
@@ -500,8 +784,8 @@ TEXT ·Sys_data_pipe_write(SB),NOSPLIT,$0-32
 	MOVQ AX, ret+24(FP)
 	RET
 
-// func Sys_data_pipe_read(handle Handle, flags uint32, requested uint, buffer unsafe.Pointer) int
-TEXT ·Sys_data_pipe_read(SB),NOSPLIT,$0-32
+// func Sys_datapipe_read(handle Handle, flags uint32, requested uint, buffer unsafe.Pointer) int
+TEXT ·Sys_datapipe_read(SB),NOSPLIT,$0-32
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
 	MOVQ requested+8(FP), DX
@@ -511,19 +795,18 @@ TEXT ·Sys_data_pipe_read(SB),NOSPLIT,$0-32
 	MOVQ AX, ret+24(FP)
 	RET
 
-// func Sys_data_pipe_begin_write(handle Handle, flags uint32, requested uint, buffer *uintptr) int
-TEXT ·Sys_data_pipe_begin_write(SB),NOSPLIT,$0-32
+// func Sys_datapipe_begin_write(handle Handle, flags uint32, buffer *uintptr) int
+TEXT ·Sys_datapipe_begin_write(SB),NOSPLIT,$0-24
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
-	MOVQ requested+8(FP), DX
-	MOVQ buffer+16(FP), R10
+	MOVQ buffer+8(FP), DX
 	MOVQ $0xff00ff000000e9, AX // 233
 	SYSCALL
-	MOVQ AX, ret+24(FP)
+	MOVQ AX, ret+16(FP)
 	RET
 
-// func Sys_data_pipe_end_write(handle Handle, written uint) Status
-TEXT ·Sys_data_pipe_end_write(SB),NOSPLIT,$0-20
+// func Sys_datapipe_end_write(handle Handle, written uint) Status
+TEXT ·Sys_datapipe_end_write(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVQ written+8(FP), SI
 	MOVQ $0xff00ff000000ea, AX // 234
@@ -531,19 +814,18 @@ TEXT ·Sys_data_pipe_end_write(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_data_pipe_begin_read(handle Handle, flags uint32, requested uint, buffer *uintptr) int
-TEXT ·Sys_data_pipe_begin_read(SB),NOSPLIT,$0-32
+// func Sys_datapipe_begin_read(handle Handle, flags uint32, buffer *uintptr) int
+TEXT ·Sys_datapipe_begin_read(SB),NOSPLIT,$0-24
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
-	MOVQ requested+8(FP), DX
-	MOVQ buffer+16(FP), R10
+	MOVQ buffer+8(FP), DX
 	MOVQ $0xff00ff000000eb, AX // 235
 	SYSCALL
-	MOVQ AX, ret+24(FP)
+	MOVQ AX, ret+16(FP)
 	RET
 
-// func Sys_data_pipe_end_read(handle Handle, read uint) Status
-TEXT ·Sys_data_pipe_end_read(SB),NOSPLIT,$0-20
+// func Sys_datapipe_end_read(handle Handle, read uint) Status
+TEXT ·Sys_datapipe_end_read(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVQ read+8(FP), SI
 	MOVQ $0xff00ff000000ec, AX // 236
@@ -551,16 +833,16 @@ TEXT ·Sys_data_pipe_end_read(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_wait_set_create() Handle
-TEXT ·Sys_wait_set_create(SB),NOSPLIT,$0-4
+// func Sys_waitset_create() Handle
+TEXT ·Sys_waitset_create(SB),NOSPLIT,$0-4
 	MOVQ $0xff00ff000000f0, AX // 240
 	SYSCALL
 	MOVL AX, ret+0(FP)
 	RET
 
-// func Sys_wait_set_add(wait_set_handle Handle, handle Handle, signals Signals, cookie uint64) Status
-TEXT ·Sys_wait_set_add(SB),NOSPLIT,$0-28
-	MOVL wait_set_handle+0(FP), DI
+// func Sys_waitset_add(waitset_handle Handle, handle Handle, signals Signals, cookie uint64) Status
+TEXT ·Sys_waitset_add(SB),NOSPLIT,$0-28
+	MOVL waitset_handle+0(FP), DI
 	MOVL handle+4(FP), SI
 	MOVL signals+8(FP), DX
 	MOVQ cookie+16(FP), R10
@@ -569,19 +851,19 @@ TEXT ·Sys_wait_set_add(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_wait_set_remove(wait_set_handle Handle, cookie uint64) Status
-TEXT ·Sys_wait_set_remove(SB),NOSPLIT,$0-20
-	MOVL wait_set_handle+0(FP), DI
+// func Sys_waitset_remove(waitset_handle Handle, cookie uint64) Status
+TEXT ·Sys_waitset_remove(SB),NOSPLIT,$0-20
+	MOVL waitset_handle+0(FP), DI
 	MOVQ cookie+8(FP), SI
 	MOVQ $0xff00ff000000f2, AX // 242
 	SYSCALL
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_wait_set_wait(wait_set_handle Handle, timeout Time, num_results *uint32, results *WaitSetResult, max_results *uint32) Status
-TEXT ·Sys_wait_set_wait(SB),NOSPLIT,$0-44
+// func Sys_waitset_wait(waitset_handle Handle, timeout Time, num_results *uint32, results *WaitSetResult, max_results *uint32) Status
+TEXT ·Sys_waitset_wait(SB),NOSPLIT,$0-44
 	CALL runtime·entersyscall(SB)
-	MOVL wait_set_handle+0(FP), DI
+	MOVL waitset_handle+0(FP), DI
 	MOVQ timeout+8(FP), SI
 	MOVQ num_results+16(FP), DX
 	MOVQ results+24(FP), R10
@@ -614,6 +896,22 @@ TEXT ·Sys_object_set_property(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
+// func Sys_acpi_uefi_rsdp(handle Handle) uint32
+TEXT ·Sys_acpi_uefi_rsdp(SB),NOSPLIT,$0-12
+	MOVL handle+0(FP), DI
+	MOVQ $0xff00ff00000104, AX // 260
+	SYSCALL
+	MOVL AX, ret+8(FP)
+	RET
+
+// func Sys_acpi_cache_flush(handle Handle) Status
+TEXT ·Sys_acpi_cache_flush(SB),NOSPLIT,$0-12
+	MOVL handle+0(FP), DI
+	MOVQ $0xff00ff00000105, AX // 261
+	SYSCALL
+	MOVL AX, ret+8(FP)
+	RET
+
 // func Sys_socket_create(out_handles *Handle, flags uint32) Status
 TEXT ·Sys_socket_create(SB),NOSPLIT,$0-20
 	MOVQ out_handles+0(FP), DI
@@ -643,5 +941,27 @@ TEXT ·Sys_socket_read(SB),NOSPLIT,$0-32
 	MOVQ $0xff00ff0000011a, AX // 282
 	SYSCALL
 	MOVQ AX, ret+24(FP)
+	RET
+
+// func Sys_thread_read_state(handle Handle, kind uint32, buffer unsafe.Pointer, buffer_len *uint32) Status
+TEXT ·Sys_thread_read_state(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVL kind+4(FP), SI
+	MOVQ buffer+8(FP), DX
+	MOVQ buffer_len+16(FP), R10
+	MOVQ $0xff00ff00000122, AX // 290
+	SYSCALL
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_thread_write_state(handle Handle, kind uint32, buffer unsafe.Pointer, buffer_len uint32) Status
+TEXT ·Sys_thread_write_state(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVL kind+4(FP), SI
+	MOVQ buffer+8(FP), DX
+	MOVL buffer_len+16(FP), R10
+	MOVQ $0xff00ff00000123, AX // 291
+	SYSCALL
+	MOVL AX, ret+24(FP)
 	RET
 
