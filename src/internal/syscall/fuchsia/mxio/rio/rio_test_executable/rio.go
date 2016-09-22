@@ -28,7 +28,7 @@ func CreateRIOServer() *dispatcher.Dispatcher {
 
 // Create a pair of handles, and add one end to the RIO server, along with a RIO Server callback.
 func CreateRIOClient(d *dispatcher.Dispatcher, cb rio.ServerHandler, cookie int64) *rio.RemoteIO {
-	handles, err := fuchsia.MessagePipeCreate(0)
+	handles, err := fuchsia.MsgPipeCreate(0)
 	if err != nil {
 		panic(err)
 	}
@@ -86,7 +86,7 @@ var testData = []struct {
 
 func checkOpen(client *rio.RemoteIO, opIndex int) {
 	// Create the expected return handle here, since dummy values would be rejected.
-	testHandles, err := fuchsia.MessagePipeCreate(0)
+	testHandles, err := fuchsia.MsgPipeCreate(0)
 	if err != nil {
 		panic(err)
 	}
@@ -99,7 +99,7 @@ func checkOpen(client *rio.RemoteIO, opIndex int) {
 
 func checkClone(client *rio.RemoteIO, opIndex int) {
 	// Create the expected return handle here, since dummy values would be rejected.
-	testHandles, err := fuchsia.MessagePipeCreate(0)
+	testHandles, err := fuchsia.MsgPipeCreate(0)
 	if err != nil {
 		panic(err)
 	}
@@ -147,7 +147,7 @@ func checkSeek(client *rio.RemoteIO, opIndex int) {
 func checkIoctl(client *rio.RemoteIO, opIndex int) {
 	if testData[opIndex].inArg2 == mxio.IoctlDeviceGetHandle {
 		// Create the expected return handle here, since dummy values would be rejected.
-		testHandles, err := fuchsia.MessagePipeCreate(0)
+		testHandles, err := fuchsia.MsgPipeCreate(0)
 		if err != nil {
 			panic(err)
 		}

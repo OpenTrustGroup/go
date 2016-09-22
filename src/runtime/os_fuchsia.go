@@ -115,7 +115,7 @@ func newosproc(mp *m, stk unsafe.Pointer) {
 		exit(2)
 	}
 
-	status := fuchsia.Sys_thread_start(h, funcPC(threadinit), uintptr(stk), uintptr(unsafe.Pointer(mp)))
+	status := fuchsia.Sys_thread_start(h, funcPC(threadinit), uintptr(stk), uintptr(unsafe.Pointer(mp)), 0)
 	if status < 0 {
 		println("runtime: newosproc fuchsia.Sys_thread_start failed:", h)
 		exit(2)

@@ -40,7 +40,7 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 	if !msg.IsValid() {
 		return 0, fuchsia.ErrInvalidArgs
 	}
-	rpipe, err := fuchsia.MessagePipeCreate(mxio.FlagReplyPipe)
+	rpipe, err := fuchsia.MsgPipeCreate(mxio.FlagReplyPipe)
 	if err != nil {
 		return 0, err
 	}

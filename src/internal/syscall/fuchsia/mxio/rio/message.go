@@ -72,7 +72,7 @@ type Msg struct {
 // ReadMsg reads a message from a handle
 func (m *Msg) ReadMsg(h fuchsia.Handle) (numBytes, numHandles uint32, err error) {
 	msgBytes := (*[MessageSizeMax]byte)(unsafe.Pointer(m))
-	numBytes, numHandles, err = fuchsia.MessageRead(h, msgBytes[:], m.Handle[:], 0)
+	numBytes, numHandles, err = fuchsia.MsgPipeRead(h, msgBytes[:], m.Handle[:], 0)
 	m.Hcount = numHandles
 	return
 }
@@ -86,7 +86,7 @@ func (m *Msg) WriteMsg(h fuchsia.Handle) error {
 	if m.Hcount > 0 {
 		handles = m.Handle[:m.Hcount]
 	}
-	return fuchsia.MessageWrite(h, data, handles, 0)
+	return fuchsia.MsgPipeWrite(h, data, handles, 0)
 }
 
 // HasReplyPipe returns if the message contains a reply pipe

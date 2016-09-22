@@ -50,16 +50,16 @@ func HandleWaitMany(handles []Handle, signals []Signals, timeout Time) (uint32, 
 	return resultIndex, resultSignals, nil
 }
 
-func MessagePipeCreate(flags uint32) ([]Handle, error) {
+func MsgPipeCreate(flags uint32) ([]Handle, error) {
 	handles := make([]Handle, 2)
-	status := Sys_message_pipe_create(&handles[0], flags)
+	status := Sys_msgpipe_create(&handles[0], flags)
 	if status != ErrOk {
 		return nil, status
 	}
 	return handles, nil
 }
 
-func MessageRead(handle Handle, data []byte, handles []Handle, flags uint32) (numBytes, numHandles uint32, err error) {
+func MsgPipeRead(handle Handle, data []byte, handles []Handle, flags uint32) (numBytes, numHandles uint32, err error) {
 	numBytes = uint32(len(data))
 	numHandles = uint32(len(handles))
 	var dataPtr unsafe.Pointer
@@ -70,13 +70,13 @@ func MessageRead(handle Handle, data []byte, handles []Handle, flags uint32) (nu
 	if len(handles) > 0 {
 		handlePtr = &handles[0]
 	}
-	if status := Sys_message_read(handle, dataPtr, &numBytes, handlePtr, &numHandles, flags); status != ErrOk {
+	if status := Sys_msgpipe_read(handle, dataPtr, &numBytes, handlePtr, &numHandles, flags); status != ErrOk {
 		err = status
 	}
 	return
 }
 
-func MessageWrite(handle Handle, data []byte, handles []Handle, flags uint32) error {
+func MsgPipeWrite(handle Handle, data []byte, handles []Handle, flags uint32) error {
 	var dataPtr unsafe.Pointer
 	if len(data) > 0 {
 		dataPtr = unsafe.Pointer(&data[0])
@@ -85,7 +85,7 @@ func MessageWrite(handle Handle, data []byte, handles []Handle, flags uint32) er
 	if len(handles) > 0 {
 		handlePtr = &handles[0]
 	}
-	status := Sys_message_write(handle, dataPtr, uint32(len(data)), handlePtr, uint32(len(handles)), flags)
+	status := Sys_msgpipe_write(handle, dataPtr, uint32(len(data)), handlePtr, uint32(len(handles)), flags)
 	if status != ErrOk {
 		return status
 	}

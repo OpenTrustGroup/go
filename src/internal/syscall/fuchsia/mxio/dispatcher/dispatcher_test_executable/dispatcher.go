@@ -47,7 +47,7 @@ func main() {
 			handlerCb(-1)
 		} else {
 			data := make([]byte, 8)
-			numBytes, numHandles, err := fuchsia.MessageRead(h, data, nil, 0)
+			numBytes, numHandles, err := fuchsia.MsgPipeRead(h, data, nil, 0)
 			if err != nil {
 				if err == fuchsia.ErrBadState {
 					// This error implies there are no messages currently in the pipe
@@ -68,7 +68,7 @@ func main() {
 		panic(err)
 	}
 	go d.Serve()
-	handles, err := fuchsia.MessagePipeCreate(0)
+	handles, err := fuchsia.MsgPipeCreate(0)
 	if err != nil {
 		panic(err)
 	} else if len(handles) != 2 {
@@ -85,7 +85,7 @@ func main() {
 
 	writeMessageVerifySum := func(val, expectedSum int64) {
 		buf := (*[8]byte)(unsafe.Pointer(&val))[:]
-		if err := fuchsia.MessageWrite(handles[1], buf, nil, 0); err != nil {
+		if err := fuchsia.MsgPipeWrite(handles[1], buf, nil, 0); err != nil {
 			panic(err)
 		}
 		seenSum := <-c

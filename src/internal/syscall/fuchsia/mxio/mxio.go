@@ -69,7 +69,7 @@ const (
 
 // Other MXIO related constants
 const (
-	// A flag to MessagePipeCreate, identifying that MessageWrite MUST include itself as the last
+	// A flag to MsgPipeCreate, identifying that MsgPipeWrite MUST include itself as the last
 	// handle being transferred. Handles[1] will be created as a reply pipe, but Handles[0] will be
 	// a regular pipe.
 	FlagReplyPipe = 1 << 0
@@ -77,7 +77,7 @@ const (
 
 // IoPortCreate wraps the corresponding syscall
 func IoPortCreate(options uint32) (fuchsia.Handle, error) {
-	handle := fuchsia.Sys_io_port_create(options)
+	handle := fuchsia.Sys_port_create(options)
 	if handle <= 0 {
 		return 0, fuchsia.Status(handle)
 	}
@@ -86,7 +86,7 @@ func IoPortCreate(options uint32) (fuchsia.Handle, error) {
 
 // IoPortQueue wraps the corresponding syscall
 func IoPortQueue(handle fuchsia.Handle, packet *Packet, size uint) error {
-	if status := fuchsia.Sys_io_port_queue(handle, unsafe.Pointer(packet), size); status != fuchsia.ErrOk {
+	if status := fuchsia.Sys_port_queue(handle, unsafe.Pointer(packet), size); status != fuchsia.ErrOk {
 		return status
 	}
 	return nil
@@ -95,7 +95,7 @@ func IoPortQueue(handle fuchsia.Handle, packet *Packet, size uint) error {
 // IoPortWait wraps the corresponding syscall
 func IoPortWait(handle fuchsia.Handle, size uint) (*Packet, error) {
 	var packet Packet
-	status := fuchsia.Sys_io_port_wait(handle, unsafe.Pointer(&packet), size)
+	status := fuchsia.Sys_port_wait(handle, unsafe.Pointer(&packet), size)
 	if status != fuchsia.ErrOk {
 		return nil, status
 	}
@@ -104,7 +104,7 @@ func IoPortWait(handle fuchsia.Handle, size uint) (*Packet, error) {
 
 // IoPortBind wraps the corresponding syscall
 func IoPortBind(handle fuchsia.Handle, key uint64, source fuchsia.Handle, signals fuchsia.Signals) error {
-	if status := fuchsia.Sys_io_port_bind(handle, key, source, signals); status != fuchsia.ErrOk {
+	if status := fuchsia.Sys_port_bind(handle, key, source, signals); status != fuchsia.ErrOk {
 		return status
 	}
 	return nil
