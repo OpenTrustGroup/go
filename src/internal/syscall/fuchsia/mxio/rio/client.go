@@ -10,6 +10,7 @@ package rio
 import (
 	"internal/syscall/fuchsia"
 	"internal/syscall/fuchsia/mxio"
+	"unsafe"
 )
 
 // RemoteIO is an object which manages file-like operations on a remote object, accessible through a
@@ -121,25 +122,30 @@ func (r *RemoteIO) read(op uint32, out []byte, off int64) (int, error) {
 			msg.SetOff(off)
 		}
 
-		transferred, err := r.txn(&msg)
+		r, err := r.txn(&msg)
 		if err != nil {
 			break
 		}
 		msg.DiscardHandles()
 
-		if transferred > msg.Datalen || transferred > xfer {
+		if r > msg.Datalen || r > xfer {
 			status = fuchsia.ErrIO
 			break
 		}
-		copy(out[xferTotal:uint32(xferTotal)+transferred], msg.Data[:transferred])
-		xferTotal += int(transferred)
-		size -= transferred
+		copy(out[xferTotal:], msg.Data[:r])
+		xferTotal += int(r)
+		size -= r
 		if op == OpReadAt {
-			off += int64(transferred)
+			off += int64(r)
+		}
+
+		// stop at short read
+		if r < xfer {
+			break
 		}
 	}
 
-	if xferTotal != len(out) {
+	if status != 0 {
 		return xferTotal, status
 	}
 	return xferTotal, nil
@@ -232,9 +238,9 @@ func (r *RemoteIO) Close() error {
 }
 
 // getObject requests an MXIO object remotely
-func (r *RemoteIO) getObject(op uint32, name string, flags int32, mode uint32) ([]fuchsia.Handle, mxio.Protocol, error) {
+func (r *RemoteIO) getObject(op uint32, name string, flags int32, mode uint32) ([]fuchsia.Handle, mxio.Protocol, []byte, error) {
 	if len(name) > MessageChunkSize {
-		return nil, 0, fuchsia.ErrInvalidArgs
+		return nil, 0, nil, fuchsia.ErrInvalidArgs
 	}
 	var msg Msg
 	msg.SetOp(op)
@@ -244,13 +250,17 @@ func (r *RemoteIO) getObject(op uint32, name string, flags int32, mode uint32) (
 	copy(msg.Data[:], name)
 
 	if _, err := r.txn(&msg); err != nil {
-		return nil, mxio.ProtocolUndefined, err
+		return nil, mxio.ProtocolUndefined, nil, err
 	}
-	return msg.Handle[:msg.Hcount], msg.Protocol(), nil
+	var extra []byte
+	if msg.Datalen != 0 {
+		extra = append(extra, msg.Data[:msg.Datalen]...)
+	}
+	return msg.Handle[:msg.Hcount], msg.Protocol(), extra, nil
 }
 
 func (r *RemoteIO) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
-	handles, protocol, err := r.getObject(OpOpen, path, flags, mode)
+	handles, protocol, extra, err := r.getObject(OpOpen, path, flags, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +270,10 @@ func (r *RemoteIO) Open(path string, flags int32, mode uint32) (mxio.MXIO, error
 		panic("Pipe Protocol: Unimplemented")
 	case mxio.ProtocolRemote:
 		return New(handles)
+	case mxio.ProtocolVMOFile:
+		return NewVMOFile(handles[0], extra)
 	default:
+		println("unknown rio protocol, ", protocol)
 		// In the error case, the server may have given us handles -- close them
 		for i := range handles {
 			fuchsia.HandleClose(handles[i])
@@ -270,7 +283,7 @@ func (r *RemoteIO) Open(path string, flags int32, mode uint32) (mxio.MXIO, error
 }
 
 func (r *RemoteIO) Clone() ([]fuchsia.Handle, error) {
-	handles, _, err := r.getObject(OpClone, "", 0, 0)
+	handles, _, _, err := r.getObject(OpClone, "", 0, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -308,4 +321,24 @@ func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []fuchsia.Handle, error)
 		msg.DiscardHandles()
 		return msg.Data[:msg.Datalen], nil, nil
 	}
+}
+
+func (r *RemoteIO) Misc(op uint32, in, out []byte) (n int, err error) {
+	return 0, fuchsia.ErrNotSupported
+}
+
+func Stat(f mxio.MXIO) (attr mxio.Vnattr, err error) {
+	b := (*[unsafe.Sizeof(attr)]byte)(unsafe.Pointer(&attr))
+	if _, err := f.Misc(OpStat, nil, (*b)[:]); err != nil {
+		return mxio.Vnattr{}, err
+	}
+	return attr, nil
+}
+
+func UnlinkAt(dir mxio.MXIO, name string) error {
+	_, err := dir.Misc(OpUnlink, []byte(name), nil)
+	if err != nil {
+		return err
+	}
+	return nil
 }
