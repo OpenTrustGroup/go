@@ -68,12 +68,6 @@ func hostname() (name string, err error) {
 	return "", errors.New("os.hostname unimplemented")
 }
 
-func isExist(err error) bool      { panic("TODO os.isExist") }
-func isNotExist(err error) bool   { panic("TODO os.isNotExist") }
-func isPermission(err error) bool { panic("TODO os.isPermission") }
-
-func Lstat(name string) (FileInfo, error) { panic("TODO os.Lstat") }
-
 type signal string
 
 func (s signal) String() string { return string(s) }
