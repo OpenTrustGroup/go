@@ -37,19 +37,29 @@ func osyield() {
 	fuchsia.Sys_nanosleep(0)
 }
 
-var fuchsiaProcHandle fuchsia.Handle
-
 func osinit() {
 	ncpu = int32(fuchsia.Sys_num_cpus())
 
 	if _cgo_get_mxio_root != nil {
-		var handles struct {
+		type mxio_init struct {
 			rootClone   int32
+			stdioClone  int32
 			processSelf int32
+			envlen      int32
+			environ     **byte
 		}
+		var handles mxio_init
 		asmcgocall(_cgo_get_mxio_root, unsafe.Pointer(&handles))
 		fuchsia.RootHandle = fuchsia.Handle(handles.rootClone)
-		fuchsiaProcHandle = fuchsia.Handle(handles.processSelf)
+		fuchsia.StdioHandle = fuchsia.Handle(handles.stdioClone)
+		fuchsia.ProcHandle = fuchsia.Handle(handles.processSelf)
+
+		const maxEnvSize = 1 << 20 // arbitrary
+		envp := (*(*[maxEnvSize]*byte)(unsafe.Pointer(handles.environ)))[:handles.envlen]
+		envs = make([]string, len(envp))
+		for i, e := range envp {
+			envs[i] = gostring(e)
+		}
 	} else {
 		// TODO: implement cgo-less init
 		println("runtime: no fuchsia process handle without cgo yet")
@@ -171,9 +181,6 @@ func goenvs() {
 
 const _NSIG = 65 // TODO
 
-var _cgo_setenv unsafe.Pointer   // pointer to C function
-var _cgo_unsetenv unsafe.Pointer // pointer to C function
-
 //go:nosplit
 func nanotime() int64 {
 	return int64(fuchsia.Sys_current_time())
@@ -216,4 +223,9 @@ func magenta_settls(val uintptr) {
 		println("runtime: thread_arch_prctl failed err=", status)
 		exit(2)
 	}
+}
+
+//go:linkname os_sigpipe os.sigpipe
+func os_sigpipe() {
+	// TODO
 }
