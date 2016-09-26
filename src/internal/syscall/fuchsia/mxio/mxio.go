@@ -24,7 +24,8 @@ type MXIO interface {
 	Open(path string, flags int32, mode uint32) (MXIO, error)
 	Clone() ([]fuchsia.Handle, error)
 	Ioctl(op uint32, in []byte) ([]byte, []fuchsia.Handle, error)
-	// TODO(smklein): Add missing ops, like "Misc" and "Wait"
+	Misc(op uint32, in, out []byte) (n int, err error)
+	// TODO(smklein): Add missing ops, like "Wait"
 }
 
 const (
@@ -65,6 +66,8 @@ const (
 	// The REMOTEIO protocol uses message ports to implement synchronous remoting of
 	// read/write/close operations.
 	ProtocolRemote
+	// The VMOFILE protocol accesses a file as a VMO.
+	ProtocolVMOFile
 )
 
 // Other MXIO related constants
@@ -109,3 +112,40 @@ func IoPortBind(handle fuchsia.Handle, key uint64, source fuchsia.Handle, signal
 	}
 	return nil
 }
+
+type Vnattr struct {
+	Mode     Vtype
+	Reserved uint32
+	Inode    uint64
+	Size     uint64
+}
+
+type Vtype uint32
+
+// bit-compatible with POSIX stat
+const (
+	VtypeMask Vtype = 0170000
+	VtypeSock Vtype = 0140000
+	VtypeLink Vtype = 0120000
+	VtypeFile Vtype = 0100000
+	VtypeBdev Vtype = 0060000
+	VtypeDir  Vtype = 0040000
+	VtypeCdev Vtype = 0020000
+	VtypePipe Vtype = 0010000
+
+	VtypeISUID Vtype = 0004000
+	VtypeISGID Vtype = 0002000
+	VtypeISVTX Vtype = 0001000
+	VtypeIRWXU Vtype = 0000700
+	VtypeIRUSR Vtype = 0000400
+	VtypeIWUSR Vtype = 0000200
+	VtypeIXUSR Vtype = 0000100
+	VtypeIRWXG Vtype = 0000070
+	VtypeIRGRP Vtype = 0000040
+	VtypeIWGRP Vtype = 0000020
+	VtypeIXGRP Vtype = 0000010
+	VtypeIRWXO Vtype = 0000007
+	VtypeIROTH Vtype = 0000004
+	VtypeIWOTH Vtype = 0000002
+	VtypeIXOTH Vtype = 0000001
+)
