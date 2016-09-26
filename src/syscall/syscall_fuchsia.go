@@ -4,7 +4,13 @@
 
 package syscall
 
-import "internal/syscall/fuchsia"
+import (
+	"internal/syscall/fuchsia"
+	"internal/syscall/fuchsia/mxio"
+	"internal/syscall/fuchsia/mxio/rio"
+	"io"
+	"sync"
+)
 
 var (
 	Stdin  = 0
@@ -33,11 +39,17 @@ const (
 
 // TODO(crawshaw): generate a zerrors file once cgo is working
 const (
+	EPERM        = Errno(0x01)
+	ENOENT       = Errno(0x02)
+	EACCES       = Errno(0x02) // TODO: not defined in magenta yet
+	EINTR        = Errno(0x04)
+	EEXIST       = Errno(0x11)
 	ENOTDIR      = Errno(0x14)
 	EISDIR       = Errno(0x15)
 	EINVAL       = Errno(0x16)
 	EPIPE        = Errno(0x20)
 	ENAMETOOLONG = Errno(0x24)
+	ENOTEMPTY    = Errno(0x27)
 	ENOPROTOOPT  = Errno(0x5c)
 	EFUCHSIA     = Errno(0xfa)
 )
@@ -47,11 +59,14 @@ const (
 )
 
 type Stat_t struct {
+	Dev  uint64
+	Ino  uint64
+	Size uint64
 }
 
 func Getpid() (pid int) {
-	println("syscall.Getpid TODO")
-	return 0
+	// TODO: is ProcHandle process-wide or OS-wide?
+	return int(fuchsia.ProcHandle)
 }
 
 func Getppid() (ppid int) {
@@ -93,18 +108,203 @@ func Getwd() (wd string, err error) {
 func Chdir(path string) (err error) {
 	panic("syscall.Chdir TODO")
 }
+
 func Mkdir(path string, mode uint32) (err error) {
 	panic("syscall.Mkdir TODO")
 }
+
 func Rmdir(path string) (err error) {
-	panic("syscall.Rmdir TODO")
+	return Unlink(path)
 }
+
 func Unlink(path string) (err error) {
-	panic("syscall.Unlink TODO")
+	dir, file := splitpath(path)
+
+	rootMu.Lock()
+	f, err := root.Open(dir, 0, 0)
+	rootMu.Unlock()
+
+	if err != nil {
+		return err
+	}
+	err = rio.UnlinkAt(f, file)
+	f.Close()
+	return err
 }
+
+func splitpath(path string) (dir, file string) {
+	i := len(path) - 1
+	for i >= 0 && path[i] != '/' {
+		i--
+	}
+	dir = path[:i+1]
+	file = path[i+1:]
+	return dir, file
+}
+
 func Rename(oldpath, newpath string) (err error) {
 	panic("syscall.Rename TODO")
 }
 func Fchdir(fd int) (err error) {
 	panic("syscall.Fchdir TODO")
+}
+
+func CloseOnExec(r int) {
+	panic("syscall.CloseOnExec TODO")
+}
+
+var (
+	rootMu sync.Mutex
+	root   mxio.MXIO
+)
+
+var (
+	stdioMu sync.Mutex
+	stdio   mxio.MXIO
+)
+
+const fdsOff = 1e6 // move outside the fd range of unistd.c  MXIO
+
+var (
+	fdsMu sync.Mutex
+	fds   []mxio.MXIO
+)
+
+func Read(fd int, p []byte) (n int, err error) {
+	fdsMu.Lock()
+	f := fds[fd-fdsOff]
+	fdsMu.Unlock()
+
+	// An io.Reader can return n < len(p) and io.EOF.
+	// But this is the POSIX syscall read(3), which
+	// returns nil on eof.
+	n, err = f.Read(p)
+	if err == io.EOF {
+		err = nil
+	}
+	return n, err
+}
+
+func init() {
+	var err error
+
+	rootMu.Lock()
+	root, err = rio.New([]fuchsia.Handle{fuchsia.RootHandle})
+	if err != nil {
+		println("syscall: failed to create mxio root: ", err.Error())
+	}
+	rootMu.Unlock()
+
+	stdioMu.Lock()
+	stdio, err = rio.New([]fuchsia.Handle{fuchsia.StdioHandle})
+	if err != nil {
+		println("syscall: failed to create mxio stdio: ", err.Error())
+	}
+	stdioMu.Unlock()
+}
+
+func Write(fd int, p []byte) (n int, err error) {
+	switch fd {
+	case Stdout, Stderr:
+		stdioMu.Lock()
+		stdio.Write(p)
+		stdioMu.Unlock()
+	default:
+		fdsMu.Lock()
+		f := fds[fd-fdsOff]
+		fdsMu.Unlock()
+		return f.Write(p)
+	}
+	return 0, EINVAL
+}
+
+func Seek(fd int, offset int64, whence int) (off int64, err error) {
+	fdsMu.Lock()
+	f := fds[fd-fdsOff]
+	fdsMu.Unlock()
+	return f.Seek(offset, whence)
+}
+
+func Close(fd int) (err error) {
+	fdsMu.Lock()
+	f := fds[fd-fdsOff]
+	fds[fd-fdsOff] = nil
+	fdsMu.Unlock()
+	return f.Close()
+}
+
+func Open(path string, mode int, perm uint32) (fd int, err error) {
+	if path == "" || path[0] != '/' {
+		panic("syscall.Open: relative path not supported, '" + path + "'")
+	}
+
+	rootMu.Lock()
+	f, err := root.Open(path, int32(mode), perm)
+	rootMu.Unlock()
+
+	if err != nil {
+		println("syscall.Open: f=", f, ", err=", err.Error())
+		return -1, err
+	}
+
+	fdsMu.Lock()
+	i := -1
+	for i = 0; i < len(fds); i++ {
+		if fds[i] == nil {
+			fds[i] = f
+			break
+		}
+	}
+	if i == len(fds) {
+		fds = append(fds, f)
+	}
+	fdsMu.Unlock()
+
+	return i + fdsOff, nil
+}
+
+func Fstat(fd int, stat *Stat_t) (err error) {
+	fdsMu.Lock()
+	f := fds[fd-fdsOff]
+	fdsMu.Unlock()
+
+	attr, err := rio.Stat(f)
+	if err != nil {
+		return err
+	}
+	stat.Dev = 0
+	stat.Ino = attr.Inode
+	stat.Size = attr.Size
+	return nil
+}
+
+func Stat(path string, stat *Stat_t) (err error) {
+	fd, err := Open(path, O_RDONLY, 0)
+	if err != nil {
+		return err
+	}
+	err = Fstat(fd, stat)
+	if err2 := Close(fd); err == nil {
+		err = err2
+	}
+	return err
+}
+
+func Lstat(path string, stat *Stat_t) (err error) {
+	panic("syscall.Lstat TODO")
+}
+func Pread(fd int, p []byte, offset int64) (n int, err error) {
+	panic("syscall.Pread TODO")
+}
+func Pwrite(fd int, p []byte, offset int64) (n int, err error) {
+	panic("syscall.Pwrite TODO")
+}
+func Truncate(path string, length int64) (err error) {
+	panic("syscall.Truncate TODO")
+}
+func Link(oldpath string, newpath string) (err error) {
+	panic("syscall.Link TODO")
+}
+func Symlink(oldpath string, newpath string) (err error) {
+	panic("syscall.Symlink TODO")
 }
