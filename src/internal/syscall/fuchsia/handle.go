@@ -11,7 +11,11 @@ import (
 )
 
 // RootHandle is set by the runtime on initialization.
-var RootHandle Handle
+var (
+	RootHandle  Handle
+	StdioHandle Handle
+	ProcHandle  Handle
+)
 
 func HandleClose(handle Handle) error {
 	if status := Sys_handle_close(handle); status != ErrOk {

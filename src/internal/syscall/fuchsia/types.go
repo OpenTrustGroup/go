@@ -6,13 +6,8 @@
 
 package fuchsia
 
-// Allow conversion from status to error
-func (s Status) Error() string {
-	return "errno(" + string(s) + ")"
-}
-
 const (
-	ErrOk = Status(-iota)
+	ErrOk Status = -iota
 	ErrInternal
 	ErrNotSupported
 	ErrNotFound
@@ -39,7 +34,7 @@ const (
 	ErrHandleClosed
 	ErrChannelClosed
 	ErrNotAvailable
-	_ // -27
+	ErrShouldWait
 	_ // -28
 	_ // -29
 	ErrAccessDenied
@@ -96,3 +91,14 @@ const (
 const (
 	TimensecInfinite = Time(0xFFFFFFFFFFFFFFFF)
 )
+
+// EOF is used like io.EOF.
+//
+// When package io is linked in, at initialization this value is
+// rewritten to be equivalent to io.EOF, so that the io.Readers
+// and io.Writers in this package meet their specs.
+var EOF error = eof{}
+
+type eof struct{}
+
+func (eof) Error() string { return "fuchsia.EOF" }
