@@ -150,4 +150,8 @@ func Pipe() (r *File, w *File, err error) {
 	panic("TODO os.Pipe")
 }
 
+func Symlink(oldname, newname string) error {
+	panic("TODO os.Symlink")
+}
+
 const DevNull = "/dev/null" // TODO

@@ -50,7 +50,8 @@ type Stat_t struct {
 }
 
 func Getpid() (pid int) {
-	panic("syscall.Getpid TODO")
+	println("syscall.Getpid TODO")
+	return 0
 }
 
 func Getppid() (ppid int) {

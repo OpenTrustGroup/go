@@ -4,7 +4,10 @@
 
 package os
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type ProcessState struct {
 }
@@ -62,7 +65,7 @@ func startProcess(name string, argv []string, attr *ProcAttr) (p *Process, err e
 }
 
 func hostname() (name string, err error) {
-	panic("TODO os.hostname")
+	return "", errors.New("os.hostname unimplemented")
 }
 
 func isExist(err error) bool      { panic("TODO os.isExist") }
