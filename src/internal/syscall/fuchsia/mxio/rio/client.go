@@ -324,7 +324,23 @@ func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []fuchsia.Handle, error)
 }
 
 func (r *RemoteIO) Misc(op uint32, in, out []byte) (n int, err error) {
-	return 0, fuchsia.ErrNotSupported
+	if len(in) > MessageChunkSize || len(out) > MessageChunkSize {
+		return 0, fuchsia.ErrInvalidArgs
+	}
+
+	var msg Msg
+	msg.SetOp(op)
+	msg.Arg = int32(len(out))
+	msg.Datalen = uint32(len(in))
+	copy(msg.Data[:], in)
+
+	if _, err = r.txn(&msg); err != nil {
+		return 0, err
+	}
+	msg.DiscardHandles()
+
+	n = copy(out, msg.Data[:msg.Datalen])
+	return n, nil
 }
 
 func Stat(f mxio.MXIO) (attr mxio.Vnattr, err error) {
