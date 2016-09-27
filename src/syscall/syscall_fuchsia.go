@@ -37,6 +37,10 @@ const (
 	O_CLOEXEC   = 02000000
 )
 
+const (
+	S_IFDIR = 0000040000
+)
+
 // TODO(crawshaw): generate a zerrors file once cgo is working
 const (
 	EPERM        = Errno(0x01)
@@ -106,11 +110,24 @@ func Getwd() (wd string, err error) {
 }
 
 func Chdir(path string) (err error) {
-	panic("syscall.Chdir TODO")
+	// TODO: if cgo enabled, change the working directory there too.
+	f, err := openPath(path, 0, 0)
+	if err != nil {
+		return err
+	}
+	cwdMu.Lock()
+	cwd = f
+	cwdMu.Unlock()
+	return nil
 }
 
 func Mkdir(path string, mode uint32) (err error) {
-	panic("syscall.Mkdir TODO")
+	f, err := openPath(path, O_CREAT|O_EXCL|O_RDWR, mode&0777|S_IFDIR)
+	if err != nil {
+		return err
+	}
+	f.Close()
+	return nil
 }
 
 func Rmdir(path string) (err error) {
@@ -120,10 +137,7 @@ func Rmdir(path string) (err error) {
 func Unlink(path string) (err error) {
 	dir, file := splitpath(path)
 
-	rootMu.Lock()
-	f, err := root.Open(dir, 0, 0)
-	rootMu.Unlock()
-
+	f, err := openPath(dir, 0, 0)
 	if err != nil {
 		return err
 	}
@@ -156,6 +170,11 @@ func CloseOnExec(r int) {
 var (
 	rootMu sync.Mutex
 	root   mxio.MXIO
+)
+
+var (
+	cwdMu sync.Mutex
+	cwd   mxio.MXIO
 )
 
 var (
@@ -195,6 +214,13 @@ func init() {
 	}
 	rootMu.Unlock()
 
+	cwdMu.Lock()
+	cwd, err = rio.New([]fuchsia.Handle{fuchsia.CwdHandle})
+	if err != nil {
+		println("syscall: failed to create mxio cwd: ", err.Error())
+	}
+	cwdMu.Unlock()
+
 	stdioMu.Lock()
 	stdio, err = rio.New([]fuchsia.Handle{fuchsia.StdioHandle})
 	if err != nil {
@@ -233,17 +259,23 @@ func Close(fd int) (err error) {
 	return f.Close()
 }
 
-func Open(path string, mode int, perm uint32) (fd int, err error) {
+func openPath(path string, mode int, perm uint32) (f mxio.MXIO, err error) {
 	if path == "" || path[0] != '/' {
-		panic("syscall.Open: relative path not supported, '" + path + "'")
+		cwdMu.Lock()
+		f, err = cwd.Open(path, int32(mode), perm)
+		cwdMu.Unlock()
+	} else {
+		rootMu.Lock()
+		f, err = root.Open(path, int32(mode), perm)
+		rootMu.Unlock()
 	}
+	return f, err
+}
 
-	rootMu.Lock()
-	f, err := root.Open(path, int32(mode), perm)
-	rootMu.Unlock()
-
+func Open(path string, mode int, perm uint32) (fd int, err error) {
+	f, err := openPath(path, mode, perm)
 	if err != nil {
-		println("syscall.Open: f=", f, ", err=", err.Error())
+		println("syscall.Open: path=", path, ", err=", err.Error())
 		return -1, err
 	}
 
@@ -291,8 +323,10 @@ func Stat(path string, stat *Stat_t) (err error) {
 }
 
 func Lstat(path string, stat *Stat_t) (err error) {
-	panic("syscall.Lstat TODO")
+	// TODO: adjust when there are symlinks
+	return Stat(path, stat)
 }
+
 func Pread(fd int, p []byte, offset int64) (n int, err error) {
 	panic("syscall.Pread TODO")
 }

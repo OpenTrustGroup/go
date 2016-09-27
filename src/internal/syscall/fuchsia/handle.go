@@ -10,10 +10,11 @@ import (
 	"unsafe"
 )
 
-// RootHandle is set by the runtime on initialization.
+// Process-wide MXIO handles.
 var (
 	RootHandle  Handle
 	StdioHandle Handle
+	CwdHandle   Handle
 	ProcHandle  Handle
 )
 

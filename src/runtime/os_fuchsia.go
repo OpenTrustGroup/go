@@ -44,7 +44,9 @@ func osinit() {
 		type mxio_init struct {
 			rootClone   int32
 			stdioClone  int32
+			cwd         int32
 			processSelf int32
+			_           int32
 			envlen      int32
 			environ     **byte
 		}
@@ -52,6 +54,7 @@ func osinit() {
 		asmcgocall(_cgo_get_mxio_root, unsafe.Pointer(&handles))
 		fuchsia.RootHandle = fuchsia.Handle(handles.rootClone)
 		fuchsia.StdioHandle = fuchsia.Handle(handles.stdioClone)
+		fuchsia.CwdHandle = fuchsia.Handle(handles.cwd)
 		fuchsia.ProcHandle = fuchsia.Handle(handles.processSelf)
 
 		const maxEnvSize = 1 << 20 // arbitrary
