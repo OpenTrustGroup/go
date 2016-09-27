@@ -10,6 +10,7 @@ import (
 	"internal/syscall/fuchsia/mxio/rio"
 	"io"
 	"sync"
+	"unsafe"
 )
 
 var (
@@ -378,6 +379,69 @@ func Link(oldpath string, newpath string) (err error) {
 }
 func Symlink(oldpath string, newpath string) (err error) {
 	panic("syscall.Symlink TODO")
+}
+
+func clen(n []byte) int {
+	for i := 0; i < len(n); i++ {
+		if n[i] == 0 {
+			return i
+		}
+	}
+	return len(n)
+}
+
+type errDirentEmpty struct{}
+
+func (errDirentEmpty) Error() string {
+	return "syscall.Readdirnames: remoteio readdir returned empty dirent"
+}
+
+type errDirentTooLarge struct{}
+
+func (errDirentTooLarge) Error() string {
+	return "syscall.Readdirnames: remoteio readdir returned oversized dirent"
+}
+
+func Readdirnames(fd int, max int) (names []string, err error) {
+	fdsMu.Lock()
+	f := fds[fd-fdsOff]
+	fdsMu.Unlock()
+
+	const dirBufsize = rio.MessageChunkSize
+	var bufback [dirBufsize]byte
+
+	for max != 0 {
+		buf := bufback[:]
+		n, err := f.Misc(rio.OpReaddir, nil, buf)
+		if err != nil {
+			return nil, err
+		}
+		buf = buf[:n:n]
+		if n <= 0 {
+			break // EOF
+		}
+
+		const sizeofSize = 4
+		for max != 0 && len(buf) >= sizeofSize {
+			d := (*Dirent)(unsafe.Pointer(&buf[0]))
+			if d.Size == 0 {
+				return nil, errDirentEmpty{}
+			}
+			if int(d.Size) > len(buf) {
+				return nil, errDirentTooLarge{}
+			}
+			buf = buf[d.Size:]
+			bytes := (*[dirBufsize]byte)(unsafe.Pointer(&d.Name[0]))[:d.Size-8]
+			name := string(bytes[:clen(bytes)])
+			if name == "." || name == ".." {
+				continue
+			}
+			max--
+			names = append(names, name)
+		}
+	}
+
+	return names, nil
 }
 
 type Dirent struct {

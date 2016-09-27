@@ -7,7 +7,7 @@ package os
 import "time"
 
 func (f *File) readdirnames(n int) (names []string, err error) {
-	panic("TODO os.readdirnames")
+	return syscall.Readdirnames(f.fd, n)
 }
 
 func (f *File) Chmod(mode FileMode) error {

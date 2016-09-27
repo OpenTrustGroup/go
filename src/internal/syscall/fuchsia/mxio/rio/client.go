@@ -343,6 +343,9 @@ func (r *RemoteIO) Misc(op uint32, in, out []byte) (n int, err error) {
 	}
 	msg.DiscardHandles()
 
+	if int(msg.Datalen) > len(out) {
+		return 0, fuchsia.ErrIO
+	}
 	n = copy(out, msg.Data[:msg.Datalen])
 	return n, nil
 }
