@@ -110,7 +110,7 @@ func Exit(code int) {
 
 func Getpagesize() int { return 4096 }
 
-const ImplementsGetwd = true
+const ImplementsGetwd = false
 
 func Getwd() (wd string, err error) {
 	panic("syscall.Getwd TODO")
@@ -375,10 +375,10 @@ func Truncate(path string, length int64) (err error) {
 	panic("syscall.Truncate TODO")
 }
 func Link(oldpath string, newpath string) (err error) {
-	panic("syscall.Link TODO")
+	return EOPNOTSUPP // no fuchsia support yet
 }
 func Symlink(oldpath string, newpath string) (err error) {
-	panic("syscall.Symlink TODO")
+	return EOPNOTSUPP // no fuchsia support yet
 }
 
 func clen(n []byte) int {
