@@ -164,8 +164,33 @@ func splitpath(path string) (dir, file string) {
 }
 
 func Rename(oldpath, newpath string) (err error) {
-	panic("syscall.Rename TODO")
+	if oldpath == "" || newpath == "" {
+		return EINVAL
+	}
+
+	var f mxio.MXIO
+	if oldpath[0] == '/' && newpath[0] == '/' {
+		// both paths are absolute: rename relative to root
+		rootMu.Lock()
+		defer rootMu.Unlock()
+		f = root
+	} else if oldpath[0] != '/' && newpath[0] != '/' {
+		// both paths are relative: rename relative to cwd
+		cwdMu.Lock()
+		defer cwdMu.Unlock()
+		f = cwd
+	} else {
+		// mixed absolute & relative paths: unsupported
+		return EOPNOTSUPP
+	}
+
+	buf := make([]byte, len(oldpath)+len(newpath)+2)
+	copy(buf, oldpath)
+	copy(buf[len(oldpath)+1:], newpath)
+	_, err = f.Misc(rio.OpRename, buf, nil)
+	return err
 }
+
 func Fchdir(fd int) (err error) {
 	panic("syscall.Fchdir TODO")
 }

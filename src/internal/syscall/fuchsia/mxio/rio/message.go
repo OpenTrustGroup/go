@@ -46,6 +46,8 @@ const (
 	OpUnlink
 	OpReadAt
 	OpWriteAt
+	OpUnused_
+	OpRename
 	OpNumOps // The total number of operations
 
 	OpReplyPipe = 0x01000000
