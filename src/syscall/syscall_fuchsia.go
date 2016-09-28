@@ -310,7 +310,10 @@ func Open(path string, mode int, perm uint32) (fd int, err error) {
 		println("syscall.Open: path=", path, ", err=", err.Error())
 		return -1, err
 	}
+	return OpenMXIO(f), nil
+}
 
+func OpenMXIO(f mxio.MXIO) (fd int) {
 	fdsMu.Lock()
 	i := -1
 	for i = 0; i < len(fds); i++ {
@@ -324,7 +327,7 @@ func Open(path string, mode int, perm uint32) (fd int, err error) {
 	}
 	fdsMu.Unlock()
 
-	return i + fdsOff, nil
+	return i + fdsOff
 }
 
 func Ioctl(fd int, op uint32, in []byte) ([]byte, []fuchsia.Handle, error) {

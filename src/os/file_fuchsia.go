@@ -4,7 +4,12 @@
 
 package os
 
-import "time"
+import (
+	"syscall"
+	"time"
+
+	"internal/syscall/fuchsia/mxio/pipe"
+)
 
 func (f *File) readdirnames(n int) (names []string, err error) {
 	return syscall.Readdirnames(f.fd, n)
@@ -52,7 +57,14 @@ func Readlink(name string) (string, error) {
 }
 
 func Pipe() (r *File, w *File, err error) {
-	panic("TODO os.Pipe")
+	p0, p1, err := pipe.NewPipe()
+	if err != nil {
+		return nil, nil, err
+	}
+	r = NewFile(uintptr(syscall.OpenMXIO(p0)), "|0")
+	w = NewFile(uintptr(syscall.OpenMXIO(p1)), "|1")
+	// TODO CloseOnExec equivalent
+	return r, w, nil
 }
 
 func sigpipe() // implemented in package runtime
