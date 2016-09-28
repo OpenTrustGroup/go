@@ -32,8 +32,8 @@ const (
 	ErrNotReady
 	ErrTimedOut
 	ErrHandleClosed
-	ErrChannelClosed
-	ErrNotAvailable
+	ErrRemoteClosed
+	ErrUnavailable
 	ErrShouldWait
 	_ // -28
 	_ // -29

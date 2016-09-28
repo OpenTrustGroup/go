@@ -65,7 +65,7 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 		return 0, err
 	} else if (signals.Satisfied&fuchsia.SignalPeerClosed != 0) &&
 		(signals.Satisfied&fuchsia.SignalReadable == 0) {
-		return 0, fuchsia.ErrChannelClosed
+		return 0, fuchsia.ErrRemoteClosed
 	}
 
 	// Set the Handle count to the maximum possible value. This is just a conservative mechanism; if
