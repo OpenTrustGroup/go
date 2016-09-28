@@ -41,11 +41,12 @@ func osinit() {
 	ncpu = int32(fuchsia.Sys_num_cpus())
 
 	if _cgo_get_mxio_root != nil {
+		// mxio_init matches a Go struct of the same name in gcc_mxio.c.
 		type mxio_init struct {
-			rootClone   int32
-			stdioClone  int32
-			cwd         int32
-			processSelf int32
+			rootClone   fuchsia.Handle
+			stdioClone  fuchsia.Handle
+			cwd         fuchsia.Handle
+			processSelf fuchsia.Handle
 			_           int32
 			envlen      int32
 			environ     **byte

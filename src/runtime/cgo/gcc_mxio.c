@@ -17,10 +17,10 @@ extern char **environ;
 
 // mxio_init matches a Go struct of the same name in os_fuchsia.go.
 struct mxio_init {
-	int32_t rootClone;
-	int32_t stdioClone;
-	int32_t cwd;
-	int32_t processSelf;
+	mx_handle_t rootClone;
+	mx_handle_t stdioClone;
+	mx_handle_t cwd;
+	mx_handle_t processSelf;
 	int32_t unused;
 	int32_t envlen;
 	char**  environ;
