@@ -53,6 +53,7 @@ const (
 	ENOTDIR      = Errno(0x14)
 	EISDIR       = Errno(0x15)
 	EINVAL       = Errno(0x16)
+	ESPIPE       = Errno(0x1d) // TODO: not defined in magenta yet
 	EPIPE        = Errno(0x20)
 	ENAMETOOLONG = Errno(0x24)
 	ENOTEMPTY    = Errno(0x27)
@@ -337,11 +338,35 @@ func Lstat(path string, stat *Stat_t) (err error) {
 }
 
 func Pread(fd int, p []byte, offset int64) (n int, err error) {
-	panic("syscall.Pread TODO")
+	if fd == Stdout || fd == Stderr {
+		return 0, ESPIPE
+	}
+
+	fdsMu.Lock()
+	f := fds[fd-fdsOff]
+	fdsMu.Unlock()
+
+	// An io.Reader can return n < len(p) and io.EOF.
+	// But this is the POSIX syscall read(3), which
+	// returns nil on eof.
+	n, err = f.ReadAt(p, offset)
+	if err == io.EOF {
+		err = nil
+	}
+	return n, err
 }
+
 func Pwrite(fd int, p []byte, offset int64) (n int, err error) {
-	panic("syscall.Pwrite TODO")
+	if fd == Stdout || fd == Stderr {
+		return 0, ESPIPE
+	}
+
+	fdsMu.Lock()
+	f := fds[fd-fdsOff]
+	fdsMu.Unlock()
+	return f.WriteAt(p, offset)
 }
+
 func Truncate(path string, length int64) (err error) {
 	panic("syscall.Truncate TODO")
 }
