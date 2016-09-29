@@ -47,17 +47,20 @@ const (
 const (
 	EPERM        = Errno(0x01)
 	ENOENT       = Errno(0x02)
-	EACCES       = Errno(0x02) // TODO: not defined in magenta yet
 	EINTR        = Errno(0x04)
+	EIO          = Errno(0x05)
+	EACCES       = Errno(0x0d)
 	EEXIST       = Errno(0x11)
 	ENOTDIR      = Errno(0x14)
 	EISDIR       = Errno(0x15)
 	EINVAL       = Errno(0x16)
-	ESPIPE       = Errno(0x1d) // TODO: not defined in magenta yet
+	ESPIPE       = Errno(0x1d)
 	EPIPE        = Errno(0x20)
 	ENAMETOOLONG = Errno(0x24)
 	ENOTEMPTY    = Errno(0x27)
 	ENOPROTOOPT  = Errno(0x5c)
+	EOPNOTSUPP   = Errno(0x5f)
+	ENOTSUP      = EOPNOTSUPP
 	EFUCHSIA     = Errno(0xfa)
 )
 
