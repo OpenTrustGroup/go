@@ -128,8 +128,12 @@ func (d *Dispatcher) Serve() {
 		}
 		handlerID := packet.Hdr.Key
 		d.mu.Lock()
-		hr := d.handlers[handlerID]
+		hr, ok := d.handlers[handlerID]
 		d.mu.Unlock()
+		if !ok {
+			// The handler is concurrently being closed by another thread
+			continue
+		}
 		if (hr.flags & flagDisconnected) != 0 {
 			// Do not process packets from disconnected handlers.
 			// Close handlers that receive the "SignalSignaled" close message.
