@@ -23,7 +23,8 @@ func (f *File) Truncate(size int64) error {
 }
 
 func (f *File) Sync() error {
-	panic("TODO os.Sync")
+	println("TODO os.Sync")
+	return nil
 }
 
 func syscallMode(i FileMode) (o uint32) {
