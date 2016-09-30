@@ -9,19 +9,19 @@ package rio
 import (
 	"unsafe"
 
-	"internal/syscall/fuchsia"
-	"internal/syscall/fuchsia/mxio"
+	"syscall/mx"
+	"syscall/mx/mxio"
 )
 
 type VMOFile struct {
-	h   fuchsia.Handle
+	h   mx.Handle
 	off int64
 	len int64
 	end int64
 	at  int64
 }
 
-func NewVMOFile(handle fuchsia.Handle, extra []byte) (*VMOFile, error) {
+func NewVMOFile(handle mx.Handle, extra []byte) (*VMOFile, error) {
 	// mxio_vmofile_create
 	f := &VMOFile{
 		h:   handle,
@@ -36,14 +36,14 @@ func NewVMOFile(handle fuchsia.Handle, extra []byte) (*VMOFile, error) {
 func (f *VMOFile) Read(data []byte) (n int, err error) {
 	if int64(len(data)) > f.end-f.at {
 		data = data[:f.end-f.at]
-		err = fuchsia.EOF
+		err = mx.EOF
 	}
 	if len(data) == 0 {
 		return 0, err
 	}
-	n = fuchsia.Sys_vmo_read(f.h, unsafe.Pointer(&data[0]), uint64(f.at), uint(len(data)))
+	n = mx.Sys_vmo_read(f.h, unsafe.Pointer(&data[0]), uint64(f.at), uint(len(data)))
 	if n < 0 {
-		return 0, fuchsia.Status(n)
+		return 0, mx.Status(n)
 	}
 	f.at += int64(n)
 	return n, err
@@ -54,11 +54,11 @@ func (f *VMOFile) ReadAt(data []byte, off int64) (int, error) {
 }
 
 func (f *VMOFile) Write(data []byte) (int, error) {
-	return 0, fuchsia.ErrNotSupported
+	return 0, mx.ErrNotSupported
 }
 
 func (f *VMOFile) WriteAt(data []byte, off int64) (int, error) {
-	return 0, fuchsia.ErrNotSupported
+	return 0, mx.ErrNotSupported
 }
 
 func (f *VMOFile) Seek(offset int64, whence int) (int64, error) {
@@ -73,14 +73,14 @@ func (f *VMOFile) Seek(offset int64, whence int) (int64, error) {
 	}
 
 	if at > f.end-f.off {
-		return 0, fuchsia.ErrOutOfRange
+		return 0, mx.ErrOutOfRange
 	}
 	f.at = at
 	return at, nil
 }
 
 func (f *VMOFile) Close() error {
-	if err := fuchsia.HandleClose(f.h); err != nil {
+	if err := mx.HandleClose(f.h); err != nil {
 		return err
 	}
 	f.h = 0
@@ -88,13 +88,13 @@ func (f *VMOFile) Close() error {
 }
 
 func (f *VMOFile) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
-	return nil, fuchsia.ErrNotSupported
+	return nil, mx.ErrNotSupported
 }
-func (f *VMOFile) Clone() ([]fuchsia.Handle, error) {
-	return nil, fuchsia.ErrNotSupported
+func (f *VMOFile) Clone() ([]mx.Handle, error) {
+	return nil, mx.ErrNotSupported
 }
-func (f *VMOFile) Ioctl(op uint32, in []byte) ([]byte, []fuchsia.Handle, error) {
-	return nil, nil, fuchsia.ErrNotSupported
+func (f *VMOFile) Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error) {
+	return nil, nil, mx.ErrNotSupported
 }
 
 func (f *VMOFile) Misc(op uint32, in, out []byte) (n int, err error) {
@@ -105,11 +105,11 @@ func (f *VMOFile) Misc(op uint32, in, out []byte) (n int, err error) {
 			Mode: mxio.VtypeFile | mxio.VtypeIRUSR,
 		}
 		if unsafe.Sizeof(attr) > uintptr(len(out)) {
-			return 0, fuchsia.ErrInvalidArgs
+			return 0, mx.ErrInvalidArgs
 		}
 		*(*mxio.Vnattr)(unsafe.Pointer(&out[0])) = attr
 		return int(unsafe.Sizeof(attr)), nil
 	default:
-		return 0, fuchsia.ErrInvalidArgs
+		return 0, mx.ErrInvalidArgs
 	}
 }

@@ -5,12 +5,13 @@
 package syscall
 
 import (
-	"internal/syscall/fuchsia"
-	"internal/syscall/fuchsia/mxio"
-	"internal/syscall/fuchsia/mxio/rio"
 	"io"
 	"sync"
 	"unsafe"
+
+	"syscall/mx"
+	"syscall/mx/mxio"
+	"syscall/mx/mxio/rio"
 )
 
 var (
@@ -77,7 +78,7 @@ type Stat_t struct {
 
 func Getpid() (pid int) {
 	// TODO: is ProcHandle process-wide or OS-wide?
-	return int(fuchsia.ProcHandle)
+	return int(mx.ProcHandle)
 }
 
 func Getppid() (ppid int) {
@@ -105,7 +106,7 @@ func Getgroups() (gids []int, err error) {
 }
 
 func Exit(code int) {
-	fuchsia.Sys_exit(code)
+	mx.Sys_exit(code)
 }
 
 func Getpagesize() int { return 4096 }
@@ -240,21 +241,21 @@ func init() {
 	var err error
 
 	rootMu.Lock()
-	root, err = rio.New([]fuchsia.Handle{fuchsia.RootHandle})
+	root, err = rio.New([]mx.Handle{mx.RootHandle})
 	if err != nil {
 		println("syscall: failed to create mxio root: ", err.Error())
 	}
 	rootMu.Unlock()
 
 	cwdMu.Lock()
-	cwd, err = rio.New([]fuchsia.Handle{fuchsia.CwdHandle})
+	cwd, err = rio.New([]mx.Handle{mx.CwdHandle})
 	if err != nil {
 		println("syscall: failed to create mxio cwd: ", err.Error())
 	}
 	cwdMu.Unlock()
 
 	stdioMu.Lock()
-	stdio, err = rio.New([]fuchsia.Handle{fuchsia.StdioHandle})
+	stdio, err = rio.New([]mx.Handle{mx.StdioHandle})
 	if err != nil {
 		println("syscall: failed to create mxio stdio: ", err.Error())
 	}
@@ -330,7 +331,7 @@ func OpenMXIO(f mxio.MXIO) (fd int) {
 	return i + fdsOff
 }
 
-func Ioctl(fd int, op uint32, in []byte) ([]byte, []fuchsia.Handle, error) {
+func Ioctl(fd int, op uint32, in []byte) ([]byte, []mx.Handle, error) {
 	fdsMu.Lock()
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()

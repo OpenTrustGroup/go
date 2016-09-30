@@ -10,7 +10,7 @@ package mxio
 import (
 	"unsafe"
 
-	"internal/syscall/fuchsia"
+	"syscall/mx"
 )
 
 // MXIO provides classic unix-style IO over various transports
@@ -22,8 +22,8 @@ type MXIO interface {
 	Seek(offset int64, whence int) (int64, error)
 	Close() error
 	Open(path string, flags int32, mode uint32) (MXIO, error)
-	Clone() ([]fuchsia.Handle, error)
-	Ioctl(op uint32, in []byte) ([]byte, []fuchsia.Handle, error)
+	Clone() ([]mx.Handle, error)
+	Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error)
 	Misc(op uint32, in, out []byte) (n int, err error)
 	// TODO(smklein): Add missing ops, like "Wait"
 }
@@ -48,9 +48,9 @@ type PacketHeader struct {
 // Packet describes the unit of communication via an MXIO protocol
 type Packet struct {
 	Hdr       PacketHeader
-	Timestamp fuchsia.Time
+	Timestamp mx.Time
 	Bytes     uintptr
-	Signals   fuchsia.Signals
+	Signals   mx.Signals
 	Reserved  uint32
 }
 
@@ -103,35 +103,35 @@ const (
 var IoctlDevmgrMountFS = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevmgr, 0)
 
 // IoPortCreate wraps the corresponding syscall
-func IoPortCreate(options uint32) (fuchsia.Handle, error) {
-	handle := fuchsia.Sys_port_create(options)
+func IoPortCreate(options uint32) (mx.Handle, error) {
+	handle := mx.Sys_port_create(options)
 	if handle <= 0 {
-		return 0, fuchsia.Status(handle)
+		return 0, mx.Status(handle)
 	}
 	return handle, nil
 }
 
 // IoPortQueue wraps the corresponding syscall
-func IoPortQueue(handle fuchsia.Handle, packet *Packet, size uint) error {
-	if status := fuchsia.Sys_port_queue(handle, unsafe.Pointer(packet), size); status != fuchsia.ErrOk {
+func IoPortQueue(handle mx.Handle, packet *Packet, size uint) error {
+	if status := mx.Sys_port_queue(handle, unsafe.Pointer(packet), size); status != mx.ErrOk {
 		return status
 	}
 	return nil
 }
 
 // IoPortWait wraps the corresponding syscall
-func IoPortWait(handle fuchsia.Handle, size uint) (*Packet, error) {
+func IoPortWait(handle mx.Handle, size uint) (*Packet, error) {
 	var packet Packet
-	status := fuchsia.Sys_port_wait(handle, unsafe.Pointer(&packet), size)
-	if status != fuchsia.ErrOk {
+	status := mx.Sys_port_wait(handle, unsafe.Pointer(&packet), size)
+	if status != mx.ErrOk {
 		return nil, status
 	}
 	return &packet, nil
 }
 
 // IoPortBind wraps the corresponding syscall
-func IoPortBind(handle fuchsia.Handle, key uint64, source fuchsia.Handle, signals fuchsia.Signals) error {
-	if status := fuchsia.Sys_port_bind(handle, key, source, signals); status != fuchsia.ErrOk {
+func IoPortBind(handle mx.Handle, key uint64, source mx.Handle, signals mx.Signals) error {
+	if status := mx.Sys_port_bind(handle, key, source, signals); status != mx.ErrOk {
 		return status
 	}
 	return nil

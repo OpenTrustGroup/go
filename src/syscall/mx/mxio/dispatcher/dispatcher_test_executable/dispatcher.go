@@ -11,8 +11,8 @@ package main
 import (
 	"unsafe"
 
-	"internal/syscall/fuchsia"
-	"internal/syscall/fuchsia/mxio/dispatcher"
+	"syscall/mx"
+	"syscall/mx/mxio/dispatcher"
 )
 
 // Test creating a dispatcher which both sums integers.
@@ -31,7 +31,7 @@ func main() {
 
 	expectedCookie := int64(1234)
 
-	dispatcherCb := func(h fuchsia.Handle, cb interface{}, cookie int64) error {
+	dispatcherCb := func(h mx.Handle, cb interface{}, cookie int64) error {
 		if cookie != expectedCookie {
 			panic("Unexpected cookie")
 		}
@@ -47,9 +47,9 @@ func main() {
 			handlerCb(-1)
 		} else {
 			data := make([]byte, 8)
-			numBytes, numHandles, err := fuchsia.MsgPipeRead(h, data, nil, 0)
+			numBytes, numHandles, err := mx.MsgPipeRead(h, data, nil, 0)
 			if err != nil {
-				if err == fuchsia.ErrBadState {
+				if err == mx.ErrBadState {
 					// This error implies there are no messages currently in the pipe
 					return dispatcher.ErrNoWork
 				}
@@ -68,7 +68,7 @@ func main() {
 		panic(err)
 	}
 	go d.Serve()
-	handles, err := fuchsia.MsgPipeCreate(0)
+	handles, err := mx.MsgPipeCreate(0)
 	if err != nil {
 		panic(err)
 	} else if len(handles) != 2 {
@@ -85,7 +85,7 @@ func main() {
 
 	writeMessageVerifySum := func(val, expectedSum int64) {
 		buf := (*[8]byte)(unsafe.Pointer(&val))[:]
-		if err := fuchsia.MsgPipeWrite(handles[1], buf, nil, 0); err != nil {
+		if err := mx.MsgPipeWrite(handles[1], buf, nil, 0); err != nil {
 			panic(err)
 		}
 		seenSum := <-c
@@ -98,7 +98,7 @@ func main() {
 	writeMessageVerifySum(6, 10)
 	writeMessageVerifySum(15, 25)
 
-	if err := fuchsia.HandleClose(handles[1]); err != nil {
+	if err := mx.HandleClose(handles[1]); err != nil {
 		panic(err)
 	}
 

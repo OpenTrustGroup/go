@@ -10,8 +10,8 @@ package dispatcher
 import (
 	"sync"
 
-	"internal/syscall/fuchsia"
-	"internal/syscall/fuchsia/mxio"
+	"syscall/mx"
+	"syscall/mx/mxio"
 )
 
 // A DispatcherCallback is called when the handle is readable or closed.
@@ -21,10 +21,10 @@ import (
 // A return value of ErrNoWork causes the message draining to end.
 // A return value of ErrDisconnectNoCallback disconnects the handler WITHOUT a callback.
 // Any other error as a return value disconnects the handler WITH a final callback on an empty handle.
-type DispatcherCallback func(h fuchsia.Handle, callback interface{}, cookie int64) error
+type DispatcherCallback func(h mx.Handle, callback interface{}, cookie int64) error
 
 type handler struct {
-	h        fuchsia.Handle
+	h        mx.Handle
 	flags    uint32
 	callback interface{}
 	cookie   int64
@@ -38,7 +38,7 @@ const (
 
 // Dispatcher can read messages from a handle and assign them to a callback.
 type Dispatcher struct {
-	ioport   fuchsia.Handle
+	ioport   mx.Handle
 	callback DispatcherCallback
 
 	mu            sync.Mutex
@@ -50,12 +50,12 @@ type Dispatcher struct {
 const (
 	// If returned from dispatcher callback, indicates that the dispatcher should immediately
 	// disconnect with no additional callbacks.
-	ErrDisconnectNoCallback = fuchsia.Status(1)
+	ErrDisconnectNoCallback = mx.Status(1)
 	// If returned from dispatcher callback, indicates that there are no more messages to read.
-	ErrNoWork = fuchsia.Status(-9999)
+	ErrNoWork = mx.Status(-9999)
 	// If returned from dispatcher callback, indicates that the message was handed to another
 	// server.
-	ErrIndirect = fuchsia.Status(-9998)
+	ErrIndirect = mx.Status(-9998)
 )
 
 // New creates a new dispatcher.
@@ -74,7 +74,7 @@ func New(callback DispatcherCallback) (*Dispatcher, error) {
 // Closes a dispatcher, shutting down all handles added to the dispatcher and preventing additional
 // handles from being added.
 func (d *Dispatcher) close() {
-	fuchsia.HandleClose(d.ioport)
+	mx.HandleClose(d.ioport)
 }
 
 // Unbind a handler from the dispatcher to prevent further messages from arriving.
@@ -85,13 +85,13 @@ func (d *Dispatcher) disconnectHandler(hr *handler, handlerID uint64) {
 	// Send a "SignalSignaled" close message to shut down the handler
 	var packet mxio.Packet
 	packet.Hdr.Key = handlerID
-	packet.Signals = fuchsia.SignalSignaled
+	packet.Signals = mx.SignalSignaled
 	mxio.IoPortQueue(d.ioport, &packet, mxio.PacketSize)
 	hr.flags |= flagDisconnected
 }
 
 func (d *Dispatcher) closeHandler(hr *handler, handlerID uint64) {
-	fuchsia.HandleClose(hr.h)
+	mx.HandleClose(hr.h)
 	d.mu.Lock()
 	delete(d.handlers, handlerID)
 	d.mu.Unlock()
@@ -137,20 +137,20 @@ func (d *Dispatcher) Serve() {
 		if (hr.flags & flagDisconnected) != 0 {
 			// Do not process packets from disconnected handlers.
 			// Close handlers that receive the "SignalSignaled" close message.
-			if (packet.Signals & fuchsia.SignalSignaled) != 0 {
+			if (packet.Signals & mx.SignalSignaled) != 0 {
 				d.closeHandler(hr, handlerID)
 			}
 			continue
 		}
 		// Read everything we can from this single handler
-		if (packet.Signals & fuchsia.SignalReadable) != 0 {
+		if (packet.Signals & mx.SignalReadable) != 0 {
 			if d.drainAllMessages(hr, handlerID) {
 				// We disconnected from the handle -- don't bother considering a close
 				continue
 			}
 		}
 		// We haven't yet disconnected from the handler. Should we?
-		if (packet.Signals & fuchsia.SignalPeerClosed) != 0 {
+		if (packet.Signals & mx.SignalPeerClosed) != 0 {
 			d.callback(0, hr.callback, hr.cookie)
 			d.disconnectHandler(hr, handlerID)
 		}
@@ -159,7 +159,7 @@ func (d *Dispatcher) Serve() {
 
 // AddHandler adds a handle to the dispatcher, with an associated callback.  The callback will be
 // called by the dispatcher server, as soon as h becomes readable or closed.
-func (d *Dispatcher) AddHandler(h fuchsia.Handle, callback interface{}, cookie int64) error {
+func (d *Dispatcher) AddHandler(h mx.Handle, callback interface{}, cookie int64) error {
 	hr := &handler{
 		h:        h,
 		flags:    0,
@@ -180,5 +180,5 @@ func (d *Dispatcher) AddHandler(h fuchsia.Handle, callback interface{}, cookie i
 	d.handlers[handlerID] = hr
 	d.mu.Unlock()
 
-	return mxio.IoPortBind(d.ioport, handlerID, h, fuchsia.SignalReadable|fuchsia.SignalPeerClosed)
+	return mxio.IoPortBind(d.ioport, handlerID, h, mx.SignalReadable|mx.SignalPeerClosed)
 }

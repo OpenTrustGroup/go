@@ -4,7 +4,7 @@
 
 // +build fuchsia
 
-package fuchsia
+package mx
 
 import (
 	"unsafe"

@@ -10,10 +10,10 @@ package main
 import (
 	"bytes"
 
-	"internal/syscall/fuchsia"
-	"internal/syscall/fuchsia/mxio"
-	"internal/syscall/fuchsia/mxio/dispatcher"
-	"internal/syscall/fuchsia/mxio/rio"
+	"syscall/mx"
+	"syscall/mx/mxio"
+	"syscall/mx/mxio/dispatcher"
+	"syscall/mx/mxio/rio"
 )
 
 // Create a new dispatcher, running a RIO server. It is initialized with no clients.
@@ -28,7 +28,7 @@ func CreateRIOServer() *dispatcher.Dispatcher {
 
 // Create a pair of handles, and add one end to the RIO server, along with a RIO Server callback.
 func CreateRIOClient(d *dispatcher.Dispatcher, cb rio.ServerHandler, cookie int64) *rio.RemoteIO {
-	handles, err := fuchsia.MsgPipeCreate(0)
+	handles, err := mx.MsgPipeCreate(0)
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +38,7 @@ func CreateRIOClient(d *dispatcher.Dispatcher, cb rio.ServerHandler, cookie int6
 	}
 
 	// TODO(smklein): Add 'event' handle to clientHandles when testing 'wait'
-	client, err := rio.New([]fuchsia.Handle{handles[1]})
+	client, err := rio.New([]mx.Handle{handles[1]})
 	if err != nil {
 		panic(err)
 	}
@@ -53,44 +53,44 @@ var testData = []struct {
 	inData []uint8 // 'data', or 0 if ignored
 
 	// Output messages
-	outRetval  fuchsia.Status   // Expected return value from server
-	outArg2    int64            // 'arg2', or 0 if ignored
-	outData    []uint8          // 'data', or empty if ignored
-	outHandles []fuchsia.Handle // 'handles', or empty if ignored
+	outRetval  mx.Status   // Expected return value from server
+	outArg2    int64       // 'arg2', or 0 if ignored
+	outData    []uint8     // 'data', or empty if ignored
+	outHandles []mx.Handle // 'handles', or empty if ignored
 }{
 	// IN: Arg: Flags, Arg2: Mode, Data: Name
 	// OUT: Retval: 0, Arg2: Protocol, Handles: Opened object (set elsewhere)
-	{rio.OpOpen, 12, 34, []uint8{'f', 'i', 'l', 'e'}, 0, int64(mxio.ProtocolRemote), []uint8{}, []fuchsia.Handle{}},
+	{rio.OpOpen, 12, 34, []uint8{'f', 'i', 'l', 'e'}, 0, int64(mxio.ProtocolRemote), []uint8{}, []mx.Handle{}},
 	// IN: Nothing
 	// OUT: Retval: 0, Arg2: Protocol, Handles: Opened object (set elsewhere)
-	{rio.OpClone, 0, 0, []uint8{}, 0, int64(mxio.ProtocolRemote), []uint8{}, []fuchsia.Handle{}},
+	{rio.OpClone, 0, 0, []uint8{}, 0, int64(mxio.ProtocolRemote), []uint8{}, []mx.Handle{}},
 	// IN: Arg: Max bytes to read
 	// OUT: Retval: Bytes read, Arg2: New offset, Data: Data read
-	{rio.OpRead, 4, 0, []uint8{}, 4, 5, []uint8{'d', 'a', 't', 'a'}, []fuchsia.Handle{}},
+	{rio.OpRead, 4, 0, []uint8{}, 4, 5, []uint8{'d', 'a', 't', 'a'}, []mx.Handle{}},
 	// IN: Data: Data to write
 	// OUT: Retval: Bytes read, Arg2: New offset
-	{rio.OpWrite, 0, 0, []uint8{'i', 'n', 'p', 'u', 't'}, 5, 10, []uint8{}, []fuchsia.Handle{}},
+	{rio.OpWrite, 0, 0, []uint8{'i', 'n', 'p', 'u', 't'}, 5, 10, []uint8{}, []mx.Handle{}},
 	// IN: Arg: Whence, Arg2: Offset
 	// OUT: Retval: 0, Arg2: Offset
-	{rio.OpSeek, 1, 0x1234567, []uint8{}, 0, 0x7654321, []uint8{}, []fuchsia.Handle{}},
+	{rio.OpSeek, 1, 0x1234567, []uint8{}, 0, 0x7654321, []uint8{}, []mx.Handle{}},
 	// IN: Arg: Max length of "out", Arg2: Opcode (arbitrary), Data: Arbitrary bytes
 	// OUT: Retval: 0, Data: Arbitrary bytes
-	{rio.OpIoctl, rio.MessageChunkSize, 1337, []uint8{'i', 'n'}, 0, 0, []uint8{'o', 'u', 't'}, []fuchsia.Handle{}},
+	{rio.OpIoctl, rio.MessageChunkSize, 1337, []uint8{'i', 'n'}, 0, 0, []uint8{'o', 'u', 't'}, []mx.Handle{}},
 	// IN: Arg: Max length of "out", Arg2: Opcode (IoctlDevmgr)
 	// OUT: Retval: 0, Handles: Opened object (set elsewhere)
-	{rio.OpIoctl, rio.MessageChunkSize, int64(mxio.IoctlDevmgrMountFS), []uint8{}, 0, 0, []uint8{}, []fuchsia.Handle{}},
+	{rio.OpIoctl, rio.MessageChunkSize, int64(mxio.IoctlDevmgrMountFS), []uint8{}, 0, 0, []uint8{}, []mx.Handle{}},
 	// IN: Nothing
 	// OUT: Nothing
-	{rio.OpClose, 0, 0, []uint8{}, 0, 0, []uint8{}, []fuchsia.Handle{}},
+	{rio.OpClose, 0, 0, []uint8{}, 0, 0, []uint8{}, []mx.Handle{}},
 }
 
 func checkOpen(client *rio.RemoteIO, opIndex int) {
 	// Create the expected return handle here, since dummy values would be rejected.
-	testHandles, err := fuchsia.MsgPipeCreate(0)
+	testHandles, err := mx.MsgPipeCreate(0)
 	if err != nil {
 		panic(err)
 	}
-	testData[opIndex].outHandles = []fuchsia.Handle{testHandles[0]}
+	testData[opIndex].outHandles = []mx.Handle{testHandles[0]}
 	_, err = client.Open(string(testData[opIndex].inData), testData[opIndex].inArg, uint32(testData[opIndex].inArg2))
 	if err != nil {
 		panic(err)
@@ -99,11 +99,11 @@ func checkOpen(client *rio.RemoteIO, opIndex int) {
 
 func checkClone(client *rio.RemoteIO, opIndex int) {
 	// Create the expected return handle here, since dummy values would be rejected.
-	testHandles, err := fuchsia.MsgPipeCreate(0)
+	testHandles, err := mx.MsgPipeCreate(0)
 	if err != nil {
 		panic(err)
 	}
-	testData[opIndex].outHandles = []fuchsia.Handle{testHandles[0]}
+	testData[opIndex].outHandles = []mx.Handle{testHandles[0]}
 	handles, err := client.Clone()
 	if err != nil {
 		panic(err)
@@ -147,11 +147,11 @@ func checkSeek(client *rio.RemoteIO, opIndex int) {
 func checkIoctl(client *rio.RemoteIO, opIndex int) {
 	if testData[opIndex].inArg2 == int64(mxio.IoctlDevmgrMountFS) {
 		// Create the expected return handle here, since dummy values would be rejected.
-		testHandles, err := fuchsia.MsgPipeCreate(0)
+		testHandles, err := mx.MsgPipeCreate(0)
 		if err != nil {
 			panic(err)
 		}
-		testData[opIndex].outHandles = []fuchsia.Handle{testHandles[0]}
+		testData[opIndex].outHandles = []mx.Handle{testHandles[0]}
 	}
 
 	outData, outHandles, err := client.Ioctl(uint32(testData[opIndex].inArg2), testData[opIndex].inData)
@@ -183,7 +183,7 @@ func main() {
 	// This function will be called on the "fake" server. Check that everything is plumbed through
 	// correctly. In a realistic use of RIO, this function might exist in another process
 	// completely.
-	serverCb := func(msg *rio.Msg, rh fuchsia.Handle, cookie int64) fuchsia.Status {
+	serverCb := func(msg *rio.Msg, rh mx.Handle, cookie int64) mx.Status {
 		// Check incoming message
 		if cookie != testCookie {
 			panic("Unexpected cookie")

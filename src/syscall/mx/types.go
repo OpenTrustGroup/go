@@ -4,7 +4,7 @@
 
 // +build fuchsia
 
-package fuchsia
+package mx
 
 const (
 	ErrOk Status = -iota
@@ -101,4 +101,4 @@ var EOF error = eof{}
 
 type eof struct{}
 
-func (eof) Error() string { return "fuchsia.EOF" }
+func (eof) Error() string { return "mx.EOF" }

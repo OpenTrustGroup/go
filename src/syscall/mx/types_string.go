@@ -2,7 +2,7 @@
 
 // +build fuchsia
 
-package fuchsia
+package mx
 
 const (
 	_Status_name_0 = "ErrWrongTypeErrRecurseTooDeepErrNotFileErrNotDirErrBadPath"
@@ -44,7 +44,7 @@ func (i Status) Error() string {
 		return _Status_name_5[_Status_index_5[i]:_Status_index_5[i+1]]
 	default:
 		var buf [20]byte
-		return "fuchsia.errno(" + string(itoa(buf[:], int(i))) + ")"
+		return "mx.errno(" + string(itoa(buf[:], int(i))) + ")"
 	}
 }
 

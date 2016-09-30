@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"internal/syscall/fuchsia/mxio/pipe"
+	"syscall/mx/mxio/pipe"
 )
 
 func (f *File) readdirnames(n int) (names []string, err error) {

@@ -8,21 +8,21 @@
 package rio
 
 import (
-	"internal/syscall/fuchsia"
-	"internal/syscall/fuchsia/mxio"
+	"syscall/mx"
+	"syscall/mx/mxio"
 	"unsafe"
 )
 
 // RemoteIO is an object which manages file-like operations on a remote object, accessible through a
 // handle.
 type RemoteIO struct {
-	h     fuchsia.Handle // Message pipe handle for the RPC
-	e     fuchsia.Handle // Event handle for device state signals
+	h     mx.Handle // Message pipe handle for the RPC
+	e     mx.Handle // Event handle for device state signals
 	flags uint32
 }
 
 // New returns a new RemoteIO object
-func New(handle []fuchsia.Handle) (*RemoteIO, error) {
+func New(handle []mx.Handle) (*RemoteIO, error) {
 	r := &RemoteIO{}
 	if len(handle) > 0 {
 		r.h = handle[0]
@@ -39,9 +39,9 @@ func New(handle []fuchsia.Handle) (*RemoteIO, error) {
 func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 	msg.Magic = MessageMagic
 	if !msg.IsValid() {
-		return 0, fuchsia.ErrInvalidArgs
+		return 0, mx.ErrInvalidArgs
 	}
-	rpipe, err := fuchsia.MsgPipeCreate(mxio.FlagReplyPipe)
+	rpipe, err := mx.MsgPipeCreate(mxio.FlagReplyPipe)
 	if err != nil {
 		return 0, err
 	}
@@ -51,7 +51,7 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 	msg.Handle[msg.Hcount] = rpipe[1]
 	msg.Hcount++
 	rh := rpipe[0]
-	defer fuchsia.HandleClose(rh) // Our end of the reply pipe -- close it before returning
+	defer mx.HandleClose(rh) // Our end of the reply pipe -- close it before returning
 
 	// Send the message (containing the reply pipe) over the RIO handle
 	if err := msg.WriteMsg(r.h); err != nil {
@@ -60,12 +60,12 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 	}
 
 	// Wait for a response on the reply pipe
-	signals, err := fuchsia.HandleWaitOne(rh, fuchsia.SignalReadable|fuchsia.SignalPeerClosed, fuchsia.TimensecInfinite)
+	signals, err := mx.HandleWaitOne(rh, mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite)
 	if err != nil {
 		return 0, err
-	} else if (signals.Satisfied&fuchsia.SignalPeerClosed != 0) &&
-		(signals.Satisfied&fuchsia.SignalReadable == 0) {
-		return 0, fuchsia.ErrRemoteClosed
+	} else if (signals.Satisfied&mx.SignalPeerClosed != 0) &&
+		(signals.Satisfied&mx.SignalReadable == 0) {
+		return 0, mx.ErrRemoteClosed
 	}
 
 	// Set the Handle count to the maximum possible value. This is just a conservative mechanism; if
@@ -80,15 +80,15 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 	}
 	// The kernel ensures that the reply pipe endpoint is the last handle returned
 	msg.Hcount--
-	fuchsia.HandleClose(msg.Handle[msg.Hcount])
+	mx.HandleClose(msg.Handle[msg.Hcount])
 
 	if !msg.IsValidIncoming(numBytes) || msg.Op() != OpStatus {
 		msg.DiscardHandles() // If these handles were transmitted poorly, drop them
-		return 0, fuchsia.ErrIO
+		return 0, mx.ErrIO
 	}
 
 	// Check for remote error
-	status := fuchsia.Status(msg.Arg)
+	status := mx.Status(msg.Arg)
 	if status < 0 {
 		msg.DiscardHandles() // Throw away any remaining handles; no one else will see them
 		return 0, status
@@ -106,7 +106,7 @@ func (r *RemoteIO) ReadAt(out []byte, off int64) (int, error) {
 }
 
 func (r *RemoteIO) read(op uint32, out []byte, off int64) (int, error) {
-	var status fuchsia.Status
+	var status mx.Status
 	size := uint32(len(out))
 	xferTotal := 0
 	for size > 0 {
@@ -129,7 +129,7 @@ func (r *RemoteIO) read(op uint32, out []byte, off int64) (int, error) {
 		msg.DiscardHandles()
 
 		if r > msg.Datalen || r > xfer {
-			status = fuchsia.ErrIO
+			status = mx.ErrIO
 			break
 		}
 		copy(out[xferTotal:], msg.Data[:r])
@@ -158,7 +158,7 @@ func (r *RemoteIO) WriteAt(p []byte, off int64) (int, error) {
 	return r.write(OpWriteAt, p, off)
 }
 func (r *RemoteIO) write(op uint32, p []byte, off int64) (int, error) {
-	var status fuchsia.Status
+	var status mx.Status
 	xferTotal := 0
 	for len(p) > 0 {
 		xfer := uint32(MessageChunkSize) // Write p in chunks
@@ -180,7 +180,7 @@ func (r *RemoteIO) write(op uint32, p []byte, off int64) (int, error) {
 		}
 		msg.DiscardHandles() // We shouldn't be receiving handles
 		if transferred > xfer {
-			status = fuchsia.ErrIO
+			status = mx.ErrIO
 			break
 		}
 		xferTotal += int(transferred)
@@ -189,7 +189,7 @@ func (r *RemoteIO) write(op uint32, p []byte, off int64) (int, error) {
 			off += int64(transferred)
 		}
 		if transferred < xfer { // Short write
-			status = fuchsia.ErrIO
+			status = mx.ErrIO
 			break
 		}
 	}
@@ -224,11 +224,11 @@ func (r *RemoteIO) Close() error {
 
 	rioHandle := r.h
 	r.h = 0
-	fuchsia.HandleClose(rioHandle)
+	mx.HandleClose(rioHandle)
 	if r.e > 0 {
 		rioHandle = r.e
 		r.e = 0
-		fuchsia.HandleClose(rioHandle)
+		mx.HandleClose(rioHandle)
 	}
 
 	if err != nil {
@@ -238,9 +238,9 @@ func (r *RemoteIO) Close() error {
 }
 
 // getObject requests an MXIO object remotely
-func (r *RemoteIO) getObject(op uint32, name string, flags int32, mode uint32) ([]fuchsia.Handle, mxio.Protocol, []byte, error) {
+func (r *RemoteIO) getObject(op uint32, name string, flags int32, mode uint32) ([]mx.Handle, mxio.Protocol, []byte, error) {
 	if len(name) > MessageChunkSize {
-		return nil, 0, nil, fuchsia.ErrInvalidArgs
+		return nil, 0, nil, mx.ErrInvalidArgs
 	}
 	var msg Msg
 	msg.SetOp(op)
@@ -276,13 +276,13 @@ func (r *RemoteIO) Open(path string, flags int32, mode uint32) (mxio.MXIO, error
 		println("unknown rio protocol, ", protocol)
 		// In the error case, the server may have given us handles -- close them
 		for i := range handles {
-			fuchsia.HandleClose(handles[i])
+			mx.HandleClose(handles[i])
 		}
-		return nil, fuchsia.ErrNotSupported
+		return nil, mx.ErrNotSupported
 	}
 }
 
-func (r *RemoteIO) Clone() ([]fuchsia.Handle, error) {
+func (r *RemoteIO) Clone() ([]mx.Handle, error) {
 	handles, _, _, err := r.getObject(OpClone, "", 0, 0)
 	if err != nil {
 		return nil, err
@@ -290,15 +290,15 @@ func (r *RemoteIO) Clone() ([]fuchsia.Handle, error) {
 	return handles, nil
 }
 
-func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []fuchsia.Handle, error) {
+func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error) {
 	var msg Msg
 	if len(in) > mxio.IoctlMaxInput {
-		return nil, nil, fuchsia.ErrInvalidArgs
+		return nil, nil, mx.ErrInvalidArgs
 	}
 	msg.SetOp(OpIoctl)
 	msg.Datalen = uint32(len(in))
 	if mxio.IoctlKind(op) == mxio.IoctlKindGetHandle {
-		msg.Arg = int32(unsafe.Sizeof(fuchsia.Handle(0)))
+		msg.Arg = int32(unsafe.Sizeof(mx.Handle(0)))
 	} else {
 		msg.Arg = MessageChunkSize
 	}
@@ -312,7 +312,7 @@ func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []fuchsia.Handle, error)
 
 	switch mxio.IoctlKind(op) {
 	case mxio.IoctlKindGetHandle:
-		var outHandles []fuchsia.Handle
+		var outHandles []mx.Handle
 		if msg.Hcount > 0 {
 			outHandles = append(outHandles, msg.Handle[0]) // Give the first handle back to the Ioctl caller
 			msg.Handle[0] = 0                              // Avoid closing this handle; we've put it in out
@@ -329,7 +329,7 @@ func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []fuchsia.Handle, error)
 
 func (r *RemoteIO) Misc(op uint32, in, out []byte) (n int, err error) {
 	if len(in) > MessageChunkSize || len(out) > MessageChunkSize {
-		return 0, fuchsia.ErrInvalidArgs
+		return 0, mx.ErrInvalidArgs
 	}
 
 	var msg Msg
@@ -344,7 +344,7 @@ func (r *RemoteIO) Misc(op uint32, in, out []byte) (n int, err error) {
 	msg.DiscardHandles()
 
 	if int(msg.Datalen) > len(out) {
-		return 0, fuchsia.ErrIO
+		return 0, mx.ErrIO
 	}
 	n = copy(out, msg.Data[:msg.Datalen])
 	return n, nil

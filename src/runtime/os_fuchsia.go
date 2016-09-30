@@ -5,7 +5,7 @@
 package runtime
 
 import (
-	"internal/syscall/fuchsia"
+	"syscall/mx"
 	"unsafe"
 )
 
@@ -20,43 +20,43 @@ func getRandomData(r []byte) {
 
 //go:nosplit
 func futexsleep(addr *uint32, val uint32, ns int64) {
-	timeout := fuchsia.Time(ns)
+	timeout := mx.Time(ns)
 	if ns < 0 {
-		timeout = fuchsia.TimensecInfinite
+		timeout = mx.TimensecInfinite
 	}
-	fuchsia.Sys_futex_wait((*int)(unsafe.Pointer(addr)), int(val), timeout)
+	mx.Sys_futex_wait((*int)(unsafe.Pointer(addr)), int(val), timeout)
 }
 
 //go:nosplit
 func futexwakeup(addr *uint32, cnt uint32) {
-	fuchsia.Sys_futex_wake((*int)(unsafe.Pointer(addr)), cnt)
+	mx.Sys_futex_wake((*int)(unsafe.Pointer(addr)), cnt)
 }
 
 //go:nosplit
 func osyield() {
-	fuchsia.Sys_nanosleep(0)
+	mx.Sys_nanosleep(0)
 }
 
 func osinit() {
-	ncpu = int32(fuchsia.Sys_num_cpus())
+	ncpu = int32(mx.Sys_num_cpus())
 
 	if _cgo_get_mxio_root != nil {
 		// mxio_init matches a Go struct of the same name in gcc_mxio.c.
 		type mxio_init struct {
-			rootClone   fuchsia.Handle
-			stdioClone  fuchsia.Handle
-			cwd         fuchsia.Handle
-			processSelf fuchsia.Handle
+			rootClone   mx.Handle
+			stdioClone  mx.Handle
+			cwd         mx.Handle
+			processSelf mx.Handle
 			_           int32
 			envlen      int32
 			environ     **byte
 		}
 		var handles mxio_init
 		asmcgocall(_cgo_get_mxio_root, unsafe.Pointer(&handles))
-		fuchsia.RootHandle = fuchsia.Handle(handles.rootClone)
-		fuchsia.StdioHandle = fuchsia.Handle(handles.stdioClone)
-		fuchsia.CwdHandle = fuchsia.Handle(handles.cwd)
-		fuchsia.ProcHandle = fuchsia.Handle(handles.processSelf)
+		mx.RootHandle = mx.Handle(handles.rootClone)
+		mx.StdioHandle = mx.Handle(handles.stdioClone)
+		mx.CwdHandle = mx.Handle(handles.cwd)
+		mx.ProcHandle = mx.Handle(handles.processSelf)
 
 		const maxEnvSize = 1 << 20 // arbitrary
 		envp := (*(*[maxEnvSize]*byte)(unsafe.Pointer(handles.environ)))[:handles.envlen]
@@ -132,16 +132,16 @@ var gothreadname = []byte("gothread")
 
 //go:nowritebarrier
 func newosproc(mp *m, stk unsafe.Pointer) {
-	p := fuchsia.Handle(0) // TODO: only works due to temporary hack in magenta
-	h := fuchsia.Sys_thread_create(p, &gothreadname[0], uint32(len(gothreadname)), 0)
+	p := mx.Handle(0) // TODO: only works due to temporary hack in magenta
+	h := mx.Sys_thread_create(p, &gothreadname[0], uint32(len(gothreadname)), 0)
 	if h < 0 {
-		println("runtime: newosproc fuchsia.Sys_thread_create failed:", h)
+		println("runtime: newosproc mx.Sys_thread_create failed:", h)
 		exit(2)
 	}
 
-	status := fuchsia.Sys_thread_start(h, funcPC(threadinit), uintptr(stk), uintptr(unsafe.Pointer(mp)), 0)
+	status := mx.Sys_thread_start(h, funcPC(threadinit), uintptr(stk), uintptr(unsafe.Pointer(mp)), 0)
 	if status < 0 {
-		println("runtime: newosproc fuchsia.Sys_thread_start failed:", h)
+		println("runtime: newosproc mx.Sys_thread_start failed:", h)
 		exit(2)
 	}
 }
@@ -159,7 +159,7 @@ type mx_proc_info struct {
 	version       uint32
 	next_tls_slot uint32
 	proc_args     *mx_proc_args
-	handle        *fuchsia.Handle
+	handle        *mx.Handle
 	handle_info   *uint32
 	handle_count  int32
 	argv          **byte
@@ -187,13 +187,13 @@ const _NSIG = 65 // TODO
 
 //go:nosplit
 func nanotime() int64 {
-	return int64(fuchsia.Sys_current_time())
+	return int64(mx.Sys_current_time())
 }
 
 //go:nosplit
 func write(fd uintptr, buf unsafe.Pointer, n int32) int32 {
 	if fd == 1 || fd == 2 {
-		fuchsia.Sys_debug_write(buf, uint32(n))
+		mx.Sys_debug_write(buf, uint32(n))
 	}
 	// TODO
 	return n
@@ -201,12 +201,12 @@ func write(fd uintptr, buf unsafe.Pointer, n int32) int32 {
 
 //go:nosplit
 func exit(code int32) {
-	fuchsia.Sys_exit(int(code))
+	mx.Sys_exit(int(code))
 }
 
 //go:nosplit
 func usleep(usec uint32) {
-	fuchsia.Sys_nanosleep(fuchsia.Time(usec * 1000))
+	mx.Sys_nanosleep(mx.Time(usec * 1000))
 }
 
 func signame(sig uint32) string {
@@ -222,7 +222,7 @@ func magenta_mktls() {
 //go:nosplit
 func magenta_settls(val uintptr) {
 	const ARCH_SET_FS = 0
-	status := fuchsia.Sys_thread_arch_prctl(0, ARCH_SET_FS, &val)
+	status := mx.Sys_thread_arch_prctl(0, ARCH_SET_FS, &val)
 	if status < 0 {
 		println("runtime: thread_arch_prctl failed err=", status)
 		exit(2)

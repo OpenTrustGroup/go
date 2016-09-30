@@ -52,12 +52,12 @@ TEXT runtime·threadinit(SB),NOSPLIT,$0
 	CLD				// convention is D is always left cleared
 	CALL	runtime·stackcheck(SB)	// clobbers AX,CX
 	CALL	runtime·mstart(SB)
-	// TODO CALL	internal/syscall/fuchsia·Sys_magenta_thread_exit(SB)
+	// TODO CALL	syscall/mx·Sys_magenta_thread_exit(SB)
 	RET
 
 // set tls base to DI
 // Note that this code is only used when CGO_ENABLED=0.
-// Not using internal/syscall/fuchsia so we can avoid setting up a G.
+// Not using syscall/mx so we can avoid setting up a G.
 //
 // TODO: make VSDO call directly here, avoid the syscall.
 TEXT runtime·settls(SB),NOSPLIT,$8

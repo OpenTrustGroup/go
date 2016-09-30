@@ -9,8 +9,8 @@ package rio
 import (
 	"unsafe"
 
-	"internal/syscall/fuchsia"
-	"internal/syscall/fuchsia/mxio"
+	"syscall/mx"
+	"syscall/mx/mxio"
 )
 
 const (
@@ -62,7 +62,7 @@ type MsgHeader struct {
 	arg2     int64
 	Reserved int32
 	Hcount   uint32
-	Handle   [MessageMaxHandles + 1]fuchsia.Handle // 3 handles + reply pipe
+	Handle   [MessageMaxHandles + 1]mx.Handle // 3 handles + reply pipe
 }
 
 // Msg is the message sent in the Remote IO protocol
@@ -72,23 +72,23 @@ type Msg struct {
 }
 
 // ReadMsg reads a message from a handle
-func (m *Msg) ReadMsg(h fuchsia.Handle) (numBytes, numHandles uint32, err error) {
+func (m *Msg) ReadMsg(h mx.Handle) (numBytes, numHandles uint32, err error) {
 	msgBytes := (*[MessageSizeMax]byte)(unsafe.Pointer(m))
-	numBytes, numHandles, err = fuchsia.MsgPipeRead(h, msgBytes[:], m.Handle[:], 0)
+	numBytes, numHandles, err = mx.MsgPipeRead(h, msgBytes[:], m.Handle[:], 0)
 	m.Hcount = numHandles
 	return
 }
 
 // WriteMsg writes a message to a handle
-func (m *Msg) WriteMsg(h fuchsia.Handle) error {
+func (m *Msg) WriteMsg(h mx.Handle) error {
 	msgBytes := (*[MessageSizeMax]byte)(unsafe.Pointer(m))
 
 	data := msgBytes[:MessageHeaderSize+m.Datalen]
-	var handles []fuchsia.Handle
+	var handles []mx.Handle
 	if m.Hcount > 0 {
 		handles = m.Handle[:m.Hcount]
 	}
-	return fuchsia.MsgPipeWrite(h, data, handles, 0)
+	return mx.MsgPipeWrite(h, data, handles, 0)
 }
 
 // HasReplyPipe returns if the message contains a reply pipe
@@ -149,6 +149,6 @@ func (m *Msg) IsValidIncoming(size uint32) bool {
 // DiscardHandles throws away any handles that might exist within the message
 func (m *Msg) DiscardHandles() {
 	for i := uint32(0); i < m.Hcount; i++ {
-		fuchsia.HandleClose(m.Handle[i])
+		mx.HandleClose(m.Handle[i])
 	}
 }

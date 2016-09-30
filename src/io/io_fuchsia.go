@@ -6,8 +6,10 @@
 
 package io
 
-import "internal/syscall/fuchsia"
+import (
+	"syscall/mx"
+)
 
 func init() {
-	fuchsia.EOF = EOF
+	mx.EOF = EOF
 }
