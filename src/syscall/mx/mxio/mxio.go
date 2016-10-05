@@ -38,6 +38,13 @@ const (
 	IoctlMaxInput = 1024
 )
 
+const (
+	PortPacketTypeKernel = iota
+	PortPacketTypeIosn
+	PortPacketTypeUser
+	PortPacketTypeException
+)
+
 // PacketHeader describes the following packet
 type PacketHeader struct {
 	Key        uint64

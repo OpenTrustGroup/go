@@ -77,42 +77,28 @@ func (d *Dispatcher) close() {
 	mx.HandleClose(d.ioport)
 }
 
-// Unbind a handler from the dispatcher to prevent further messages from arriving.
-func (d *Dispatcher) disconnectHandler(hr *handler, handlerID uint64) {
-	// Unbind handle from io port
-	mxio.IoPortBind(d.ioport, handlerID, hr.h, 0)
-
-	// Send a "SignalSignaled" close message to shut down the handler
-	var packet mxio.Packet
-	packet.Hdr.Key = handlerID
-	packet.Signals = mx.SignalSignaled
-	mxio.IoPortQueue(d.ioport, &packet, mxio.PacketSize)
-	hr.flags |= flagDisconnected
-}
-
-func (d *Dispatcher) closeHandler(hr *handler, handlerID uint64) {
-	mx.HandleClose(hr.h)
+func (d *Dispatcher) destroyHandler(hr *handler, handlerID uint64, doCloseCallback bool) {
+	if doCloseCallback {
+		d.callback(0, hr.callback, hr.cookie)
+	}
 	d.mu.Lock()
 	delete(d.handlers, handlerID)
 	d.mu.Unlock()
 }
 
-// drainAllMessages calls the dispatcher callback on each readable message on the specific handle.
-func (d *Dispatcher) drainAllMessages(hr *handler, handlerID uint64) (disconnected bool) {
-	for {
-		if err := d.callback(hr.h, hr.callback, hr.cookie); err != nil {
-			if err == ErrNoWork {
-				// No more messages to read
-				return false
-			}
-			if err != ErrDisconnectNoCallback {
-				// Synthesize a close
-				d.callback(0, hr.callback, hr.cookie)
-			}
-			d.disconnectHandler(hr, handlerID)
-			return true
-		}
+// Unbind a handler from the dispatcher to prevent further messages from arriving.
+func (d *Dispatcher) disconnectHandler(hr *handler, handlerID uint64, doCloseCallback bool) {
+	// close handle, so we get no further messages
+	mx.HandleClose(hr.h)
+
+	// Send a "SignalSignaled" close message to shut down the handler
+	var packet mxio.Packet
+	packet.Hdr.Key = handlerID
+	if doCloseCalback {
+		packet.Signals = mx.SignalSignaled
 	}
+	mxio.IoPortQueue(d.ioport, &packet, mxio.PacketSize)
+	hr.flags |= flagDisconnected
 }
 
 // Serve launches a dispatcher, which will continue serving 'forever'.
@@ -136,23 +122,24 @@ func (d *Dispatcher) Serve() {
 		}
 		if (hr.flags & flagDisconnected) != 0 {
 			// Do not process packets from disconnected handlers.
-			// Close handlers that receive the "SignalSignaled" close message.
-			if (packet.Signals & mx.SignalSignaled) != 0 {
-				d.closeHandler(hr, handlerID)
+			// Ignore all events until a "destroy" packet is received.
+			if packet.Hdr.PacketType == mxio.PortPacketTypeUser {
+				d.destroyHandler(hr, handlerID, (packet.Signals&mx.SignalSignaled) != 0)
 			}
 			continue
 		}
 		// Read everything we can from this single handler
 		if (packet.Signals & mx.SignalReadable) != 0 {
-			if d.drainAllMessages(hr, handlerID) {
-				// We disconnected from the handle -- don't bother considering a close
-				continue
+			if err := d.callback(hr.h, hr.callback, hr.cookie); err != nil {
+				if err != ErrNoWork {
+					d.disconnectHandler(hr, handlerID, err != nil)
+					continue
+				}
 			}
 		}
 		// We haven't yet disconnected from the handler. Should we?
 		if (packet.Signals & mx.SignalPeerClosed) != 0 {
-			d.callback(0, hr.callback, hr.cookie)
-			d.disconnectHandler(hr, handlerID)
+			d.disconnectHandler(hr, handlerID, true)
 		}
 	}
 }
@@ -180,5 +167,11 @@ func (d *Dispatcher) AddHandler(h mx.Handle, callback interface{}, cookie int64)
 	d.handlers[handlerID] = hr
 	d.mu.Unlock()
 
-	return mxio.IoPortBind(d.ioport, handlerID, h, mx.SignalReadable|mx.SignalPeerClosed)
+	err := mxio.IoPortBind(d.ioport, handlerID, h, mx.SignalReadable|mx.SignalPeerClosed)
+	if err != nil {
+		d.mu.Lock()
+		delete(d.handlers, handlerID)
+		d.mu.Unlock()
+	}
+	return err
 }
