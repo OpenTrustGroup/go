@@ -46,7 +46,7 @@ const (
 	OpUnlink
 	OpReadAt
 	OpWriteAt
-	OpUnused_
+	OpTruncate
 	OpRename
 	OpNumOps // The total number of operations
 

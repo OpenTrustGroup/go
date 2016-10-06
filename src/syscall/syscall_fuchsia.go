@@ -400,9 +400,30 @@ func Pwrite(fd int, p []byte, offset int64) (n int, err error) {
 	return f.WriteAt(p, offset)
 }
 
-func Truncate(path string, length int64) (err error) {
-	panic("syscall.Truncate TODO")
+func Ftruncate(fd int, length int64) (err error) {
+	fdsMu.Lock()
+	f := fds[fd-fdsOff]
+	fdsMu.Unlock()
+
+	_, err = f.Misc(rio.OpTruncate, length, nil, nil)
+	if err != nil {
+		return err
+	}
+	return nil
 }
+
+func Truncate(path string, length int64) (err error) {
+	fd, err := Open(path, O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	err = Ftruncate(fd, length)
+	if err2 := Close(fd); err == nil {
+		err = err2
+	}
+	return err
+}
+
 func Link(oldpath string, newpath string) (err error) {
 	return EOPNOTSUPP // no fuchsia support yet
 }
