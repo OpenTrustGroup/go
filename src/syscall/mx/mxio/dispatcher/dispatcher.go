@@ -94,7 +94,7 @@ func (d *Dispatcher) disconnectHandler(hr *handler, handlerID uint64, doCloseCal
 	// Send a "SignalSignaled" close message to shut down the handler
 	var packet mxio.Packet
 	packet.Hdr.Key = handlerID
-	if doCloseCalback {
+	if doCloseCallback {
 		packet.Signals = mx.SignalSignaled
 	}
 	mxio.IoPortQueue(d.ioport, &packet, mxio.PacketSize)
