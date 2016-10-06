@@ -188,7 +188,7 @@ func Rename(oldpath, newpath string) (err error) {
 	buf := make([]byte, len(oldpath)+len(newpath)+2)
 	copy(buf, oldpath)
 	copy(buf[len(oldpath)+1:], newpath)
-	_, err = f.Misc(rio.OpRename, buf, nil)
+	_, err = f.Misc(rio.OpRename, 0, buf, nil)
 	return err
 }
 
@@ -441,7 +441,7 @@ func Readdirnames(fd int, max int) (names []string, err error) {
 
 	for max != 0 {
 		buf := bufback[:]
-		n, err := f.Misc(rio.OpReaddir, nil, buf)
+		n, err := f.Misc(rio.OpReaddir, 0, nil, buf)
 		if err != nil {
 			return nil, err
 		}
