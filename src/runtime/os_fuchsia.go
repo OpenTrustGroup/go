@@ -190,10 +190,32 @@ func nanotime() int64 {
 	return int64(mx.Sys_current_time())
 }
 
+var logger mx.Handle
+var logBuffer []byte
+
 //go:nosplit
 func write(fd uintptr, buf unsafe.Pointer, n int32) int32 {
 	if fd == 1 || fd == 2 {
-		mx.Sys_debug_write(buf, uint32(n))
+		// This initialization mechanism is not thread-safe, but if the only calls to 'write' with
+		// these file descriptors come from print, they will already be serialized by a lock in
+		// print's implementation.
+		if logger <= 0 {
+			logger = mx.Sys_log_create(0)
+			logBuffer = make([]byte, 0, 1024)
+		}
+		if logger > 0 {
+			// Sys_log_write adds a newline to output buffers. To prevent fragmented logs, we buffer
+			// output until a newline character is encountered.
+			logBuffer = append(logBuffer, (*[1 << 30]byte)(buf)[:n]...)
+			if logBuffer[len(logBuffer)-1] == '\n' {
+				status := mx.Sys_log_write(logger, uint32(len(logBuffer)), unsafe.Pointer(&logBuffer[0]), 0)
+				// Flush buffer, regardless of status returned from write
+				logBuffer = logBuffer[:0]
+				if status < 0 {
+					return int32(status)
+				}
+			}
+		}
 	}
 	// TODO
 	return n
