@@ -1,0 +1,65 @@
+# Copyright 2016 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Compile a version of Go which is capable of building Go executables for
+# Fuchsia.
+action("go_runtime") {
+  script = "magenta.py"
+
+  outputs = [ "$target_gen_dir/bin/go" ]
+
+  args = [
+    "--fuchsia_root",
+    rebase_path("//."),
+    "--go_output_path",
+    rebase_path("$target_gen_dir/bin/go"),
+  ]
+
+  # Convert "host" and "target" info to "GO{ARCH,OS}" formats
+  if (host_os == "linux") {
+    args += [
+      "--go_bootstrap_path",
+      rebase_path("//buildtools/linux64/go"),
+      "--go_host_os",
+      "linux",
+    ]
+  } else if (host_os == "mac") {
+    args += [
+      "--go_bootstrap_path",
+      rebase_path("//buildtools/mac/go"),
+      "--go_host_os",
+      "darwin",
+    ]
+  } else {
+    assert(false, "Go cross compiler currently only supported on Linux and Mac")
+  }
+
+  if (host_cpu == "x64") {
+    args += [
+      "--go_host_arch",
+      "amd64",
+    ]
+  } else if (host_cpu == "arm64") {
+    args += [
+      "--go_host_arch",
+      "arm64",
+    ]
+  } else {
+    assert(false, "Unsupported Host CPU")
+  }
+
+  if (target_cpu == "x64") {
+    args += [
+      "--go_target_arch",
+      "amd64",
+    ]
+  } else if (target_cpu == "arm64") {
+    args += [
+      "--go_target_arch",
+      "arm64",
+    ]
+  } else {
+    assert(false, "Unsupported Target CPU")
+  }
+}
