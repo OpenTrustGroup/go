@@ -10,25 +10,25 @@ action("go_runtime") {
   outputs = [ "$target_gen_dir/bin/go" ]
 
   args = [
-    "--fuchsia_root",
+    "--fuchsia-root",
     rebase_path("//."),
-    "--go_output_path",
+    "--go-output-path",
     rebase_path("$target_gen_dir/bin/go"),
   ]
 
   # Convert "host" and "target" info to "GO{ARCH,OS}" formats
   if (host_os == "linux") {
     args += [
-      "--go_bootstrap_path",
+      "--go-bootstrap-path",
       rebase_path("//buildtools/linux64/go"),
-      "--go_host_os",
+      "--go-host-os",
       "linux",
     ]
   } else if (host_os == "mac") {
     args += [
-      "--go_bootstrap_path",
+      "--go-bootstrap-path",
       rebase_path("//buildtools/mac/go"),
-      "--go_host_os",
+      "--go-host-os",
       "darwin",
     ]
   } else {
@@ -37,12 +37,12 @@ action("go_runtime") {
 
   if (host_cpu == "x64") {
     args += [
-      "--go_host_arch",
+      "--go-host-arch",
       "amd64",
     ]
   } else if (host_cpu == "arm64") {
     args += [
-      "--go_host_arch",
+      "--go-host-arch",
       "arm64",
     ]
   } else {
@@ -51,12 +51,12 @@ action("go_runtime") {
 
   if (target_cpu == "x64") {
     args += [
-      "--go_target_arch",
+      "--go-target-arch",
       "amd64",
     ]
   } else if (target_cpu == "arm64") {
     args += [
-      "--go_target_arch",
+      "--go-target-arch",
       "arm64",
     ]
   } else {
