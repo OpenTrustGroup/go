@@ -28,7 +28,7 @@ func (f *File) Truncate(size int64) error {
 }
 
 func (f *File) Sync() error {
-	println("TODO os.Sync")
+	// TODO(smklein): Implement
 	return nil
 }
 
