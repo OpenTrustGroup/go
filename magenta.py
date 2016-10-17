@@ -48,8 +48,8 @@ def main():
 
     # TODO(smklein): Remove this hack once crawshaw fixes the corresponding
     # 'cmd/dst' bug.
-    rmtree(os.path.join(go_dir, 'pkg/fuchsia_' + args.go_target_arch))
-    rmtree(os.path.join(go_dir, 'pkg/fuchsia_' + args.go_target_arch + '_shared'))
+    rmtree(os.path.join(go_dir, 'pkg/fuchsia_' + args.go_target_arch), True)
+    rmtree(os.path.join(go_dir, 'pkg/fuchsia_' + args.go_target_arch + '_shared'), True)
 
     # Actually compile Go
     r = call(['./make.bash'], env=os.environ)
