@@ -98,7 +98,8 @@ func IoctlNumber(ioctl uint32) uint32 {
 }
 
 const (
-	IoctlKindGetHandle = 0x1
+	IoctlKindDefault = iota
+	IoctlKindGetHandle
 )
 
 const (
@@ -108,6 +109,7 @@ const (
 )
 
 var IoctlDevmgrMountFS = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevmgr, 0)
+var IoctlDevmgrUnmountFS = IoctlNum(IoctlKindDefault, IoctlFamilyDevmgr, 1)
 
 // IoPortCreate wraps the corresponding syscall
 func IoPortCreate(options uint32) (mx.Handle, error) {
