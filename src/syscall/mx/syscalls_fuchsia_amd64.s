@@ -15,64 +15,55 @@ TEXT ·Sys_exit(SB),NOSPLIT,$0-8
 	SYSCALL
 	RET
 
-// func Sys_debug_read(_ Handle, buffer unsafe.Pointer, length uint32) int
-TEXT ·Sys_debug_read(SB),NOSPLIT,$0-32
-	MOVL _+0(FP), DI
-	MOVQ buffer+8(FP), SI
-	MOVL length+16(FP), DX
+// func Sys_current_time() Time
+TEXT ·Sys_current_time(SB),NOSPLIT,$0-8
 	MOVQ $0xff00ff00000001, AX // 1
 	SYSCALL
-	MOVQ AX, ret+24(FP)
-	RET
-
-// func Sys_debug_write(buffer unsafe.Pointer, length uint32) int
-TEXT ·Sys_debug_write(SB),NOSPLIT,$0-24
-	MOVQ buffer+0(FP), DI
-	MOVL length+8(FP), SI
-	MOVQ $0xff00ff00000002, AX // 2
-	SYSCALL
-	MOVQ AX, ret+16(FP)
+	MOVQ AX, ret+0(FP)
 	RET
 
 // func Sys_nanosleep(nanoseconds Time) Status
 TEXT ·Sys_nanosleep(SB),NOSPLIT,$0-12
 	MOVQ nanoseconds+0(FP), DI
-	MOVQ $0xff00ff00000003, AX // 3
+	MOVQ $0xff00ff00000002, AX // 2
 	SYSCALL
 	MOVL AX, ret+8(FP)
 	RET
 
-// func Sys_current_time() Time
-TEXT ·Sys_current_time(SB),NOSPLIT,$0-8
-	MOVQ $0xff00ff00000004, AX // 4
+// func Sys_num_cpus() uint
+TEXT ·Sys_num_cpus(SB),NOSPLIT,$0-8
+	MOVQ $0xff00ff00000003, AX // 3
 	SYSCALL
 	MOVQ AX, ret+0(FP)
 	RET
 
-// func Sys_debug_send_command(_ Handle, buffer unsafe.Pointer, length uint32) int
-TEXT ·Sys_debug_send_command(SB),NOSPLIT,$0-32
+// func Sys_debug_read(_ Handle, buffer unsafe.Pointer, length uint32) Status
+TEXT ·Sys_debug_read(SB),NOSPLIT,$0-28
 	MOVL _+0(FP), DI
 	MOVQ buffer+8(FP), SI
 	MOVL length+16(FP), DX
 	MOVQ $0xff00ff00000005, AX // 5
 	SYSCALL
-	MOVQ AX, ret+24(FP)
+	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_num_cpus() uint
-TEXT ·Sys_num_cpus(SB),NOSPLIT,$0-8
+// func Sys_debug_write(buffer unsafe.Pointer, length uint32) Status
+TEXT ·Sys_debug_write(SB),NOSPLIT,$0-20
+	MOVQ buffer+0(FP), DI
+	MOVL length+8(FP), SI
 	MOVQ $0xff00ff00000006, AX // 6
 	SYSCALL
-	MOVQ AX, ret+0(FP)
+	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_debug_task_get_child(handle Handle, koid uint64) Handle
-TEXT ·Sys_debug_task_get_child(SB),NOSPLIT,$0-20
-	MOVL handle+0(FP), DI
-	MOVQ koid+8(FP), SI
+// func Sys_debug_send_command(_ Handle, buffer unsafe.Pointer, length uint32) Status
+TEXT ·Sys_debug_send_command(SB),NOSPLIT,$0-28
+	MOVL _+0(FP), DI
+	MOVQ buffer+8(FP), SI
+	MOVL length+16(FP), DX
 	MOVQ $0xff00ff00000007, AX // 7
 	SYSCALL
-	MOVL AX, ret+16(FP)
+	MOVL AX, ret+24(FP)
 	RET
 
 // func Sys_debug_transfer_handle(proc Handle, handle Handle) Handle
@@ -117,12 +108,24 @@ TEXT ·Sys_ktrace_read(SB),NOSPLIT,$0-32
 	MOVQ AX, ret+24(FP)
 	RET
 
-// func Sys_ktrace_control(handle Handle, action uint32, options uint32) Status
-TEXT ·Sys_ktrace_control(SB),NOSPLIT,$0-20
+// func Sys_ktrace_control(handle Handle, action uint32, options uint32, _ unsafe.Pointer) Status
+TEXT ·Sys_ktrace_control(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL action+4(FP), SI
 	MOVL options+8(FP), DX
+	MOVQ _+16(FP), R10
 	MOVQ $0xff00ff0000000c, AX // 12
+	SYSCALL
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_ktrace_write(handle Handle, id uint32, arg0 uint32, arg1 uint32) Status
+TEXT ·Sys_ktrace_write(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVL id+4(FP), SI
+	MOVL arg0+8(FP), DX
+	MOVL arg1+12(FP), R10
+	MOVQ $0xff00ff0000000d, AX // 13
 	SYSCALL
 	MOVL AX, ret+16(FP)
 	RET
@@ -231,6 +234,16 @@ TEXT ·Sys_object_get_info(SB),NOSPLIT,$0-40
 	MOVQ $0xff00ff0000002e, AX // 46
 	SYSCALL
 	MOVQ AX, ret+32(FP)
+	RET
+
+// func Sys_object_get_child(handle Handle, koid uint64, rights Rights) Handle
+TEXT ·Sys_object_get_child(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVQ koid+8(FP), SI
+	MOVL rights+16(FP), DX
+	MOVQ $0xff00ff0000002f, AX // 47
+	SYSCALL
+	MOVL AX, ret+24(FP)
 	RET
 
 // func Sys_thread_create(process Handle, name *uint8, name_len uint32, flags uint32) Handle
@@ -670,24 +683,24 @@ TEXT ·Sys_pci_map_config(SB),NOSPLIT,$0-12
 	MOVL AX, ret+8(FP)
 	RET
 
-// func Sys_pci_query_irq_mode_caps(handle Handle, mode int, out_max_irqs *uint32) Status
-TEXT ·Sys_pci_query_irq_mode_caps(SB),NOSPLIT,$0-28
+// func Sys_pci_query_irq_mode_caps(handle Handle, mode uint32, out_max_irqs *uint32) Status
+TEXT ·Sys_pci_query_irq_mode_caps(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
-	MOVQ mode+8(FP), SI
-	MOVQ out_max_irqs+16(FP), DX
+	MOVL mode+4(FP), SI
+	MOVQ out_max_irqs+8(FP), DX
 	MOVQ $0xff00ff000000bd, AX // 189
 	SYSCALL
-	MOVL AX, ret+24(FP)
+	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_pci_set_irq_mode(handle Handle, mode int, requested_irq_count uint32) Status
-TEXT ·Sys_pci_set_irq_mode(SB),NOSPLIT,$0-28
+// func Sys_pci_set_irq_mode(handle Handle, mode uint32, requested_irq_count uint32) Status
+TEXT ·Sys_pci_set_irq_mode(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
-	MOVQ mode+8(FP), SI
-	MOVL requested_irq_count+16(FP), DX
+	MOVL mode+4(FP), SI
+	MOVL requested_irq_count+8(FP), DX
 	MOVQ $0xff00ff000000be, AX // 190
 	SYSCALL
-	MOVL AX, ret+24(FP)
+	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_pci_init(handle Handle, init_buf *int, len uint32) Status
@@ -963,5 +976,14 @@ TEXT ·Sys_thread_write_state(SB),NOSPLIT,$0-28
 	MOVQ $0xff00ff00000123, AX // 291
 	SYSCALL
 	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_job_create(parent_job Handle, flags uint32) Handle
+TEXT ·Sys_job_create(SB),NOSPLIT,$0-12
+	MOVL parent_job+0(FP), DI
+	MOVL flags+4(FP), SI
+	MOVQ $0xff00ff0000012c, AX // 300
+	SYSCALL
+	MOVL AX, ret+8(FP)
 	RET
 

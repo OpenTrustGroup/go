@@ -1,3 +1,4 @@
+
 // Copyright 2016 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -45,11 +46,7 @@ func Sys_exit(retcode int)
 
 //go:noescape
 //go:nosplit
-func Sys_debug_read(_ Handle, buffer unsafe.Pointer, length uint32) int
-
-//go:noescape
-//go:nosplit
-func Sys_debug_write(buffer unsafe.Pointer, length uint32) int
+func Sys_current_time() Time
 
 //go:noescape
 //go:nosplit
@@ -57,19 +54,19 @@ func Sys_nanosleep(nanoseconds Time) Status
 
 //go:noescape
 //go:nosplit
-func Sys_current_time() Time
-
-//go:noescape
-//go:nosplit
-func Sys_debug_send_command(_ Handle, buffer unsafe.Pointer, length uint32) int
-
-//go:noescape
-//go:nosplit
 func Sys_num_cpus() uint
 
 //go:noescape
 //go:nosplit
-func Sys_debug_task_get_child(handle Handle, koid uint64) Handle
+func Sys_debug_read(_ Handle, buffer unsafe.Pointer, length uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_debug_write(buffer unsafe.Pointer, length uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_debug_send_command(_ Handle, buffer unsafe.Pointer, length uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -89,7 +86,11 @@ func Sys_ktrace_read(handle Handle, ptr unsafe.Pointer, off uint32, len uint32) 
 
 //go:noescape
 //go:nosplit
-func Sys_ktrace_control(handle Handle, action uint32, options uint32) Status
+func Sys_ktrace_control(handle Handle, action uint32, options uint32, _ unsafe.Pointer) Status
+
+//go:noescape
+//go:nosplit
+func Sys_ktrace_write(handle Handle, id uint32, arg0 uint32, arg1 uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -130,6 +131,10 @@ func Sys_object_signal(handle Handle, clear_mask uint32, set_mask uint32) Status
 //go:noescape
 //go:nosplit
 func Sys_object_get_info(handle Handle, topic uint32, topic_size uint16, buffer unsafe.Pointer, buffer_size uint) int
+
+//go:noescape
+//go:nosplit
+func Sys_object_get_child(handle Handle, koid uint64, rights Rights) Handle
 
 //go:noescape
 //go:nosplit
@@ -305,11 +310,11 @@ func Sys_pci_map_config(handle Handle) Handle
 
 //go:noescape
 //go:nosplit
-func Sys_pci_query_irq_mode_caps(handle Handle, mode int, out_max_irqs *uint32) Status
+func Sys_pci_query_irq_mode_caps(handle Handle, mode uint32, out_max_irqs *uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_pci_set_irq_mode(handle Handle, mode int, requested_irq_count uint32) Status
+func Sys_pci_set_irq_mode(handle Handle, mode uint32, requested_irq_count uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -418,3 +423,8 @@ func Sys_thread_read_state(handle Handle, kind uint32, buffer unsafe.Pointer, bu
 //go:noescape
 //go:nosplit
 func Sys_thread_write_state(handle Handle, kind uint32, buffer unsafe.Pointer, buffer_len uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_job_create(parent_job Handle, flags uint32) Handle
+

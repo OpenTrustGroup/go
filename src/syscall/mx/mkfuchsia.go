@@ -463,6 +463,9 @@ func (p *parser) parseType() (t magentaType, err error) {
 	if ident == "unsigned" {
 		ident = "unsigned " + p.nextIdent()
 	}
+	if ident == "volatile" {
+		ident = p.nextIdent()
+	}
 	p.skipWhitespace()
 	if p.r == '(' {
 		// Function pointer type. Consume the whole thing and write it off.
@@ -712,6 +715,7 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"mx_time_t":                mx_time_t,   // uint64_t nanoseconds
 	"mx_koid_t":                mx_koid_t,
 	"mx_handle_t":              mx_handle_t, // int32_t
+	"mx_futex_t":               mx_int,
 	"mx_signals_t":             mx_signals_t,
 	"mx_signals_state_t":       mx_signals_state_t,
 	"mx_waitset_result_t":      mx_waitset_result_t,
