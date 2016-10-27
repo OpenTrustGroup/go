@@ -70,6 +70,18 @@ func main() {
 	if *stubs {
 		fmt.Fprint(buf, stubsHeader)
 		for _, call := range syscalls {
+			fmt.Fprintf(buf, "//go:cgo_import_dynamic vdso_mx_%s mx_%s \"libmagenta.so.abi\"\n", call.name, call.name)
+		}
+		fmt.Fprint(buf, "\n")
+		for _, call := range syscalls {
+			fmt.Fprintf(buf, "//go:linkname vdso_mx_%s vdso_mx_%s\n", call.name, call.name)
+		}
+		fmt.Fprint(buf, "\nvar (\n")
+		for _, call := range syscalls {
+			fmt.Fprintf(buf, "\tvdso_mx_%s uintptr\n", call.name)
+		}
+		fmt.Fprint(buf, ")\n\n")
+		for _, call := range syscalls {
 			fmt.Fprint(buf, "//go:noescape\n")
 			fmt.Fprint(buf, "//go:nosplit\n")
 			printStub(buf, call)
@@ -164,7 +176,7 @@ func printStub(buf *bytes.Buffer, call magentaSyscallDef) {
 }
 
 // amd64RegArgs is the amd64 registers in function argument calling convention order
-var amd64RegArgs = []string{"DI", "SI", "DX", "R10", "R8", "R9", "R12", "R13"}
+var amd64RegArgs = []string{"DI", "SI", "DX", "CX", "R8", "R9", "R12", "R13"}
 
 // blockingSyscalls is a map of known syscalls which may block.
 var blockingSyscalls = map[string]bool{
@@ -215,8 +227,10 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 		fmt.Fprintf(buf, "\tMOV%s %s+%d(FP), %s\n", suffix, name, off, reg)
 		off += typeSize(t)
 	}
-	fmt.Fprintf(buf, "\tMOVQ $0x%x, AX // %d\n", MAGENTA_SYSCALL_MAGIC|call.number, call.number)
-	fmt.Fprintf(buf, "\tSYSCALL\n")
+	fmt.Fprintf(buf, "\tMOVQ vdso_mx_%s(SB), AX\n", call.name)
+	fmt.Fprintf(buf, "\tCALL AX\n")
+	//fmt.Fprintf(buf, "\tMOVQ $0x%x, AX // %d\n", MAGENTA_SYSCALL_MAGIC|call.number, call.number)
+	//fmt.Fprintf(buf, "\tSYSCALL\n")
 	if retSize := typeSize(call.ret); retSize > 0 {
 		suffix := "Q"
 		if retSize == 4 {

@@ -1,4 +1,3 @@
-
 // Copyright 2016 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -11,29 +10,29 @@
 // func Sys_exit(retcode int)
 TEXT ·Sys_exit(SB),NOSPLIT,$0-8
 	MOVQ retcode+0(FP), DI
-	MOVQ $0xff00ff00000000, AX // 0
-	SYSCALL
+	MOVQ vdso_mx_exit(SB), AX
+	CALL AX
 	RET
 
 // func Sys_current_time() Time
 TEXT ·Sys_current_time(SB),NOSPLIT,$0-8
-	MOVQ $0xff00ff00000001, AX // 1
-	SYSCALL
+	MOVQ vdso_mx_current_time(SB), AX
+	CALL AX
 	MOVQ AX, ret+0(FP)
 	RET
 
 // func Sys_nanosleep(nanoseconds Time) Status
 TEXT ·Sys_nanosleep(SB),NOSPLIT,$0-12
 	MOVQ nanoseconds+0(FP), DI
-	MOVQ $0xff00ff00000002, AX // 2
-	SYSCALL
+	MOVQ vdso_mx_nanosleep(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
 // func Sys_num_cpus() uint
 TEXT ·Sys_num_cpus(SB),NOSPLIT,$0-8
-	MOVQ $0xff00ff00000003, AX // 3
-	SYSCALL
+	MOVQ vdso_mx_num_cpus(SB), AX
+	CALL AX
 	MOVQ AX, ret+0(FP)
 	RET
 
@@ -42,8 +41,8 @@ TEXT ·Sys_debug_read(SB),NOSPLIT,$0-28
 	MOVL _+0(FP), DI
 	MOVQ buffer+8(FP), SI
 	MOVL length+16(FP), DX
-	MOVQ $0xff00ff00000005, AX // 5
-	SYSCALL
+	MOVQ vdso_mx_debug_read(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -51,8 +50,8 @@ TEXT ·Sys_debug_read(SB),NOSPLIT,$0-28
 TEXT ·Sys_debug_write(SB),NOSPLIT,$0-20
 	MOVQ buffer+0(FP), DI
 	MOVL length+8(FP), SI
-	MOVQ $0xff00ff00000006, AX // 6
-	SYSCALL
+	MOVQ vdso_mx_debug_write(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -61,8 +60,8 @@ TEXT ·Sys_debug_send_command(SB),NOSPLIT,$0-28
 	MOVL _+0(FP), DI
 	MOVQ buffer+8(FP), SI
 	MOVL length+16(FP), DX
-	MOVQ $0xff00ff00000007, AX // 7
-	SYSCALL
+	MOVQ vdso_mx_debug_send_command(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -70,8 +69,8 @@ TEXT ·Sys_debug_send_command(SB),NOSPLIT,$0-28
 TEXT ·Sys_debug_transfer_handle(SB),NOSPLIT,$0-12
 	MOVL proc+0(FP), DI
 	MOVL handle+4(FP), SI
-	MOVQ $0xff00ff00000008, AX // 8
-	SYSCALL
+	MOVQ vdso_mx_debug_transfer_handle(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
@@ -80,9 +79,9 @@ TEXT ·Sys_debug_read_memory(SB),NOSPLIT,$0-40
 	MOVL proc+0(FP), DI
 	MOVQ vaddr+8(FP), SI
 	MOVQ len+16(FP), DX
-	MOVQ buffer+24(FP), R10
-	MOVQ $0xff00ff00000009, AX // 9
-	SYSCALL
+	MOVQ buffer+24(FP), CX
+	MOVQ vdso_mx_debug_read_memory(SB), AX
+	CALL AX
 	MOVQ AX, ret+32(FP)
 	RET
 
@@ -91,9 +90,9 @@ TEXT ·Sys_debug_write_memory(SB),NOSPLIT,$0-40
 	MOVL proc+0(FP), DI
 	MOVQ vaddr+8(FP), SI
 	MOVQ len+16(FP), DX
-	MOVQ buffer+24(FP), R10
-	MOVQ $0xff00ff0000000a, AX // 10
-	SYSCALL
+	MOVQ buffer+24(FP), CX
+	MOVQ vdso_mx_debug_write_memory(SB), AX
+	CALL AX
 	MOVQ AX, ret+32(FP)
 	RET
 
@@ -102,9 +101,9 @@ TEXT ·Sys_ktrace_read(SB),NOSPLIT,$0-32
 	MOVL handle+0(FP), DI
 	MOVQ ptr+8(FP), SI
 	MOVL off+16(FP), DX
-	MOVL len+20(FP), R10
-	MOVQ $0xff00ff0000000b, AX // 11
-	SYSCALL
+	MOVL len+20(FP), CX
+	MOVQ vdso_mx_ktrace_read(SB), AX
+	CALL AX
 	MOVQ AX, ret+24(FP)
 	RET
 
@@ -113,9 +112,9 @@ TEXT ·Sys_ktrace_control(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL action+4(FP), SI
 	MOVL options+8(FP), DX
-	MOVQ _+16(FP), R10
-	MOVQ $0xff00ff0000000c, AX // 12
-	SYSCALL
+	MOVQ _+16(FP), CX
+	MOVQ vdso_mx_ktrace_control(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -124,17 +123,17 @@ TEXT ·Sys_ktrace_write(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVL id+4(FP), SI
 	MOVL arg0+8(FP), DX
-	MOVL arg1+12(FP), R10
-	MOVQ $0xff00ff0000000d, AX // 13
-	SYSCALL
+	MOVL arg1+12(FP), CX
+	MOVQ vdso_mx_ktrace_write(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_log_create(flags uint32) Handle
 TEXT ·Sys_log_create(SB),NOSPLIT,$0-12
 	MOVL flags+0(FP), DI
-	MOVQ $0xff00ff0000001e, AX // 30
-	SYSCALL
+	MOVQ vdso_mx_log_create(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
@@ -143,9 +142,9 @@ TEXT ·Sys_log_write(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL len+4(FP), SI
 	MOVQ buffer+8(FP), DX
-	MOVL flags+16(FP), R10
-	MOVQ $0xff00ff0000001f, AX // 31
-	SYSCALL
+	MOVL flags+16(FP), CX
+	MOVQ vdso_mx_log_write(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -154,17 +153,17 @@ TEXT ·Sys_log_read(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL len+4(FP), SI
 	MOVQ buffer+8(FP), DX
-	MOVL flags+16(FP), R10
-	MOVQ $0xff00ff00000020, AX // 32
-	SYSCALL
+	MOVL flags+16(FP), CX
+	MOVQ vdso_mx_log_read(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
 // func Sys_handle_close(handle Handle) Status
 TEXT ·Sys_handle_close(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
-	MOVQ $0xff00ff00000028, AX // 40
-	SYSCALL
+	MOVQ vdso_mx_handle_close(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
@@ -172,8 +171,8 @@ TEXT ·Sys_handle_close(SB),NOSPLIT,$0-12
 TEXT ·Sys_handle_duplicate(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
 	MOVL rights+4(FP), SI
-	MOVQ $0xff00ff00000029, AX // 41
-	SYSCALL
+	MOVQ vdso_mx_handle_duplicate(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
@@ -183,9 +182,9 @@ TEXT ·Sys_handle_wait_one(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL signals+4(FP), SI
 	MOVQ timeout+8(FP), DX
-	MOVQ signals_state+16(FP), R10
-	MOVQ $0xff00ff0000002a, AX // 42
-	SYSCALL
+	MOVQ signals_state+16(FP), CX
+	MOVQ vdso_mx_handle_wait_one(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	CALL runtime·exitsyscall(SB)
 	RET
@@ -196,11 +195,11 @@ TEXT ·Sys_handle_wait_many(SB),NOSPLIT,$0-52
 	MOVL count+0(FP), DI
 	MOVQ handles+8(FP), SI
 	MOVQ signals+16(FP), DX
-	MOVQ timeout+24(FP), R10
+	MOVQ timeout+24(FP), CX
 	MOVQ result_index+32(FP), R8
 	MOVQ signals_states+40(FP), R9
-	MOVQ $0xff00ff0000002b, AX // 43
-	SYSCALL
+	MOVQ vdso_mx_handle_wait_many(SB), AX
+	CALL AX
 	MOVL AX, ret+48(FP)
 	CALL runtime·exitsyscall(SB)
 	RET
@@ -209,8 +208,8 @@ TEXT ·Sys_handle_wait_many(SB),NOSPLIT,$0-52
 TEXT ·Sys_handle_replace(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
 	MOVL rights+4(FP), SI
-	MOVQ $0xff00ff0000002c, AX // 44
-	SYSCALL
+	MOVQ vdso_mx_handle_replace(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
@@ -219,8 +218,8 @@ TEXT ·Sys_object_signal(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVL clear_mask+4(FP), SI
 	MOVL set_mask+8(FP), DX
-	MOVQ $0xff00ff0000002d, AX // 45
-	SYSCALL
+	MOVQ vdso_mx_object_signal(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -229,10 +228,10 @@ TEXT ·Sys_object_get_info(SB),NOSPLIT,$0-40
 	MOVL handle+0(FP), DI
 	MOVL topic+4(FP), SI
 	MOVQ topic_size+8(FP), DX
-	MOVQ buffer+16(FP), R10
+	MOVQ buffer+16(FP), CX
 	MOVQ buffer_size+24(FP), R8
-	MOVQ $0xff00ff0000002e, AX // 46
-	SYSCALL
+	MOVQ vdso_mx_object_get_info(SB), AX
+	CALL AX
 	MOVQ AX, ret+32(FP)
 	RET
 
@@ -241,8 +240,8 @@ TEXT ·Sys_object_get_child(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVQ koid+8(FP), SI
 	MOVL rights+16(FP), DX
-	MOVQ $0xff00ff0000002f, AX // 47
-	SYSCALL
+	MOVQ vdso_mx_object_get_child(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -251,9 +250,9 @@ TEXT ·Sys_thread_create(SB),NOSPLIT,$0-28
 	MOVL process+0(FP), DI
 	MOVQ name+8(FP), SI
 	MOVL name_len+16(FP), DX
-	MOVL flags+20(FP), R10
-	MOVQ $0xff00ff00000032, AX // 50
-	SYSCALL
+	MOVL flags+20(FP), CX
+	MOVQ vdso_mx_thread_create(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -262,17 +261,17 @@ TEXT ·Sys_thread_start(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
 	MOVQ thread_entry+8(FP), SI
 	MOVQ stack+16(FP), DX
-	MOVQ arg1+24(FP), R10
+	MOVQ arg1+24(FP), CX
 	MOVQ arg2+32(FP), R8
-	MOVQ $0xff00ff00000033, AX // 51
-	SYSCALL
+	MOVQ vdso_mx_thread_start(SB), AX
+	CALL AX
 	MOVL AX, ret+40(FP)
 	RET
 
 // func Sys_thread_exit()
 TEXT ·Sys_thread_exit(SB),NOSPLIT,$0-0
-	MOVQ $0xff00ff00000034, AX // 52
-	SYSCALL
+	MOVQ vdso_mx_thread_exit(SB), AX
+	CALL AX
 	RET
 
 // func Sys_thread_arch_prctl(handle Handle, op uint32, value_ptr *uintptr) Status
@@ -280,8 +279,8 @@ TEXT ·Sys_thread_arch_prctl(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVL op+4(FP), SI
 	MOVQ value_ptr+8(FP), DX
-	MOVQ $0xff00ff00000035, AX // 53
-	SYSCALL
+	MOVQ vdso_mx_thread_arch_prctl(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -289,8 +288,8 @@ TEXT ·Sys_thread_arch_prctl(SB),NOSPLIT,$0-20
 TEXT ·Sys_msgpipe_create(SB),NOSPLIT,$0-20
 	MOVQ out_handles+0(FP), DI
 	MOVL flags+8(FP), SI
-	MOVQ $0xff00ff0000003c, AX // 60
-	SYSCALL
+	MOVQ vdso_mx_msgpipe_create(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -299,11 +298,11 @@ TEXT ·Sys_msgpipe_read(SB),NOSPLIT,$0-52
 	MOVL handle+0(FP), DI
 	MOVQ bytes+8(FP), SI
 	MOVQ num_bytes+16(FP), DX
-	MOVQ handles+24(FP), R10
+	MOVQ handles+24(FP), CX
 	MOVQ num_handles+32(FP), R8
 	MOVL flags+40(FP), R9
-	MOVQ $0xff00ff0000003d, AX // 61
-	SYSCALL
+	MOVQ vdso_mx_msgpipe_read(SB), AX
+	CALL AX
 	MOVL AX, ret+48(FP)
 	RET
 
@@ -312,11 +311,11 @@ TEXT ·Sys_msgpipe_write(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
 	MOVQ bytes+8(FP), SI
 	MOVL num_bytes+16(FP), DX
-	MOVQ handles+24(FP), R10
+	MOVQ handles+24(FP), CX
 	MOVL num_handles+32(FP), R8
 	MOVL flags+36(FP), R9
-	MOVQ $0xff00ff0000003e, AX // 62
-	SYSCALL
+	MOVQ vdso_mx_msgpipe_write(SB), AX
+	CALL AX
 	MOVL AX, ret+40(FP)
 	RET
 
@@ -325,16 +324,16 @@ TEXT ·Sys_interrupt_create(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVL vector+4(FP), SI
 	MOVL flags+8(FP), DX
-	MOVQ $0xff00ff00000046, AX // 70
-	SYSCALL
+	MOVQ vdso_mx_interrupt_create(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_interrupt_complete(handle Handle) Status
 TEXT ·Sys_interrupt_complete(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
-	MOVQ $0xff00ff00000047, AX // 71
-	SYSCALL
+	MOVQ vdso_mx_interrupt_complete(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
@@ -343,8 +342,8 @@ TEXT ·Sys_process_create(SB),NOSPLIT,$0-20
 	MOVQ name+0(FP), DI
 	MOVL name_len+8(FP), SI
 	MOVL flags+12(FP), DX
-	MOVQ $0xff00ff00000050, AX // 80
-	SYSCALL
+	MOVQ vdso_mx_process_create(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -353,11 +352,11 @@ TEXT ·Sys_process_start(SB),NOSPLIT,$0-44
 	MOVL process_handle+0(FP), DI
 	MOVL thread_handle+4(FP), SI
 	MOVQ entry+8(FP), DX
-	MOVQ stack+16(FP), R10
+	MOVQ stack+16(FP), CX
 	MOVL arg_handle+24(FP), R8
 	MOVQ arg2+32(FP), R9
-	MOVQ $0xff00ff00000052, AX // 82
-	SYSCALL
+	MOVQ vdso_mx_process_start(SB), AX
+	CALL AX
 	MOVL AX, ret+40(FP)
 	RET
 
@@ -366,11 +365,11 @@ TEXT ·Sys_process_map_vm(SB),NOSPLIT,$0-44
 	MOVL proc_handle+0(FP), DI
 	MOVL vmo_handle+4(FP), SI
 	MOVQ offset+8(FP), DX
-	MOVQ len+16(FP), R10
+	MOVQ len+16(FP), CX
 	MOVQ ptr+24(FP), R8
 	MOVL flags+32(FP), R9
-	MOVQ $0xff00ff00000053, AX // 83
-	SYSCALL
+	MOVQ vdso_mx_process_map_vm(SB), AX
+	CALL AX
 	MOVL AX, ret+40(FP)
 	RET
 
@@ -379,8 +378,8 @@ TEXT ·Sys_process_unmap_vm(SB),NOSPLIT,$0-28
 	MOVL proc_handle+0(FP), DI
 	MOVQ address+8(FP), SI
 	MOVQ len+16(FP), DX
-	MOVQ $0xff00ff00000054, AX // 84
-	SYSCALL
+	MOVQ vdso_mx_process_unmap_vm(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -389,9 +388,9 @@ TEXT ·Sys_process_protect_vm(SB),NOSPLIT,$0-36
 	MOVL proc_handle+0(FP), DI
 	MOVQ address+8(FP), SI
 	MOVQ len+16(FP), DX
-	MOVL prot+24(FP), R10
-	MOVQ $0xff00ff00000055, AX // 85
-	SYSCALL
+	MOVL prot+24(FP), CX
+	MOVQ vdso_mx_process_protect_vm(SB), AX
+	CALL AX
 	MOVL AX, ret+32(FP)
 	RET
 
@@ -399,24 +398,24 @@ TEXT ·Sys_process_protect_vm(SB),NOSPLIT,$0-36
 TEXT ·Sys_task_resume(SB),NOSPLIT,$0-12
 	MOVL task_handle+0(FP), DI
 	MOVL options+4(FP), SI
-	MOVQ $0xff00ff00000056, AX // 86
-	SYSCALL
+	MOVQ vdso_mx_task_resume(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
 // func Sys_task_kill(task_handle Handle) Status
 TEXT ·Sys_task_kill(SB),NOSPLIT,$0-12
 	MOVL task_handle+0(FP), DI
-	MOVQ $0xff00ff00000057, AX // 87
-	SYSCALL
+	MOVQ vdso_mx_task_kill(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
 // func Sys_event_create(options uint32) Handle
 TEXT ·Sys_event_create(SB),NOSPLIT,$0-12
 	MOVL options+0(FP), DI
-	MOVQ $0xff00ff0000005a, AX // 90
-	SYSCALL
+	MOVQ vdso_mx_event_create(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
@@ -424,8 +423,8 @@ TEXT ·Sys_event_create(SB),NOSPLIT,$0-12
 TEXT ·Sys_eventpair_create(SB),NOSPLIT,$0-20
 	MOVQ out_handles+0(FP), DI
 	MOVL flags+8(FP), SI
-	MOVQ $0xff00ff0000005b, AX // 91
-	SYSCALL
+	MOVQ vdso_mx_eventpair_create(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -434,8 +433,8 @@ TEXT ·Sys_futex_wait(SB),NOSPLIT,$0-28
 	MOVQ value_ptr+0(FP), DI
 	MOVQ current_value+8(FP), SI
 	MOVQ timeout+16(FP), DX
-	MOVQ $0xff00ff0000005d, AX // 93
-	SYSCALL
+	MOVQ vdso_mx_futex_wait(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -443,8 +442,8 @@ TEXT ·Sys_futex_wait(SB),NOSPLIT,$0-28
 TEXT ·Sys_futex_wake(SB),NOSPLIT,$0-20
 	MOVQ value_ptr+0(FP), DI
 	MOVL count+8(FP), SI
-	MOVQ $0xff00ff0000005e, AX // 94
-	SYSCALL
+	MOVQ vdso_mx_futex_wake(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -453,18 +452,18 @@ TEXT ·Sys_futex_requeue(SB),NOSPLIT,$0-44
 	MOVQ wake_ptr+0(FP), DI
 	MOVL wake_count+8(FP), SI
 	MOVQ current_value+16(FP), DX
-	MOVQ requeue_ptr+24(FP), R10
+	MOVQ requeue_ptr+24(FP), CX
 	MOVL requeue_count+32(FP), R8
-	MOVQ $0xff00ff0000005f, AX // 95
-	SYSCALL
+	MOVQ vdso_mx_futex_requeue(SB), AX
+	CALL AX
 	MOVL AX, ret+40(FP)
 	RET
 
 // func Sys_vmo_create(size uint64) Handle
 TEXT ·Sys_vmo_create(SB),NOSPLIT,$0-12
 	MOVQ size+0(FP), DI
-	MOVQ $0xff00ff00000064, AX // 100
-	SYSCALL
+	MOVQ vdso_mx_vmo_create(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
@@ -473,9 +472,9 @@ TEXT ·Sys_vmo_read(SB),NOSPLIT,$0-40
 	MOVL handle+0(FP), DI
 	MOVQ data+8(FP), SI
 	MOVQ offset+16(FP), DX
-	MOVQ len+24(FP), R10
-	MOVQ $0xff00ff00000065, AX // 101
-	SYSCALL
+	MOVQ len+24(FP), CX
+	MOVQ vdso_mx_vmo_read(SB), AX
+	CALL AX
 	MOVQ AX, ret+32(FP)
 	RET
 
@@ -484,9 +483,9 @@ TEXT ·Sys_vmo_write(SB),NOSPLIT,$0-40
 	MOVL handle+0(FP), DI
 	MOVQ data+8(FP), SI
 	MOVQ offset+16(FP), DX
-	MOVQ len+24(FP), R10
-	MOVQ $0xff00ff00000066, AX // 102
-	SYSCALL
+	MOVQ len+24(FP), CX
+	MOVQ vdso_mx_vmo_write(SB), AX
+	CALL AX
 	MOVQ AX, ret+32(FP)
 	RET
 
@@ -494,8 +493,8 @@ TEXT ·Sys_vmo_write(SB),NOSPLIT,$0-40
 TEXT ·Sys_vmo_get_size(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVQ size+8(FP), SI
-	MOVQ $0xff00ff00000067, AX // 103
-	SYSCALL
+	MOVQ vdso_mx_vmo_get_size(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -503,8 +502,8 @@ TEXT ·Sys_vmo_get_size(SB),NOSPLIT,$0-20
 TEXT ·Sys_vmo_set_size(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVQ size+8(FP), SI
-	MOVQ $0xff00ff00000068, AX // 104
-	SYSCALL
+	MOVQ vdso_mx_vmo_set_size(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -513,11 +512,11 @@ TEXT ·Sys_vmo_op_range(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
 	MOVL op+4(FP), SI
 	MOVQ offset+8(FP), DX
-	MOVQ size+16(FP), R10
+	MOVQ size+16(FP), CX
 	MOVQ buffer+24(FP), R8
 	MOVQ buffer_size+32(FP), R9
-	MOVQ $0xff00ff00000069, AX // 105
-	SYSCALL
+	MOVQ vdso_mx_vmo_op_range(SB), AX
+	CALL AX
 	MOVL AX, ret+40(FP)
 	RET
 
@@ -526,8 +525,8 @@ TEXT ·Sys_mmap_device_io(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVL io_addr+4(FP), SI
 	MOVL len+8(FP), DX
-	MOVQ $0xff00ff0000006e, AX // 110
-	SYSCALL
+	MOVQ vdso_mx_mmap_device_io(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -536,10 +535,10 @@ TEXT ·Sys_mmap_device_memory(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
 	MOVQ paddr+8(FP), SI
 	MOVL len+16(FP), DX
-	MOVQ cache_policy+24(FP), R10
+	MOVQ cache_policy+24(FP), CX
 	MOVQ out_vaddr+32(FP), R8
-	MOVQ $0xff00ff0000006f, AX // 111
-	SYSCALL
+	MOVQ vdso_mx_mmap_device_memory(SB), AX
+	CALL AX
 	MOVL AX, ret+40(FP)
 	RET
 
@@ -548,9 +547,9 @@ TEXT ·Sys_alloc_device_memory(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL len+4(FP), SI
 	MOVQ out_paddr+8(FP), DX
-	MOVQ out_vaddr+16(FP), R10
-	MOVQ $0xff00ff00000070, AX // 112
-	SYSCALL
+	MOVQ out_vaddr+16(FP), CX
+	MOVQ vdso_mx_alloc_device_memory(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -558,8 +557,8 @@ TEXT ·Sys_alloc_device_memory(SB),NOSPLIT,$0-28
 TEXT ·Sys_cprng_draw(SB),NOSPLIT,$0-24
 	MOVQ buffer+0(FP), DI
 	MOVQ len+8(FP), SI
-	MOVQ $0xff00ff000000a0, AX // 160
-	SYSCALL
+	MOVQ vdso_mx_cprng_draw(SB), AX
+	CALL AX
 	MOVQ AX, ret+16(FP)
 	RET
 
@@ -567,8 +566,8 @@ TEXT ·Sys_cprng_draw(SB),NOSPLIT,$0-24
 TEXT ·Sys_cprng_add_entropy(SB),NOSPLIT,$0-20
 	MOVQ buffer+0(FP), DI
 	MOVQ len+8(FP), SI
-	MOVQ $0xff00ff000000a1, AX // 161
-	SYSCALL
+	MOVQ vdso_mx_cprng_add_entropy(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -577,9 +576,9 @@ TEXT ·Sys_bootloader_fb_get_info(SB),NOSPLIT,$0-36
 	MOVQ format+0(FP), DI
 	MOVQ width+8(FP), SI
 	MOVQ height+16(FP), DX
-	MOVQ stride+24(FP), R10
-	MOVQ $0xff00ff000000aa, AX // 170
-	SYSCALL
+	MOVQ stride+24(FP), CX
+	MOVQ vdso_mx_bootloader_fb_get_info(SB), AX
+	CALL AX
 	MOVL AX, ret+32(FP)
 	RET
 
@@ -588,12 +587,12 @@ TEXT ·Sys_set_framebuffer(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
 	MOVQ vaddr+8(FP), SI
 	MOVL len+16(FP), DX
-	MOVL format+20(FP), R10
+	MOVL format+20(FP), CX
 	MOVL width+24(FP), R8
 	MOVL height+28(FP), R9
 	MOVL stride+32(FP), R12
-	MOVQ $0xff00ff000000ab, AX // 171
-	SYSCALL
+	MOVQ vdso_mx_set_framebuffer(SB), AX
+	CALL AX
 	MOVL AX, ret+40(FP)
 	RET
 
@@ -602,16 +601,16 @@ TEXT ·Sys_pci_get_nth_device(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVL index+4(FP), SI
 	MOVQ out_info+8(FP), DX
-	MOVQ $0xff00ff000000b4, AX // 180
-	SYSCALL
+	MOVQ vdso_mx_pci_get_nth_device(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_pci_claim_device(handle Handle) Status
 TEXT ·Sys_pci_claim_device(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
-	MOVQ $0xff00ff000000b5, AX // 181
-	SYSCALL
+	MOVQ vdso_mx_pci_claim_device(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
@@ -619,16 +618,16 @@ TEXT ·Sys_pci_claim_device(SB),NOSPLIT,$0-12
 TEXT ·Sys_pci_enable_bus_master(SB),NOSPLIT,$0-9
 	MOVL handle+0(FP), DI
 	MOVQ enable+4(FP), SI
-	MOVQ $0xff00ff000000b6, AX // 182
-	SYSCALL
+	MOVQ vdso_mx_pci_enable_bus_master(SB), AX
+	CALL AX
 	MOVL AX, ret+5(FP)
 	RET
 
 // func Sys_pci_reset_device(handle Handle) Status
 TEXT ·Sys_pci_reset_device(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
-	MOVQ $0xff00ff000000b7, AX // 183
-	SYSCALL
+	MOVQ vdso_mx_pci_reset_device(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
@@ -637,8 +636,8 @@ TEXT ·Sys_pci_map_mmio(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVL bar_num+4(FP), SI
 	MOVQ cache_policy+8(FP), DX
-	MOVQ $0xff00ff000000b8, AX // 184
-	SYSCALL
+	MOVQ vdso_mx_pci_map_mmio(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -647,10 +646,10 @@ TEXT ·Sys_pci_io_write(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL bar_num+4(FP), SI
 	MOVL offset+8(FP), DX
-	MOVL len+12(FP), R10
+	MOVL len+12(FP), CX
 	MOVL value+16(FP), R8
-	MOVQ $0xff00ff000000b9, AX // 185
-	SYSCALL
+	MOVQ vdso_mx_pci_io_write(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -659,10 +658,10 @@ TEXT ·Sys_pci_io_read(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL bar_num+4(FP), SI
 	MOVL offset+8(FP), DX
-	MOVL len+12(FP), R10
+	MOVL len+12(FP), CX
 	MOVQ out_value+16(FP), R8
-	MOVQ $0xff00ff000000ba, AX // 186
-	SYSCALL
+	MOVQ vdso_mx_pci_io_read(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -670,16 +669,16 @@ TEXT ·Sys_pci_io_read(SB),NOSPLIT,$0-28
 TEXT ·Sys_pci_map_interrupt(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
 	MOVL which_irq+4(FP), SI
-	MOVQ $0xff00ff000000bb, AX // 187
-	SYSCALL
+	MOVQ vdso_mx_pci_map_interrupt(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
 // func Sys_pci_map_config(handle Handle) Handle
 TEXT ·Sys_pci_map_config(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
-	MOVQ $0xff00ff000000bc, AX // 188
-	SYSCALL
+	MOVQ vdso_mx_pci_map_config(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
@@ -688,8 +687,8 @@ TEXT ·Sys_pci_query_irq_mode_caps(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVL mode+4(FP), SI
 	MOVQ out_max_irqs+8(FP), DX
-	MOVQ $0xff00ff000000bd, AX // 189
-	SYSCALL
+	MOVQ vdso_mx_pci_query_irq_mode_caps(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -698,8 +697,8 @@ TEXT ·Sys_pci_set_irq_mode(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVL mode+4(FP), SI
 	MOVL requested_irq_count+8(FP), DX
-	MOVQ $0xff00ff000000be, AX // 190
-	SYSCALL
+	MOVQ vdso_mx_pci_set_irq_mode(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -708,8 +707,8 @@ TEXT ·Sys_pci_init(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVQ init_buf+8(FP), SI
 	MOVL len+16(FP), DX
-	MOVQ $0xff00ff000000bf, AX // 191
-	SYSCALL
+	MOVQ vdso_mx_pci_init(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -718,8 +717,8 @@ TEXT ·Sys_io_mapping_get_info(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVQ out_vaddr+8(FP), SI
 	MOVQ out_size+16(FP), DX
-	MOVQ $0xff00ff000000c8, AX // 200
-	SYSCALL
+	MOVQ vdso_mx_io_mapping_get_info(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -728,17 +727,17 @@ TEXT ·Sys_object_bind_exception_port(SB),NOSPLIT,$0-28
 	MOVL object+0(FP), DI
 	MOVL eport+4(FP), SI
 	MOVQ key+8(FP), DX
-	MOVL options+16(FP), R10
-	MOVQ $0xff00ff000000d3, AX // 211
-	SYSCALL
+	MOVL options+16(FP), CX
+	MOVQ vdso_mx_object_bind_exception_port(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
 // func Sys_port_create(options uint32) Handle
 TEXT ·Sys_port_create(SB),NOSPLIT,$0-12
 	MOVL options+0(FP), DI
-	MOVQ $0xff00ff000000dc, AX // 220
-	SYSCALL
+	MOVQ vdso_mx_port_create(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
@@ -747,8 +746,8 @@ TEXT ·Sys_port_queue(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVQ packet+8(FP), SI
 	MOVQ size+16(FP), DX
-	MOVQ $0xff00ff000000dd, AX // 221
-	SYSCALL
+	MOVQ vdso_mx_port_queue(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -758,8 +757,8 @@ TEXT ·Sys_port_wait(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVQ packet+8(FP), SI
 	MOVQ size+16(FP), DX
-	MOVQ $0xff00ff000000de, AX // 222
-	SYSCALL
+	MOVQ vdso_mx_port_wait(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	CALL runtime·exitsyscall(SB)
 	RET
@@ -769,20 +768,20 @@ TEXT ·Sys_port_bind(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVQ key+8(FP), SI
 	MOVL source+16(FP), DX
-	MOVL signals+20(FP), R10
-	MOVQ $0xff00ff000000df, AX // 223
-	SYSCALL
+	MOVL signals+20(FP), CX
+	MOVQ vdso_mx_port_bind(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_datapipe_create(options uint32, element_size uint, capacity uint, handle *Handle) Handle
+// func Sys_datapipe_create(options uint32, element_size uint, capacity uint, consumer_handle *Handle) Handle
 TEXT ·Sys_datapipe_create(SB),NOSPLIT,$0-36
 	MOVL options+0(FP), DI
 	MOVQ element_size+8(FP), SI
 	MOVQ capacity+16(FP), DX
-	MOVQ handle+24(FP), R10
-	MOVQ $0xff00ff000000e6, AX // 230
-	SYSCALL
+	MOVQ consumer_handle+24(FP), CX
+	MOVQ vdso_mx_datapipe_create(SB), AX
+	CALL AX
 	MOVL AX, ret+32(FP)
 	RET
 
@@ -791,9 +790,9 @@ TEXT ·Sys_datapipe_write(SB),NOSPLIT,$0-32
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
 	MOVQ requested+8(FP), DX
-	MOVQ buffer+16(FP), R10
-	MOVQ $0xff00ff000000e7, AX // 231
-	SYSCALL
+	MOVQ buffer+16(FP), CX
+	MOVQ vdso_mx_datapipe_write(SB), AX
+	CALL AX
 	MOVQ AX, ret+24(FP)
 	RET
 
@@ -802,9 +801,9 @@ TEXT ·Sys_datapipe_read(SB),NOSPLIT,$0-32
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
 	MOVQ requested+8(FP), DX
-	MOVQ buffer+16(FP), R10
-	MOVQ $0xff00ff000000e8, AX // 232
-	SYSCALL
+	MOVQ buffer+16(FP), CX
+	MOVQ vdso_mx_datapipe_read(SB), AX
+	CALL AX
 	MOVQ AX, ret+24(FP)
 	RET
 
@@ -813,8 +812,8 @@ TEXT ·Sys_datapipe_begin_write(SB),NOSPLIT,$0-24
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
 	MOVQ buffer+8(FP), DX
-	MOVQ $0xff00ff000000e9, AX // 233
-	SYSCALL
+	MOVQ vdso_mx_datapipe_begin_write(SB), AX
+	CALL AX
 	MOVQ AX, ret+16(FP)
 	RET
 
@@ -822,8 +821,8 @@ TEXT ·Sys_datapipe_begin_write(SB),NOSPLIT,$0-24
 TEXT ·Sys_datapipe_end_write(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVQ written+8(FP), SI
-	MOVQ $0xff00ff000000ea, AX // 234
-	SYSCALL
+	MOVQ vdso_mx_datapipe_end_write(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -832,8 +831,8 @@ TEXT ·Sys_datapipe_begin_read(SB),NOSPLIT,$0-24
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
 	MOVQ buffer+8(FP), DX
-	MOVQ $0xff00ff000000eb, AX // 235
-	SYSCALL
+	MOVQ vdso_mx_datapipe_begin_read(SB), AX
+	CALL AX
 	MOVQ AX, ret+16(FP)
 	RET
 
@@ -841,15 +840,15 @@ TEXT ·Sys_datapipe_begin_read(SB),NOSPLIT,$0-24
 TEXT ·Sys_datapipe_end_read(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVQ read+8(FP), SI
-	MOVQ $0xff00ff000000ec, AX // 236
-	SYSCALL
+	MOVQ vdso_mx_datapipe_end_read(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_waitset_create() Handle
 TEXT ·Sys_waitset_create(SB),NOSPLIT,$0-4
-	MOVQ $0xff00ff000000f0, AX // 240
-	SYSCALL
+	MOVQ vdso_mx_waitset_create(SB), AX
+	CALL AX
 	MOVL AX, ret+0(FP)
 	RET
 
@@ -858,9 +857,9 @@ TEXT ·Sys_waitset_add(SB),NOSPLIT,$0-28
 	MOVL waitset_handle+0(FP), DI
 	MOVL handle+4(FP), SI
 	MOVL signals+8(FP), DX
-	MOVQ cookie+16(FP), R10
-	MOVQ $0xff00ff000000f1, AX // 241
-	SYSCALL
+	MOVQ cookie+16(FP), CX
+	MOVQ vdso_mx_waitset_add(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -868,8 +867,8 @@ TEXT ·Sys_waitset_add(SB),NOSPLIT,$0-28
 TEXT ·Sys_waitset_remove(SB),NOSPLIT,$0-20
 	MOVL waitset_handle+0(FP), DI
 	MOVQ cookie+8(FP), SI
-	MOVQ $0xff00ff000000f2, AX // 242
-	SYSCALL
+	MOVQ vdso_mx_waitset_remove(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -879,10 +878,10 @@ TEXT ·Sys_waitset_wait(SB),NOSPLIT,$0-44
 	MOVL waitset_handle+0(FP), DI
 	MOVQ timeout+8(FP), SI
 	MOVQ num_results+16(FP), DX
-	MOVQ results+24(FP), R10
+	MOVQ results+24(FP), CX
 	MOVQ max_results+32(FP), R8
-	MOVQ $0xff00ff000000f3, AX // 243
-	SYSCALL
+	MOVQ vdso_mx_waitset_wait(SB), AX
+	CALL AX
 	MOVL AX, ret+40(FP)
 	CALL runtime·exitsyscall(SB)
 	RET
@@ -892,9 +891,9 @@ TEXT ·Sys_object_get_property(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL property+4(FP), SI
 	MOVQ value+8(FP), DX
-	MOVQ size+16(FP), R10
-	MOVQ $0xff00ff000000fa, AX // 250
-	SYSCALL
+	MOVQ size+16(FP), CX
+	MOVQ vdso_mx_object_get_property(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -903,25 +902,25 @@ TEXT ·Sys_object_set_property(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL property+4(FP), SI
 	MOVQ value+8(FP), DX
-	MOVQ size+16(FP), R10
-	MOVQ $0xff00ff000000fb, AX // 251
-	SYSCALL
+	MOVQ size+16(FP), CX
+	MOVQ vdso_mx_object_set_property(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
 // func Sys_acpi_uefi_rsdp(handle Handle) uint32
 TEXT ·Sys_acpi_uefi_rsdp(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
-	MOVQ $0xff00ff00000104, AX // 260
-	SYSCALL
+	MOVQ vdso_mx_acpi_uefi_rsdp(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
 // func Sys_acpi_cache_flush(handle Handle) Status
 TEXT ·Sys_acpi_cache_flush(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
-	MOVQ $0xff00ff00000105, AX // 261
-	SYSCALL
+	MOVQ vdso_mx_acpi_cache_flush(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
@@ -929,8 +928,8 @@ TEXT ·Sys_acpi_cache_flush(SB),NOSPLIT,$0-12
 TEXT ·Sys_socket_create(SB),NOSPLIT,$0-20
 	MOVQ out_handles+0(FP), DI
 	MOVL flags+8(FP), SI
-	MOVQ $0xff00ff00000118, AX // 280
-	SYSCALL
+	MOVQ vdso_mx_socket_create(SB), AX
+	CALL AX
 	MOVL AX, ret+16(FP)
 	RET
 
@@ -939,9 +938,9 @@ TEXT ·Sys_socket_write(SB),NOSPLIT,$0-32
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
 	MOVQ size+8(FP), DX
-	MOVQ buffer+16(FP), R10
-	MOVQ $0xff00ff00000119, AX // 281
-	SYSCALL
+	MOVQ buffer+16(FP), CX
+	MOVQ vdso_mx_socket_write(SB), AX
+	CALL AX
 	MOVQ AX, ret+24(FP)
 	RET
 
@@ -950,9 +949,9 @@ TEXT ·Sys_socket_read(SB),NOSPLIT,$0-32
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
 	MOVQ size+8(FP), DX
-	MOVQ buffer+16(FP), R10
-	MOVQ $0xff00ff0000011a, AX // 282
-	SYSCALL
+	MOVQ buffer+16(FP), CX
+	MOVQ vdso_mx_socket_read(SB), AX
+	CALL AX
 	MOVQ AX, ret+24(FP)
 	RET
 
@@ -961,9 +960,9 @@ TEXT ·Sys_thread_read_state(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL kind+4(FP), SI
 	MOVQ buffer+8(FP), DX
-	MOVQ buffer_len+16(FP), R10
-	MOVQ $0xff00ff00000122, AX // 290
-	SYSCALL
+	MOVQ buffer_len+16(FP), CX
+	MOVQ vdso_mx_thread_read_state(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -972,9 +971,9 @@ TEXT ·Sys_thread_write_state(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL kind+4(FP), SI
 	MOVQ buffer+8(FP), DX
-	MOVL buffer_len+16(FP), R10
-	MOVQ $0xff00ff00000123, AX // 291
-	SYSCALL
+	MOVL buffer_len+16(FP), CX
+	MOVQ vdso_mx_thread_write_state(SB), AX
+	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
@@ -982,8 +981,8 @@ TEXT ·Sys_thread_write_state(SB),NOSPLIT,$0-28
 TEXT ·Sys_job_create(SB),NOSPLIT,$0-12
 	MOVL parent_job+0(FP), DI
 	MOVL flags+4(FP), SI
-	MOVQ $0xff00ff0000012c, AX // 300
-	SYSCALL
+	MOVQ vdso_mx_job_create(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 

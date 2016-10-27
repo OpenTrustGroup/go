@@ -1,4 +1,3 @@
-
 // Copyright 2016 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -38,6 +37,302 @@ type (
 		Reserved     uint32
 		SignalsState SignalsState
 	} // mx_waitset_result_t
+)
+
+//go:cgo_import_dynamic vdso_mx_exit mx_exit "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_current_time mx_current_time "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_nanosleep mx_nanosleep "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_num_cpus mx_num_cpus "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_debug_read mx_debug_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_debug_write mx_debug_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_debug_send_command mx_debug_send_command "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_debug_transfer_handle mx_debug_transfer_handle "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_debug_read_memory mx_debug_read_memory "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_debug_write_memory mx_debug_write_memory "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_ktrace_read mx_ktrace_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_ktrace_control mx_ktrace_control "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_ktrace_write mx_ktrace_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_log_create mx_log_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_log_write mx_log_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_log_read mx_log_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_handle_close mx_handle_close "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_handle_duplicate mx_handle_duplicate "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_handle_wait_one mx_handle_wait_one "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_handle_wait_many mx_handle_wait_many "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_handle_replace mx_handle_replace "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_object_signal mx_object_signal "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_object_get_info mx_object_get_info "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_object_get_child mx_object_get_child "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_thread_create mx_thread_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_thread_start mx_thread_start "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_thread_exit mx_thread_exit "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_thread_arch_prctl mx_thread_arch_prctl "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_msgpipe_create mx_msgpipe_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_msgpipe_read mx_msgpipe_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_msgpipe_write mx_msgpipe_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_interrupt_create mx_interrupt_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_interrupt_complete mx_interrupt_complete "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_process_create mx_process_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_process_start mx_process_start "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_process_map_vm mx_process_map_vm "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_process_unmap_vm mx_process_unmap_vm "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_process_protect_vm mx_process_protect_vm "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_task_resume mx_task_resume "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_task_kill mx_task_kill "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_event_create mx_event_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_eventpair_create mx_eventpair_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_futex_wait mx_futex_wait "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_futex_wake mx_futex_wake "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_futex_requeue mx_futex_requeue "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_vmo_create mx_vmo_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_vmo_read mx_vmo_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_vmo_write mx_vmo_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_vmo_get_size mx_vmo_get_size "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_vmo_set_size mx_vmo_set_size "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_vmo_op_range mx_vmo_op_range "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_mmap_device_io mx_mmap_device_io "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_mmap_device_memory mx_mmap_device_memory "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_alloc_device_memory mx_alloc_device_memory "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_cprng_draw mx_cprng_draw "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_cprng_add_entropy mx_cprng_add_entropy "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_bootloader_fb_get_info mx_bootloader_fb_get_info "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_set_framebuffer mx_set_framebuffer "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_pci_get_nth_device mx_pci_get_nth_device "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_pci_claim_device mx_pci_claim_device "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_pci_enable_bus_master mx_pci_enable_bus_master "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_pci_reset_device mx_pci_reset_device "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_pci_map_mmio mx_pci_map_mmio "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_pci_io_write mx_pci_io_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_pci_io_read mx_pci_io_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_pci_map_interrupt mx_pci_map_interrupt "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_pci_map_config mx_pci_map_config "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_pci_query_irq_mode_caps mx_pci_query_irq_mode_caps "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_pci_set_irq_mode mx_pci_set_irq_mode "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_pci_init mx_pci_init "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_io_mapping_get_info mx_io_mapping_get_info "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_object_bind_exception_port mx_object_bind_exception_port "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_port_create mx_port_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_port_queue mx_port_queue "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_port_wait mx_port_wait "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_port_bind mx_port_bind "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_create mx_datapipe_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_write mx_datapipe_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_read mx_datapipe_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_begin_write mx_datapipe_begin_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_end_write mx_datapipe_end_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_begin_read mx_datapipe_begin_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_end_read mx_datapipe_end_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_waitset_create mx_waitset_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_waitset_add mx_waitset_add "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_waitset_remove mx_waitset_remove "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_waitset_wait mx_waitset_wait "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_object_get_property mx_object_get_property "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_object_set_property mx_object_set_property "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_acpi_uefi_rsdp mx_acpi_uefi_rsdp "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_acpi_cache_flush mx_acpi_cache_flush "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_socket_create mx_socket_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_socket_write mx_socket_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_socket_read mx_socket_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_thread_read_state mx_thread_read_state "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_thread_write_state mx_thread_write_state "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_job_create mx_job_create "libmagenta.so.abi"
+
+//go:linkname vdso_mx_exit vdso_mx_exit
+//go:linkname vdso_mx_current_time vdso_mx_current_time
+//go:linkname vdso_mx_nanosleep vdso_mx_nanosleep
+//go:linkname vdso_mx_num_cpus vdso_mx_num_cpus
+//go:linkname vdso_mx_debug_read vdso_mx_debug_read
+//go:linkname vdso_mx_debug_write vdso_mx_debug_write
+//go:linkname vdso_mx_debug_send_command vdso_mx_debug_send_command
+//go:linkname vdso_mx_debug_transfer_handle vdso_mx_debug_transfer_handle
+//go:linkname vdso_mx_debug_read_memory vdso_mx_debug_read_memory
+//go:linkname vdso_mx_debug_write_memory vdso_mx_debug_write_memory
+//go:linkname vdso_mx_ktrace_read vdso_mx_ktrace_read
+//go:linkname vdso_mx_ktrace_control vdso_mx_ktrace_control
+//go:linkname vdso_mx_ktrace_write vdso_mx_ktrace_write
+//go:linkname vdso_mx_log_create vdso_mx_log_create
+//go:linkname vdso_mx_log_write vdso_mx_log_write
+//go:linkname vdso_mx_log_read vdso_mx_log_read
+//go:linkname vdso_mx_handle_close vdso_mx_handle_close
+//go:linkname vdso_mx_handle_duplicate vdso_mx_handle_duplicate
+//go:linkname vdso_mx_handle_wait_one vdso_mx_handle_wait_one
+//go:linkname vdso_mx_handle_wait_many vdso_mx_handle_wait_many
+//go:linkname vdso_mx_handle_replace vdso_mx_handle_replace
+//go:linkname vdso_mx_object_signal vdso_mx_object_signal
+//go:linkname vdso_mx_object_get_info vdso_mx_object_get_info
+//go:linkname vdso_mx_object_get_child vdso_mx_object_get_child
+//go:linkname vdso_mx_thread_create vdso_mx_thread_create
+//go:linkname vdso_mx_thread_start vdso_mx_thread_start
+//go:linkname vdso_mx_thread_exit vdso_mx_thread_exit
+//go:linkname vdso_mx_thread_arch_prctl vdso_mx_thread_arch_prctl
+//go:linkname vdso_mx_msgpipe_create vdso_mx_msgpipe_create
+//go:linkname vdso_mx_msgpipe_read vdso_mx_msgpipe_read
+//go:linkname vdso_mx_msgpipe_write vdso_mx_msgpipe_write
+//go:linkname vdso_mx_interrupt_create vdso_mx_interrupt_create
+//go:linkname vdso_mx_interrupt_complete vdso_mx_interrupt_complete
+//go:linkname vdso_mx_process_create vdso_mx_process_create
+//go:linkname vdso_mx_process_start vdso_mx_process_start
+//go:linkname vdso_mx_process_map_vm vdso_mx_process_map_vm
+//go:linkname vdso_mx_process_unmap_vm vdso_mx_process_unmap_vm
+//go:linkname vdso_mx_process_protect_vm vdso_mx_process_protect_vm
+//go:linkname vdso_mx_task_resume vdso_mx_task_resume
+//go:linkname vdso_mx_task_kill vdso_mx_task_kill
+//go:linkname vdso_mx_event_create vdso_mx_event_create
+//go:linkname vdso_mx_eventpair_create vdso_mx_eventpair_create
+//go:linkname vdso_mx_futex_wait vdso_mx_futex_wait
+//go:linkname vdso_mx_futex_wake vdso_mx_futex_wake
+//go:linkname vdso_mx_futex_requeue vdso_mx_futex_requeue
+//go:linkname vdso_mx_vmo_create vdso_mx_vmo_create
+//go:linkname vdso_mx_vmo_read vdso_mx_vmo_read
+//go:linkname vdso_mx_vmo_write vdso_mx_vmo_write
+//go:linkname vdso_mx_vmo_get_size vdso_mx_vmo_get_size
+//go:linkname vdso_mx_vmo_set_size vdso_mx_vmo_set_size
+//go:linkname vdso_mx_vmo_op_range vdso_mx_vmo_op_range
+//go:linkname vdso_mx_mmap_device_io vdso_mx_mmap_device_io
+//go:linkname vdso_mx_mmap_device_memory vdso_mx_mmap_device_memory
+//go:linkname vdso_mx_alloc_device_memory vdso_mx_alloc_device_memory
+//go:linkname vdso_mx_cprng_draw vdso_mx_cprng_draw
+//go:linkname vdso_mx_cprng_add_entropy vdso_mx_cprng_add_entropy
+//go:linkname vdso_mx_bootloader_fb_get_info vdso_mx_bootloader_fb_get_info
+//go:linkname vdso_mx_set_framebuffer vdso_mx_set_framebuffer
+//go:linkname vdso_mx_pci_get_nth_device vdso_mx_pci_get_nth_device
+//go:linkname vdso_mx_pci_claim_device vdso_mx_pci_claim_device
+//go:linkname vdso_mx_pci_enable_bus_master vdso_mx_pci_enable_bus_master
+//go:linkname vdso_mx_pci_reset_device vdso_mx_pci_reset_device
+//go:linkname vdso_mx_pci_map_mmio vdso_mx_pci_map_mmio
+//go:linkname vdso_mx_pci_io_write vdso_mx_pci_io_write
+//go:linkname vdso_mx_pci_io_read vdso_mx_pci_io_read
+//go:linkname vdso_mx_pci_map_interrupt vdso_mx_pci_map_interrupt
+//go:linkname vdso_mx_pci_map_config vdso_mx_pci_map_config
+//go:linkname vdso_mx_pci_query_irq_mode_caps vdso_mx_pci_query_irq_mode_caps
+//go:linkname vdso_mx_pci_set_irq_mode vdso_mx_pci_set_irq_mode
+//go:linkname vdso_mx_pci_init vdso_mx_pci_init
+//go:linkname vdso_mx_io_mapping_get_info vdso_mx_io_mapping_get_info
+//go:linkname vdso_mx_object_bind_exception_port vdso_mx_object_bind_exception_port
+//go:linkname vdso_mx_port_create vdso_mx_port_create
+//go:linkname vdso_mx_port_queue vdso_mx_port_queue
+//go:linkname vdso_mx_port_wait vdso_mx_port_wait
+//go:linkname vdso_mx_port_bind vdso_mx_port_bind
+//go:linkname vdso_mx_datapipe_create vdso_mx_datapipe_create
+//go:linkname vdso_mx_datapipe_write vdso_mx_datapipe_write
+//go:linkname vdso_mx_datapipe_read vdso_mx_datapipe_read
+//go:linkname vdso_mx_datapipe_begin_write vdso_mx_datapipe_begin_write
+//go:linkname vdso_mx_datapipe_end_write vdso_mx_datapipe_end_write
+//go:linkname vdso_mx_datapipe_begin_read vdso_mx_datapipe_begin_read
+//go:linkname vdso_mx_datapipe_end_read vdso_mx_datapipe_end_read
+//go:linkname vdso_mx_waitset_create vdso_mx_waitset_create
+//go:linkname vdso_mx_waitset_add vdso_mx_waitset_add
+//go:linkname vdso_mx_waitset_remove vdso_mx_waitset_remove
+//go:linkname vdso_mx_waitset_wait vdso_mx_waitset_wait
+//go:linkname vdso_mx_object_get_property vdso_mx_object_get_property
+//go:linkname vdso_mx_object_set_property vdso_mx_object_set_property
+//go:linkname vdso_mx_acpi_uefi_rsdp vdso_mx_acpi_uefi_rsdp
+//go:linkname vdso_mx_acpi_cache_flush vdso_mx_acpi_cache_flush
+//go:linkname vdso_mx_socket_create vdso_mx_socket_create
+//go:linkname vdso_mx_socket_write vdso_mx_socket_write
+//go:linkname vdso_mx_socket_read vdso_mx_socket_read
+//go:linkname vdso_mx_thread_read_state vdso_mx_thread_read_state
+//go:linkname vdso_mx_thread_write_state vdso_mx_thread_write_state
+//go:linkname vdso_mx_job_create vdso_mx_job_create
+
+var (
+	vdso_mx_exit                       uintptr
+	vdso_mx_current_time               uintptr
+	vdso_mx_nanosleep                  uintptr
+	vdso_mx_num_cpus                   uintptr
+	vdso_mx_debug_read                 uintptr
+	vdso_mx_debug_write                uintptr
+	vdso_mx_debug_send_command         uintptr
+	vdso_mx_debug_transfer_handle      uintptr
+	vdso_mx_debug_read_memory          uintptr
+	vdso_mx_debug_write_memory         uintptr
+	vdso_mx_ktrace_read                uintptr
+	vdso_mx_ktrace_control             uintptr
+	vdso_mx_ktrace_write               uintptr
+	vdso_mx_log_create                 uintptr
+	vdso_mx_log_write                  uintptr
+	vdso_mx_log_read                   uintptr
+	vdso_mx_handle_close               uintptr
+	vdso_mx_handle_duplicate           uintptr
+	vdso_mx_handle_wait_one            uintptr
+	vdso_mx_handle_wait_many           uintptr
+	vdso_mx_handle_replace             uintptr
+	vdso_mx_object_signal              uintptr
+	vdso_mx_object_get_info            uintptr
+	vdso_mx_object_get_child           uintptr
+	vdso_mx_thread_create              uintptr
+	vdso_mx_thread_start               uintptr
+	vdso_mx_thread_exit                uintptr
+	vdso_mx_thread_arch_prctl          uintptr
+	vdso_mx_msgpipe_create             uintptr
+	vdso_mx_msgpipe_read               uintptr
+	vdso_mx_msgpipe_write              uintptr
+	vdso_mx_interrupt_create           uintptr
+	vdso_mx_interrupt_complete         uintptr
+	vdso_mx_process_create             uintptr
+	vdso_mx_process_start              uintptr
+	vdso_mx_process_map_vm             uintptr
+	vdso_mx_process_unmap_vm           uintptr
+	vdso_mx_process_protect_vm         uintptr
+	vdso_mx_task_resume                uintptr
+	vdso_mx_task_kill                  uintptr
+	vdso_mx_event_create               uintptr
+	vdso_mx_eventpair_create           uintptr
+	vdso_mx_futex_wait                 uintptr
+	vdso_mx_futex_wake                 uintptr
+	vdso_mx_futex_requeue              uintptr
+	vdso_mx_vmo_create                 uintptr
+	vdso_mx_vmo_read                   uintptr
+	vdso_mx_vmo_write                  uintptr
+	vdso_mx_vmo_get_size               uintptr
+	vdso_mx_vmo_set_size               uintptr
+	vdso_mx_vmo_op_range               uintptr
+	vdso_mx_mmap_device_io             uintptr
+	vdso_mx_mmap_device_memory         uintptr
+	vdso_mx_alloc_device_memory        uintptr
+	vdso_mx_cprng_draw                 uintptr
+	vdso_mx_cprng_add_entropy          uintptr
+	vdso_mx_bootloader_fb_get_info     uintptr
+	vdso_mx_set_framebuffer            uintptr
+	vdso_mx_pci_get_nth_device         uintptr
+	vdso_mx_pci_claim_device           uintptr
+	vdso_mx_pci_enable_bus_master      uintptr
+	vdso_mx_pci_reset_device           uintptr
+	vdso_mx_pci_map_mmio               uintptr
+	vdso_mx_pci_io_write               uintptr
+	vdso_mx_pci_io_read                uintptr
+	vdso_mx_pci_map_interrupt          uintptr
+	vdso_mx_pci_map_config             uintptr
+	vdso_mx_pci_query_irq_mode_caps    uintptr
+	vdso_mx_pci_set_irq_mode           uintptr
+	vdso_mx_pci_init                   uintptr
+	vdso_mx_io_mapping_get_info        uintptr
+	vdso_mx_object_bind_exception_port uintptr
+	vdso_mx_port_create                uintptr
+	vdso_mx_port_queue                 uintptr
+	vdso_mx_port_wait                  uintptr
+	vdso_mx_port_bind                  uintptr
+	vdso_mx_datapipe_create            uintptr
+	vdso_mx_datapipe_write             uintptr
+	vdso_mx_datapipe_read              uintptr
+	vdso_mx_datapipe_begin_write       uintptr
+	vdso_mx_datapipe_end_write         uintptr
+	vdso_mx_datapipe_begin_read        uintptr
+	vdso_mx_datapipe_end_read          uintptr
+	vdso_mx_waitset_create             uintptr
+	vdso_mx_waitset_add                uintptr
+	vdso_mx_waitset_remove             uintptr
+	vdso_mx_waitset_wait               uintptr
+	vdso_mx_object_get_property        uintptr
+	vdso_mx_object_set_property        uintptr
+	vdso_mx_acpi_uefi_rsdp             uintptr
+	vdso_mx_acpi_cache_flush           uintptr
+	vdso_mx_socket_create              uintptr
+	vdso_mx_socket_write               uintptr
+	vdso_mx_socket_read                uintptr
+	vdso_mx_thread_read_state          uintptr
+	vdso_mx_thread_write_state         uintptr
+	vdso_mx_job_create                 uintptr
 )
 
 //go:noescape
@@ -346,7 +641,7 @@ func Sys_port_bind(handle Handle, key uint64, source Handle, signals Signals) St
 
 //go:noescape
 //go:nosplit
-func Sys_datapipe_create(options uint32, element_size uint, capacity uint, handle *Handle) Handle
+func Sys_datapipe_create(options uint32, element_size uint, capacity uint, consumer_handle *Handle) Handle
 
 //go:noescape
 //go:nosplit
@@ -427,4 +722,3 @@ func Sys_thread_write_state(handle Handle, kind uint32, buffer unsafe.Pointer, b
 //go:noescape
 //go:nosplit
 func Sys_job_create(parent_job Handle, flags uint32) Handle
-
