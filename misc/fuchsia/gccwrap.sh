@@ -7,7 +7,10 @@ if [ "$MAGENTA" == "" ]; then
 fi
 
 gccbin="$MAGENTA/prebuilt/downloads/x86_64-elf-6.2.0-$(uname)-x86_64/bin/x86_64-elf-gcc"
-magentabuild="$MAGENTA/build-magenta-pc-x86-64"
+
+# magenta builds go into the build configured out dir + /build-magenta
+# unclear now to pass in the global out dir
+magentabuild="$MAGENTA/../out/build-magenta/build-magenta-pc-x86-64"
 
 compiler=false
 extra_args=""
