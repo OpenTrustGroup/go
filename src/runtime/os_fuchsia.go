@@ -133,13 +133,14 @@ var gothreadname = []byte("gothread")
 //go:nowritebarrier
 func newosproc(mp *m, stk unsafe.Pointer) {
 	p := mx.Handle(0) // TODO: only works due to temporary hack in magenta
-	h := mx.Sys_thread_create(p, &gothreadname[0], uint32(len(gothreadname)), 0)
-	if h < 0 {
+	var h mx.Handle
+	status := mx.Sys_thread_create(p, &gothreadname[0], uint32(len(gothreadname)), 0, &h)
+	if status < 0 {
 		println("runtime: newosproc mx.Sys_thread_create failed:", h)
 		exit(2)
 	}
 
-	status := mx.Sys_thread_start(h, funcPC(threadinit), uintptr(stk), uintptr(unsafe.Pointer(mp)), 0)
+	status = mx.Sys_thread_start(h, funcPC(threadinit), uintptr(stk), uintptr(unsafe.Pointer(mp)), 0)
 	if status < 0 {
 		println("runtime: newosproc mx.Sys_thread_start failed:", h)
 		exit(2)
@@ -187,7 +188,8 @@ const _NSIG = 65 // TODO
 
 //go:nosplit
 func nanotime() int64 {
-	return int64(mx.Sys_current_time())
+	const MX_CLOCK_UTC = 1
+	return int64(mx.Sys_time_get(MX_CLOCK_UTC))
 }
 
 var logger mx.Handle
@@ -223,7 +225,7 @@ func write(fd uintptr, buf unsafe.Pointer, n int32) int32 {
 
 //go:nosplit
 func exit(code int32) {
-	mx.Sys_exit(int(code))
+	mx.Sys_process_exit(int(code))
 }
 
 //go:nosplit
