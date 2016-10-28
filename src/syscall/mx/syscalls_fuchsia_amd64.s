@@ -1,3 +1,4 @@
+
 // Copyright 2016 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -7,18 +8,19 @@
 
 #include "textflag.h"
 
-// func Sys_exit(retcode int)
-TEXT ·Sys_exit(SB),NOSPLIT,$0-8
+// func Sys_process_exit(retcode int)
+TEXT ·Sys_process_exit(SB),NOSPLIT,$0-8
 	MOVQ retcode+0(FP), DI
-	MOVQ vdso_mx_exit(SB), AX
+	MOVQ vdso_mx_process_exit(SB), AX
 	CALL AX
 	RET
 
-// func Sys_current_time() Time
-TEXT ·Sys_current_time(SB),NOSPLIT,$0-8
-	MOVQ vdso_mx_current_time(SB), AX
+// func Sys_time_get(clock_id uint32) Time
+TEXT ·Sys_time_get(SB),NOSPLIT,$0-16
+	MOVL clock_id+0(FP), DI
+	MOVQ vdso_mx_time_get(SB), AX
 	CALL AX
-	MOVQ AX, ret+0(FP)
+	MOVQ AX, ret+8(FP)
 	RET
 
 // func Sys_nanosleep(nanoseconds Time) Status
@@ -74,26 +76,28 @@ TEXT ·Sys_debug_transfer_handle(SB),NOSPLIT,$0-12
 	MOVL AX, ret+8(FP)
 	RET
 
-// func Sys_debug_read_memory(proc Handle, vaddr uintptr, len uint, buffer unsafe.Pointer) int
-TEXT ·Sys_debug_read_memory(SB),NOSPLIT,$0-40
+// func Sys_process_read_memory(proc Handle, vaddr uintptr, buffer unsafe.Pointer, len uint, actual *uint) Status
+TEXT ·Sys_process_read_memory(SB),NOSPLIT,$0-44
 	MOVL proc+0(FP), DI
 	MOVQ vaddr+8(FP), SI
-	MOVQ len+16(FP), DX
-	MOVQ buffer+24(FP), CX
-	MOVQ vdso_mx_debug_read_memory(SB), AX
+	MOVQ buffer+16(FP), DX
+	MOVQ len+24(FP), CX
+	MOVQ actual+32(FP), R8
+	MOVQ vdso_mx_process_read_memory(SB), AX
 	CALL AX
-	MOVQ AX, ret+32(FP)
+	MOVL AX, ret+40(FP)
 	RET
 
-// func Sys_debug_write_memory(proc Handle, vaddr uintptr, len uint, buffer unsafe.Pointer) int
-TEXT ·Sys_debug_write_memory(SB),NOSPLIT,$0-40
+// func Sys_process_write_memory(proc Handle, vaddr uintptr, buffer unsafe.Pointer, len uint, actual *uint) Status
+TEXT ·Sys_process_write_memory(SB),NOSPLIT,$0-44
 	MOVL proc+0(FP), DI
 	MOVQ vaddr+8(FP), SI
-	MOVQ len+16(FP), DX
-	MOVQ buffer+24(FP), CX
-	MOVQ vdso_mx_debug_write_memory(SB), AX
+	MOVQ buffer+16(FP), DX
+	MOVQ len+24(FP), CX
+	MOVQ actual+32(FP), R8
+	MOVQ vdso_mx_process_write_memory(SB), AX
 	CALL AX
-	MOVQ AX, ret+32(FP)
+	MOVL AX, ret+40(FP)
 	RET
 
 // func Sys_ktrace_read(handle Handle, ptr unsafe.Pointer, off uint32, len uint32) int
@@ -245,15 +249,16 @@ TEXT ·Sys_object_get_child(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_thread_create(process Handle, name *uint8, name_len uint32, flags uint32) Handle
-TEXT ·Sys_thread_create(SB),NOSPLIT,$0-28
+// func Sys_thread_create(process Handle, name *uint8, name_len uint32, flags uint32, out *Handle) Status
+TEXT ·Sys_thread_create(SB),NOSPLIT,$0-36
 	MOVL process+0(FP), DI
 	MOVQ name+8(FP), SI
 	MOVL name_len+16(FP), DX
 	MOVL flags+20(FP), CX
+	MOVQ out+24(FP), R8
 	MOVQ vdso_mx_thread_create(SB), AX
 	CALL AX
-	MOVL AX, ret+24(FP)
+	MOVL AX, ret+32(FP)
 	RET
 
 // func Sys_thread_start(handle Handle, thread_entry uintptr, stack uintptr, arg1 uintptr, arg2 uintptr) Status
@@ -284,37 +289,40 @@ TEXT ·Sys_thread_arch_prctl(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_msgpipe_create(out_handles *Handle, flags uint32) Status
-TEXT ·Sys_msgpipe_create(SB),NOSPLIT,$0-20
-	MOVQ out_handles+0(FP), DI
-	MOVL flags+8(FP), SI
-	MOVQ vdso_mx_msgpipe_create(SB), AX
+// func Sys_channel_create(options uint32, out0 *Handle, out1 *Handle) Status
+TEXT ·Sys_channel_create(SB),NOSPLIT,$0-28
+	MOVL options+0(FP), DI
+	MOVQ out0+8(FP), SI
+	MOVQ out1+16(FP), DX
+	MOVQ vdso_mx_channel_create(SB), AX
 	CALL AX
-	MOVL AX, ret+16(FP)
+	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_msgpipe_read(handle Handle, bytes unsafe.Pointer, num_bytes *uint32, handles *Handle, num_handles *uint32, flags uint32) Status
-TEXT ·Sys_msgpipe_read(SB),NOSPLIT,$0-52
+// func Sys_channel_read(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, actual_bytes *uint32, handles *Handle, num_handles uint32, actual_handles *uint32) Status
+TEXT ·Sys_channel_read(SB),NOSPLIT,$0-60
 	MOVL handle+0(FP), DI
-	MOVQ bytes+8(FP), SI
-	MOVQ num_bytes+16(FP), DX
-	MOVQ handles+24(FP), CX
-	MOVQ num_handles+32(FP), R8
-	MOVL flags+40(FP), R9
-	MOVQ vdso_mx_msgpipe_read(SB), AX
+	MOVL options+4(FP), SI
+	MOVQ bytes+8(FP), DX
+	MOVL num_bytes+16(FP), CX
+	MOVQ actual_bytes+24(FP), R8
+	MOVQ handles+32(FP), R9
+	MOVL num_handles+40(FP), R12
+	MOVQ actual_handles+48(FP), R13
+	MOVQ vdso_mx_channel_read(SB), AX
 	CALL AX
-	MOVL AX, ret+48(FP)
+	MOVL AX, ret+56(FP)
 	RET
 
-// func Sys_msgpipe_write(handle Handle, bytes unsafe.Pointer, num_bytes uint32, handles *Handle, num_handles uint32, flags uint32) Status
-TEXT ·Sys_msgpipe_write(SB),NOSPLIT,$0-44
+// func Sys_channel_write(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, handles *Handle, num_handles uint32) Status
+TEXT ·Sys_channel_write(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
-	MOVQ bytes+8(FP), SI
-	MOVL num_bytes+16(FP), DX
-	MOVQ handles+24(FP), CX
-	MOVL num_handles+32(FP), R8
-	MOVL flags+36(FP), R9
-	MOVQ vdso_mx_msgpipe_write(SB), AX
+	MOVL options+4(FP), SI
+	MOVQ bytes+8(FP), DX
+	MOVL num_bytes+16(FP), CX
+	MOVQ handles+24(FP), R8
+	MOVL num_handles+32(FP), R9
+	MOVQ vdso_mx_channel_write(SB), AX
 	CALL AX
 	MOVL AX, ret+40(FP)
 	RET
@@ -337,14 +345,15 @@ TEXT ·Sys_interrupt_complete(SB),NOSPLIT,$0-12
 	MOVL AX, ret+8(FP)
 	RET
 
-// func Sys_process_create(name *uint8, name_len uint32, flags uint32) Handle
-TEXT ·Sys_process_create(SB),NOSPLIT,$0-20
+// func Sys_process_create(name *uint8, name_len uint32, flags uint32, out *Handle) Handle
+TEXT ·Sys_process_create(SB),NOSPLIT,$0-28
 	MOVQ name+0(FP), DI
 	MOVL name_len+8(FP), SI
 	MOVL flags+12(FP), DX
+	MOVQ out+16(FP), CX
 	MOVQ vdso_mx_process_create(SB), AX
 	CALL AX
-	MOVL AX, ret+16(FP)
+	MOVL AX, ret+24(FP)
 	RET
 
 // func Sys_process_start(process_handle Handle, thread_handle Handle, entry uintptr, stack uintptr, arg_handle Handle, arg2 uintptr) Status
@@ -411,12 +420,13 @@ TEXT ·Sys_task_kill(SB),NOSPLIT,$0-12
 	MOVL AX, ret+8(FP)
 	RET
 
-// func Sys_event_create(options uint32) Handle
-TEXT ·Sys_event_create(SB),NOSPLIT,$0-12
+// func Sys_event_create(options uint32, out *Handle) Status
+TEXT ·Sys_event_create(SB),NOSPLIT,$0-20
 	MOVL options+0(FP), DI
+	MOVQ out+8(FP), SI
 	MOVQ vdso_mx_event_create(SB), AX
 	CALL AX
-	MOVL AX, ret+8(FP)
+	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_eventpair_create(out_handles *Handle, flags uint32) Status
@@ -733,12 +743,13 @@ TEXT ·Sys_object_bind_exception_port(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_port_create(options uint32) Handle
-TEXT ·Sys_port_create(SB),NOSPLIT,$0-12
+// func Sys_port_create(options uint32, out *Handle) Status
+TEXT ·Sys_port_create(SB),NOSPLIT,$0-20
 	MOVL options+0(FP), DI
+	MOVQ out+8(FP), SI
 	MOVQ vdso_mx_port_create(SB), AX
 	CALL AX
-	MOVL AX, ret+8(FP)
+	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_port_queue(handle Handle, packet unsafe.Pointer, size uint) Status
@@ -924,35 +935,38 @@ TEXT ·Sys_acpi_cache_flush(SB),NOSPLIT,$0-12
 	MOVL AX, ret+8(FP)
 	RET
 
-// func Sys_socket_create(out_handles *Handle, flags uint32) Status
-TEXT ·Sys_socket_create(SB),NOSPLIT,$0-20
-	MOVQ out_handles+0(FP), DI
-	MOVL flags+8(FP), SI
+// func Sys_socket_create(options uint32, out0 *Handle, out1 *Handle) Status
+TEXT ·Sys_socket_create(SB),NOSPLIT,$0-28
+	MOVL options+0(FP), DI
+	MOVQ out0+8(FP), SI
+	MOVQ out1+16(FP), DX
 	MOVQ vdso_mx_socket_create(SB), AX
 	CALL AX
-	MOVL AX, ret+16(FP)
+	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_socket_write(handle Handle, flags uint32, size uint, buffer unsafe.Pointer) int
-TEXT ·Sys_socket_write(SB),NOSPLIT,$0-32
+// func Sys_socket_write(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
+TEXT ·Sys_socket_write(SB),NOSPLIT,$0-36
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
-	MOVQ size+8(FP), DX
-	MOVQ buffer+16(FP), CX
+	MOVQ buffer+8(FP), DX
+	MOVQ len+16(FP), CX
+	MOVQ actual+24(FP), R8
 	MOVQ vdso_mx_socket_write(SB), AX
 	CALL AX
-	MOVQ AX, ret+24(FP)
+	MOVL AX, ret+32(FP)
 	RET
 
-// func Sys_socket_read(handle Handle, flags uint32, size uint, buffer unsafe.Pointer) int
-TEXT ·Sys_socket_read(SB),NOSPLIT,$0-32
+// func Sys_socket_read(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
+TEXT ·Sys_socket_read(SB),NOSPLIT,$0-36
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
-	MOVQ size+8(FP), DX
-	MOVQ buffer+16(FP), CX
+	MOVQ buffer+8(FP), DX
+	MOVQ len+16(FP), CX
+	MOVQ actual+24(FP), R8
 	MOVQ vdso_mx_socket_read(SB), AX
 	CALL AX
-	MOVQ AX, ret+24(FP)
+	MOVL AX, ret+32(FP)
 	RET
 
 // func Sys_thread_read_state(handle Handle, kind uint32, buffer unsafe.Pointer, buffer_len *uint32) Status
@@ -977,12 +991,13 @@ TEXT ·Sys_thread_write_state(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_job_create(parent_job Handle, flags uint32) Handle
-TEXT ·Sys_job_create(SB),NOSPLIT,$0-12
+// func Sys_job_create(parent_job Handle, flags uint32, out *Handle) Status
+TEXT ·Sys_job_create(SB),NOSPLIT,$0-20
 	MOVL parent_job+0(FP), DI
 	MOVL flags+4(FP), SI
+	MOVQ out+8(FP), DX
 	MOVQ vdso_mx_job_create(SB), AX
 	CALL AX
-	MOVL AX, ret+8(FP)
+	MOVL AX, ret+16(FP)
 	RET
 

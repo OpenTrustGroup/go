@@ -55,9 +55,10 @@ func HandleWaitMany(handles []Handle, signals []Signals, timeout Time) (uint32, 
 	return resultIndex, resultSignals, nil
 }
 
+// TODO: s/MsgPipe/Channel/
 func MsgPipeCreate(flags uint32) ([]Handle, error) {
 	handles := make([]Handle, 2)
-	status := Sys_msgpipe_create(&handles[0], flags)
+	status := Sys_channel_create(flags, &handles[0], &handles[1])
 	if status != ErrOk {
 		return nil, status
 	}
@@ -75,7 +76,7 @@ func MsgPipeRead(handle Handle, data []byte, handles []Handle, flags uint32) (nu
 	if len(handles) > 0 {
 		handlePtr = &handles[0]
 	}
-	if status := Sys_msgpipe_read(handle, dataPtr, &numBytes, handlePtr, &numHandles, flags); status != ErrOk {
+	if status := Sys_channel_read(handle, flags, dataPtr, numBytes, &numBytes, handlePtr, numHandles, &numHandles); status != ErrOk {
 		err = status
 	}
 	return
@@ -90,7 +91,7 @@ func MsgPipeWrite(handle Handle, data []byte, handles []Handle, flags uint32) er
 	if len(handles) > 0 {
 		handlePtr = &handles[0]
 	}
-	status := Sys_msgpipe_write(handle, dataPtr, uint32(len(data)), handlePtr, uint32(len(handles)), flags)
+	status := Sys_channel_write(handle, flags, dataPtr, uint32(len(data)), handlePtr, uint32(len(handles)))
 	if status != ErrOk {
 		return status
 	}

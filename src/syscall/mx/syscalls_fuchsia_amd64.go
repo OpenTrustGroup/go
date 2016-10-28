@@ -39,16 +39,16 @@ type (
 	} // mx_waitset_result_t
 )
 
-//go:cgo_import_dynamic vdso_mx_exit mx_exit "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_current_time mx_current_time "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_process_exit mx_process_exit "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_time_get mx_time_get "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_nanosleep mx_nanosleep "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_num_cpus mx_num_cpus "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_debug_read mx_debug_read "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_debug_write mx_debug_write "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_debug_send_command mx_debug_send_command "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_debug_transfer_handle mx_debug_transfer_handle "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_debug_read_memory mx_debug_read_memory "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_debug_write_memory mx_debug_write_memory "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_process_read_memory mx_process_read_memory "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_process_write_memory mx_process_write_memory "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_ktrace_read mx_ktrace_read "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_ktrace_control mx_ktrace_control "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_ktrace_write mx_ktrace_write "libmagenta.so.abi"
@@ -67,9 +67,9 @@ type (
 //go:cgo_import_dynamic vdso_mx_thread_start mx_thread_start "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_thread_exit mx_thread_exit "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_thread_arch_prctl mx_thread_arch_prctl "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_msgpipe_create mx_msgpipe_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_msgpipe_read mx_msgpipe_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_msgpipe_write mx_msgpipe_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_channel_create mx_channel_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_channel_read mx_channel_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_channel_write mx_channel_write "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_interrupt_create mx_interrupt_create "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_interrupt_complete mx_interrupt_complete "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_process_create mx_process_create "libmagenta.so.abi"
@@ -137,16 +137,16 @@ type (
 //go:cgo_import_dynamic vdso_mx_thread_write_state mx_thread_write_state "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_job_create mx_job_create "libmagenta.so.abi"
 
-//go:linkname vdso_mx_exit vdso_mx_exit
-//go:linkname vdso_mx_current_time vdso_mx_current_time
+//go:linkname vdso_mx_process_exit vdso_mx_process_exit
+//go:linkname vdso_mx_time_get vdso_mx_time_get
 //go:linkname vdso_mx_nanosleep vdso_mx_nanosleep
 //go:linkname vdso_mx_num_cpus vdso_mx_num_cpus
 //go:linkname vdso_mx_debug_read vdso_mx_debug_read
 //go:linkname vdso_mx_debug_write vdso_mx_debug_write
 //go:linkname vdso_mx_debug_send_command vdso_mx_debug_send_command
 //go:linkname vdso_mx_debug_transfer_handle vdso_mx_debug_transfer_handle
-//go:linkname vdso_mx_debug_read_memory vdso_mx_debug_read_memory
-//go:linkname vdso_mx_debug_write_memory vdso_mx_debug_write_memory
+//go:linkname vdso_mx_process_read_memory vdso_mx_process_read_memory
+//go:linkname vdso_mx_process_write_memory vdso_mx_process_write_memory
 //go:linkname vdso_mx_ktrace_read vdso_mx_ktrace_read
 //go:linkname vdso_mx_ktrace_control vdso_mx_ktrace_control
 //go:linkname vdso_mx_ktrace_write vdso_mx_ktrace_write
@@ -165,9 +165,9 @@ type (
 //go:linkname vdso_mx_thread_start vdso_mx_thread_start
 //go:linkname vdso_mx_thread_exit vdso_mx_thread_exit
 //go:linkname vdso_mx_thread_arch_prctl vdso_mx_thread_arch_prctl
-//go:linkname vdso_mx_msgpipe_create vdso_mx_msgpipe_create
-//go:linkname vdso_mx_msgpipe_read vdso_mx_msgpipe_read
-//go:linkname vdso_mx_msgpipe_write vdso_mx_msgpipe_write
+//go:linkname vdso_mx_channel_create vdso_mx_channel_create
+//go:linkname vdso_mx_channel_read vdso_mx_channel_read
+//go:linkname vdso_mx_channel_write vdso_mx_channel_write
 //go:linkname vdso_mx_interrupt_create vdso_mx_interrupt_create
 //go:linkname vdso_mx_interrupt_complete vdso_mx_interrupt_complete
 //go:linkname vdso_mx_process_create vdso_mx_process_create
@@ -236,16 +236,16 @@ type (
 //go:linkname vdso_mx_job_create vdso_mx_job_create
 
 var (
-	vdso_mx_exit                       uintptr
-	vdso_mx_current_time               uintptr
+	vdso_mx_process_exit               uintptr
+	vdso_mx_time_get                   uintptr
 	vdso_mx_nanosleep                  uintptr
 	vdso_mx_num_cpus                   uintptr
 	vdso_mx_debug_read                 uintptr
 	vdso_mx_debug_write                uintptr
 	vdso_mx_debug_send_command         uintptr
 	vdso_mx_debug_transfer_handle      uintptr
-	vdso_mx_debug_read_memory          uintptr
-	vdso_mx_debug_write_memory         uintptr
+	vdso_mx_process_read_memory        uintptr
+	vdso_mx_process_write_memory       uintptr
 	vdso_mx_ktrace_read                uintptr
 	vdso_mx_ktrace_control             uintptr
 	vdso_mx_ktrace_write               uintptr
@@ -264,9 +264,9 @@ var (
 	vdso_mx_thread_start               uintptr
 	vdso_mx_thread_exit                uintptr
 	vdso_mx_thread_arch_prctl          uintptr
-	vdso_mx_msgpipe_create             uintptr
-	vdso_mx_msgpipe_read               uintptr
-	vdso_mx_msgpipe_write              uintptr
+	vdso_mx_channel_create             uintptr
+	vdso_mx_channel_read               uintptr
+	vdso_mx_channel_write              uintptr
 	vdso_mx_interrupt_create           uintptr
 	vdso_mx_interrupt_complete         uintptr
 	vdso_mx_process_create             uintptr
@@ -337,11 +337,11 @@ var (
 
 //go:noescape
 //go:nosplit
-func Sys_exit(retcode int)
+func Sys_process_exit(retcode int)
 
 //go:noescape
 //go:nosplit
-func Sys_current_time() Time
+func Sys_time_get(clock_id uint32) Time
 
 //go:noescape
 //go:nosplit
@@ -369,11 +369,11 @@ func Sys_debug_transfer_handle(proc Handle, handle Handle) Handle
 
 //go:noescape
 //go:nosplit
-func Sys_debug_read_memory(proc Handle, vaddr uintptr, len uint, buffer unsafe.Pointer) int
+func Sys_process_read_memory(proc Handle, vaddr uintptr, buffer unsafe.Pointer, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_debug_write_memory(proc Handle, vaddr uintptr, len uint, buffer unsafe.Pointer) int
+func Sys_process_write_memory(proc Handle, vaddr uintptr, buffer unsafe.Pointer, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
@@ -433,7 +433,7 @@ func Sys_object_get_child(handle Handle, koid uint64, rights Rights) Handle
 
 //go:noescape
 //go:nosplit
-func Sys_thread_create(process Handle, name *uint8, name_len uint32, flags uint32) Handle
+func Sys_thread_create(process Handle, name *uint8, name_len uint32, flags uint32, out *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -449,15 +449,15 @@ func Sys_thread_arch_prctl(handle Handle, op uint32, value_ptr *uintptr) Status
 
 //go:noescape
 //go:nosplit
-func Sys_msgpipe_create(out_handles *Handle, flags uint32) Status
+func Sys_channel_create(options uint32, out0 *Handle, out1 *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_msgpipe_read(handle Handle, bytes unsafe.Pointer, num_bytes *uint32, handles *Handle, num_handles *uint32, flags uint32) Status
+func Sys_channel_read(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, actual_bytes *uint32, handles *Handle, num_handles uint32, actual_handles *uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_msgpipe_write(handle Handle, bytes unsafe.Pointer, num_bytes uint32, handles *Handle, num_handles uint32, flags uint32) Status
+func Sys_channel_write(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, handles *Handle, num_handles uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -469,7 +469,7 @@ func Sys_interrupt_complete(handle Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_process_create(name *uint8, name_len uint32, flags uint32) Handle
+func Sys_process_create(name *uint8, name_len uint32, flags uint32, out *Handle) Handle
 
 //go:noescape
 //go:nosplit
@@ -497,7 +497,7 @@ func Sys_task_kill(task_handle Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_event_create(options uint32) Handle
+func Sys_event_create(options uint32, out *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -625,7 +625,7 @@ func Sys_object_bind_exception_port(object Handle, eport Handle, key uint64, opt
 
 //go:noescape
 //go:nosplit
-func Sys_port_create(options uint32) Handle
+func Sys_port_create(options uint32, out *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -701,15 +701,15 @@ func Sys_acpi_cache_flush(handle Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_socket_create(out_handles *Handle, flags uint32) Status
+func Sys_socket_create(options uint32, out0 *Handle, out1 *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_socket_write(handle Handle, flags uint32, size uint, buffer unsafe.Pointer) int
+func Sys_socket_write(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_socket_read(handle Handle, flags uint32, size uint, buffer unsafe.Pointer) int
+func Sys_socket_read(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
@@ -721,4 +721,4 @@ func Sys_thread_write_state(handle Handle, kind uint32, buffer unsafe.Pointer, b
 
 //go:noescape
 //go:nosplit
-func Sys_job_create(parent_job Handle, flags uint32) Handle
+func Sys_job_create(parent_job Handle, flags uint32, out *Handle) Status
