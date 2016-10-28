@@ -113,11 +113,11 @@ var IoctlDevmgrUnmountFS = IoctlNum(IoctlKindDefault, IoctlFamilyDevmgr, 1)
 
 // IoPortCreate wraps the corresponding syscall
 func IoPortCreate(options uint32) (mx.Handle, error) {
-	handle := mx.Sys_port_create(options)
-	if handle <= 0 {
-		return 0, mx.Status(handle)
+	var h mx.Handle
+	if status := mx.Sys_port_create(options, &h); status <= 0 {
+		return 0, status
 	}
-	return handle, nil
+	return h, nil
 }
 
 // IoPortQueue wraps the corresponding syscall

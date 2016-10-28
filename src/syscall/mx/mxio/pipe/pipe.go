@@ -18,21 +18,22 @@ type Pipe struct {
 }
 
 func NewPipe() (*Pipe, *Pipe, error) {
-	var h [2]mx.Handle
-	status := mx.Sys_socket_create(&h[0], 0)
+	var h0, h1 mx.Handle
+	status := mx.Sys_socket_create(0, &h0, &h1)
 	if status < 0 {
 		return nil, nil, status
 	}
-	return &Pipe{h[0]}, &Pipe{h[1]}, nil
+	return &Pipe{h0}, &Pipe{h1}, nil
 }
 
 func (f *Pipe) Read(data []byte) (n int, err error) {
 	for {
-		r := mx.Sys_socket_read(f.h, 0, uint(len(data)), unsafe.Pointer(&data[0]))
-		if r > 0 {
-			return r, nil
+		var actual uint
+		status := mx.Sys_socket_read(f.h, 0, unsafe.Pointer(&data[0]), uint(len(data)), &actual)
+		if status == 0 {
+			return int(actual), nil
 		}
-		if mx.Status(r) == mx.ErrShouldWait {
+		if status == mx.ErrShouldWait {
 			var pending mx.SignalsState
 			status := mx.Sys_handle_wait_one(f.h, mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite, &pending)
 			if status != 0 {
@@ -47,16 +48,18 @@ func (f *Pipe) Read(data []byte) (n int, err error) {
 			// impossible
 			return 0, mx.ErrInternal
 		}
+		// TODO(crawshaw): return non-zero status here?
 	}
 }
 
 func (f *Pipe) Write(data []byte) (int, error) {
 	for {
-		r := mx.Sys_socket_write(f.h, 0, uint(len(data)), unsafe.Pointer(&data[0]))
-		if r > 0 {
-			return r, nil
+		var actual uint
+		status := mx.Sys_socket_write(f.h, 0, unsafe.Pointer(&data[0]), uint(len(data)), &actual)
+		if status == 0 {
+			return int(actual), nil
 		}
-		if mx.Status(r) == mx.ErrShouldWait {
+		if status == mx.ErrShouldWait {
 			var pending mx.SignalsState
 			status := mx.Sys_handle_wait_one(f.h, mx.SignalWritable|mx.SignalPeerClosed, mx.TimensecInfinite, &pending)
 			if status != 0 {
@@ -71,7 +74,7 @@ func (f *Pipe) Write(data []byte) (int, error) {
 			// impossible
 			return 0, mx.ErrInternal
 		}
-		return 0, mx.Status(r)
+		return 0, status
 	}
 }
 

@@ -106,7 +106,7 @@ func Getgroups() (gids []int, err error) {
 }
 
 func Exit(code int) {
-	mx.Sys_exit(code)
+	mx.Sys_process_exit(code)
 }
 
 func Getpagesize() int { return 4096 }
