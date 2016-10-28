@@ -1208,7 +1208,7 @@ func (l *Link) hostlink() {
 		argv = append(argv, peimporteddlls()...)
 	}
 	if Headtype == obj.Hfuchsia && strings.Contains(argv[0], "clang") {
-		argv = append(argv, "-lruntime", "-lmagenta", "-lmxio")
+		argv = append(argv, "-lmagenta", "-lmxio")
 	}
 
 	if l.Debugvlog != 0 {

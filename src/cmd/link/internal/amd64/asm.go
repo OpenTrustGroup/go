@@ -402,7 +402,7 @@ func elfreloc1(ctxt *ld.Link, r *ld.Reloc, sectoff int64) int {
 		if r.Siz == 4 {
 			if r.Xsym.Type == obj.SDYNIMPORT && r.Xsym.ElfType == elf.STT_FUNC {
 				ld.Thearch.Vput(ld.R_X86_64_PLT32 | uint64(elfsym)<<32)
-			} else if r.Xsym.Type == obj.SDYNIMPORT && ld.HEADTYPE == obj.Hfuchsia && strings.HasPrefix(r.Xsym.Name, "vdso_") {
+			} else if r.Xsym.Type == obj.SDYNIMPORT && ld.Headtype == obj.Hfuchsia && strings.HasPrefix(r.Xsym.Name, "vdso_") {
 				ld.Thearch.Vput(ld.R_X86_64_GOTPCREL | uint64(elfsym)<<32)
 			} else {
 				ld.Thearch.Vput(ld.R_X86_64_PC32 | uint64(elfsym)<<32)

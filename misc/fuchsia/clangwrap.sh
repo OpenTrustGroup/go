@@ -36,5 +36,5 @@ fi
 
 exec ${SDK}/toolchain/clang+llvm-${HOST_ARCH}-${HOST_OS}/bin/clang \
 	--target=${TARGET_ARCH}-fuchsia \
-	--sysroot=${SDK}/sysroot/${TARGET_ARCH}-fuchsia \
+	--sysroot=${SDK}/../out/sysroot/${TARGET_ARCH}-fuchsia \
 	"$@"
