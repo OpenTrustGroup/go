@@ -1103,6 +1103,7 @@ var cgoEnabled = map[string]bool{
 	"freebsd/amd64":   true,
 	"freebsd/arm":     false,
 	"fuchsia/amd64":   true,
+	"fuchsia/arm64":   true,
 	"linux/386":       true,
 	"linux/amd64":     true,
 	"linux/arm":       true,

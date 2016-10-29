@@ -362,7 +362,7 @@ func archreloc(ctxt *ld.Link, r *ld.Reloc, s *ld.Symbol, val *int64) int {
 
 	case obj.R_ARM64_TLS_LE:
 		r.Done = 0
-		if ld.Headtype != obj.Hlinux {
+		if ld.Headtype != obj.Hlinux && ld.Headtype != obj.Hfuchsia {
 			ld.Errorf(s, "TLS reloc on unsupported OS %v", ld.Headtype)
 		}
 		// The TCB is two pointers. This is not documented anywhere, but is
@@ -516,6 +516,7 @@ func asmb(ctxt *ld.Link) {
 		ld.Thearch.Lput(uint32(ld.Lcsize))
 
 	case obj.Hlinux,
+		obj.Hfuchsia,
 		obj.Hfreebsd,
 		obj.Hnetbsd,
 		obj.Hopenbsd,
