@@ -207,7 +207,14 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 	}
 	retSize := typeSize(call.ret)
 
-	fmt.Fprintf(buf, "TEXT ·Sys_%s(SB),NOSPLIT,$0-%d\n", call.name, argSize+retSize)
+	frameSize := 0
+	switch len(call.argTypes) {
+	case 7:
+		frameSize = 16 + 8
+	case 8:
+		frameSize = 16 + 2*8
+	}
+	fmt.Fprintf(buf, "TEXT ·Sys_%s(SB),NOSPLIT,$%d-%d\n", call.name, frameSize, argSize+retSize)
 	if _, ok := blockingSyscalls[call.name]; ok {
 		fmt.Fprintf(buf, "\tCALL runtime·entersyscall(SB)\n")
 	}
@@ -227,10 +234,23 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 		fmt.Fprintf(buf, "\tMOV%s %s+%d(FP), %s\n", suffix, name, off, reg)
 		off += typeSize(t)
 	}
+	if len(call.argTypes) >= 7 {
+		fmt.Fprintf(buf, "\tMOVQ SP, BP   // BP is preserved across vsdo call by the x86-64 ABI\n")
+		fmt.Fprintf(buf, "\tANDQ $~15, SP // stack alignment for x86-64 ABI\n")
+		if len(call.argTypes) == 8 {
+			fmt.Fprintf(buf, "\tPUSHQ R13\n")
+		}
+		fmt.Fprintf(buf, "\tPUSHQ R12\n")
+	}
 	fmt.Fprintf(buf, "\tMOVQ vdso_mx_%s(SB), AX\n", call.name)
 	fmt.Fprintf(buf, "\tCALL AX\n")
-	//fmt.Fprintf(buf, "\tMOVQ $0x%x, AX // %d\n", MAGENTA_SYSCALL_MAGIC|call.number, call.number)
-	//fmt.Fprintf(buf, "\tSYSCALL\n")
+	if len(call.argTypes) >= 7 {
+		fmt.Fprintf(buf, "\tPOPQ R12\n")
+		if len(call.argTypes) == 8 {
+			fmt.Fprintf(buf, "\tPOPQ R13\n")
+		}
+		fmt.Fprintf(buf, "\tMOVQ BP, SP\n")
+	}
 	if retSize := typeSize(call.ret); retSize > 0 {
 		suffix := "Q"
 		if retSize == 4 {

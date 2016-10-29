@@ -300,7 +300,7 @@ TEXT ·Sys_channel_create(SB),NOSPLIT,$0-28
 	RET
 
 // func Sys_channel_read(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, actual_bytes *uint32, handles *Handle, num_handles uint32, actual_handles *uint32) Status
-TEXT ·Sys_channel_read(SB),NOSPLIT,$0-60
+TEXT ·Sys_channel_read(SB),NOSPLIT,$32-60
 	MOVL handle+0(FP), DI
 	MOVL options+4(FP), SI
 	MOVQ bytes+8(FP), DX
@@ -309,8 +309,15 @@ TEXT ·Sys_channel_read(SB),NOSPLIT,$0-60
 	MOVQ handles+32(FP), R9
 	MOVL num_handles+40(FP), R12
 	MOVQ actual_handles+48(FP), R13
+	MOVQ SP, BP   // BP is preserved across vsdo call by the x86-64 ABI
+	ANDQ $~15, SP // stack alignment for x86-64 ABI
+	PUSHQ R13
+	PUSHQ R12
 	MOVQ vdso_mx_channel_read(SB), AX
 	CALL AX
+	POPQ R12
+	POPQ R13
+	MOVQ BP, SP
 	MOVL AX, ret+56(FP)
 	RET
 
@@ -593,7 +600,7 @@ TEXT ·Sys_bootloader_fb_get_info(SB),NOSPLIT,$0-36
 	RET
 
 // func Sys_set_framebuffer(handle Handle, vaddr unsafe.Pointer, len uint32, format uint32, width uint32, height uint32, stride uint32) Status
-TEXT ·Sys_set_framebuffer(SB),NOSPLIT,$0-44
+TEXT ·Sys_set_framebuffer(SB),NOSPLIT,$24-44
 	MOVL handle+0(FP), DI
 	MOVQ vaddr+8(FP), SI
 	MOVL len+16(FP), DX
@@ -601,8 +608,13 @@ TEXT ·Sys_set_framebuffer(SB),NOSPLIT,$0-44
 	MOVL width+24(FP), R8
 	MOVL height+28(FP), R9
 	MOVL stride+32(FP), R12
+	MOVQ SP, BP   // BP is preserved across vsdo call by the x86-64 ABI
+	ANDQ $~15, SP // stack alignment for x86-64 ABI
+	PUSHQ R12
 	MOVQ vdso_mx_set_framebuffer(SB), AX
 	CALL AX
+	POPQ R12
+	MOVQ BP, SP
 	MOVL AX, ret+40(FP)
 	RET
 
