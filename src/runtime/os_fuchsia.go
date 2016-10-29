@@ -37,45 +37,34 @@ func osyield() {
 	mx.Sys_nanosleep(0)
 }
 
+// cgocallm0 calls a C function on the current stack.
+//
+// It is intended for use inside functions like osinit that run
+// before mstart directly on an OS thread stack.
+//
+// If in doubt, do not use.
+func cgocallm0(fn, arg unsafe.Pointer)
+
 func osinit() {
-	ncpu = int32(mx.Sys_num_cpus())
-
 	if _cgo_get_mxio_root != nil {
-		// mxio_init matches a Go struct of the same name in gcc_mxio.c.
-		type mxio_init struct {
-			rootClone   mx.Handle
-			stdioClone  mx.Handle
-			cwd         mx.Handle
-			processSelf mx.Handle
-			_           int32
-			envlen      int32
-			environ     **byte
-		}
-		var handles mxio_init
-		asmcgocall(_cgo_get_mxio_root, unsafe.Pointer(&handles))
-		mx.RootHandle = mx.Handle(handles.rootClone)
-		mx.StdioHandle = mx.Handle(handles.stdioClone)
-		mx.CwdHandle = mx.Handle(handles.cwd)
-		mx.ProcHandle = mx.Handle(handles.processSelf)
-
-		const maxEnvSize = 1 << 20 // arbitrary
-		envp := (*(*[maxEnvSize]*byte)(unsafe.Pointer(handles.environ)))[:handles.envlen]
-		envs = make([]string, len(envp))
-		for i, e := range envp {
-			envs[i] = gostring(e)
-		}
+		cgocallm0(_cgo_get_mxio_root, unsafe.Pointer(&mxioHandles))
+		mx.RootHandle = mx.Handle(mxioHandles.rootClone)
+		mx.StdioHandle = mx.Handle(mxioHandles.stdioClone)
+		mx.CwdHandle = mx.Handle(mxioHandles.cwd)
+		mx.ProcHandle = mx.Handle(mxioHandles.processSelf)
 	} else {
 		// TODO: implement cgo-less init
 		println("runtime: no fuchsia process handle without cgo yet")
 		exit(2)
 	}
+
+	ncpu = int32(mx.Sys_num_cpus())
 }
 
 // Filled in by runtime/cgo when linked into binary.
 var _cgo_get_mxio_root unsafe.Pointer // pointer to C function
 
 func minit() {
-	// TODO
 }
 
 //go:nosplit
@@ -180,19 +169,56 @@ func resetcpuprofiler(hz int32) {
 	// TODO
 }
 
+// mxio_init matches a Go struct of the same name in gcc_mxio.c.
+type mxio_init struct {
+	rootClone   mx.Handle
+	stdioClone  mx.Handle
+	cwd         mx.Handle
+	processSelf mx.Handle
+	_           int32
+	envlen      int32
+	environ     **byte
+}
+
+var mxioHandles mxio_init
+
 func goenvs() {
-	// TODO
+	if _cgo_get_mxio_root != nil {
+		const maxEnvSize = 1 << 20 // arbitrary
+		envp := (*(*[maxEnvSize]*byte)(unsafe.Pointer(mxioHandles.environ)))[:mxioHandles.envlen]
+		envs = make([]string, len(envp))
+		for i, e := range envp {
+			envs[i] = gostring(e)
+		}
+	} else {
+		// TODO: implement cgo-less init
+		println("runtime: no fuchsia process handle without cgo yet")
+		exit(2)
+	}
 }
 
 const _NSIG = 65 // TODO
 
 //go:nosplit
 func nanotime() int64 {
+	const MX_CLOCK_MONOTONIC = 1
+	return int64(mx.Sys_time_get(MX_CLOCK_MONOTONIC))
+}
+
+//go:linkname time_now time.now
+//go:nosplit
+func time_now() (sec int64, nsec int32) {
 	const MX_CLOCK_UTC = 1
-	return int64(mx.Sys_time_get(MX_CLOCK_UTC))
+	x := int64(mx.Sys_time_get(MX_CLOCK_UTC))
+	return int64(x / 1e6), int32(x % 1e6)
+}
+
+func unixnanotime() int64 {
+	return nanotime()
 }
 
 var logger mx.Handle
+var logBufferArray [1024]byte
 var logBuffer []byte
 
 //go:nosplit
@@ -203,7 +229,7 @@ func write(fd uintptr, buf unsafe.Pointer, n int32) int32 {
 		// print's implementation.
 		if logger <= 0 {
 			logger = mx.Sys_log_create(0)
-			logBuffer = make([]byte, 0, 1024)
+			logBuffer = logBufferArray[:0]
 		}
 		if logger > 0 {
 			// Sys_log_write adds a newline to output buffers. To prevent fragmented logs, we buffer

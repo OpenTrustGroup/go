@@ -6,23 +6,6 @@
 #include "go_tls.h"
 #include "textflag.h"
 
-// func now() (sec int64, nsec int32)
-TEXT time·now(SB),NOSPLIT,$8-12
-	MOVQ $0xff00ff00000004, AX // 4
-	SYSCALL
-	MOVQ AX, CX
-
-	// generated code for
-	//	func f(x uint64) (int64, uint32) { return int64(x / 1e6), uint32(x % 1e6) }
-	MOVQ $0x431bde82d7b634db, AX
-	MULQ CX
-	SHRQ $0x12, DX
-	MOVQ DX, sec+0(FP)
-	IMULQ $0xf4240, DX
-	SUBQ DX, CX
-	MOVL CX, nsec+8(FP)
-	RET
-
 TEXT runtime·threadinit(SB),NOSPLIT,$0
 	MOVQ	DI, R8
 
@@ -72,4 +55,17 @@ TEXT runtime·settls(SB),NOSPLIT,$8
 	JLS	2(PC)
 	MOVL	$0xf1, 0xf1  // crash
 	POPQ  DI
+	RET
+
+TEXT ·cgocallm0(SB),NOSPLIT,$0-20
+	MOVQ fn+0(FP), AX
+	MOVQ arg+8(FP), DI
+
+	MOVQ SP, BP // BP is callee-save in the x86-64 ABI
+
+	ANDQ $~15, SP
+	CALL AX
+
+	MOVQ BP, SP
+	get_tls(CX)
 	RET
