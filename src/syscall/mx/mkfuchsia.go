@@ -68,7 +68,7 @@ func main() {
 
 	buf := new(bytes.Buffer)
 	if *stubs {
-		fmt.Fprint(buf, stubsHeader)
+		fmt.Fprint(buf, stubsHeader[1:])
 		for _, call := range syscalls {
 			fmt.Fprintf(buf, "//go:cgo_import_dynamic vdso_mx_%s mx_%s \"libmagenta.so.abi\"\n", call.name, call.name)
 		}
@@ -88,7 +88,7 @@ func main() {
 			fmt.Fprint(buf, "\n")
 		}
 	} else {
-		fmt.Fprint(buf, asmHeader)
+		fmt.Fprint(buf, asmHeader[1:])
 		for _, call := range syscalls {
 			fmt.Fprint(buf, "// ")
 			printStub(buf, call)
@@ -178,6 +178,9 @@ func printStub(buf *bytes.Buffer, call magentaSyscallDef) {
 // amd64RegArgs is the amd64 registers in function argument calling convention order
 var amd64RegArgs = []string{"DI", "SI", "DX", "CX", "R8", "R9", "R12", "R13"}
 
+// arm64RegArgs is the arm64 registers in function argument calling convention order
+var arm64RegArgs = []string{"R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7"}
+
 // blockingSyscalls is a map of known syscalls which may block.
 var blockingSyscalls = map[string]bool{
 	"port_wait":        true,
@@ -189,17 +192,18 @@ var blockingSyscalls = map[string]bool{
 const MAGENTA_SYSCALL_MAGIC = 0x00ff00ff00000000
 
 func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
-	if *goarch != "amd64" {
-		panic(fmt.Sprintf("goarch=%s not supported", *goarch))
-	}
 	// The summed size of all arguments
 	argSize := 0
 	for _, t := range call.argTypes {
-		for argSize%typeSize(t) != 0 {
+		sz := typeSize(t)
+		if *goarch == "arm64" && sz == 1 {
+			sz = 8
+		}
+		for argSize%sz != 0 {
 			// Add padding until the 'argSize' is aligned to the type we are adding
 			argSize++
 		}
-		argSize += typeSize(t)
+		argSize += sz
 	}
 	if argSize%8 == 4 {
 		// Force the return argument on the stack to be 8-byte aligned, not 4-byte aligned
@@ -207,59 +211,87 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 	}
 	retSize := typeSize(call.ret)
 
-	frameSize := 0
-	switch len(call.argTypes) {
-	case 7:
-		frameSize = 16 + 8
-	case 8:
-		frameSize = 16 + 2*8
+	var frameSize int
+	var regArgs []string
+	var callIns, retReg, suffix4, suffix8 string
+	switch *goarch {
+	case "amd64":
+		regArgs = amd64RegArgs
+		callIns = "CALL"
+		retReg = "AX"
+		suffix8 = "Q"
+		suffix4 = "L"
+		switch len(call.argTypes) {
+		case 7:
+			frameSize = 16 + 8
+		case 8:
+			frameSize = 16 + 2*8
+		}
+	case "arm64":
+		regArgs = arm64RegArgs
+		callIns = "BL"
+		retReg = "R0"
+		suffix8 = "D"
+		suffix4 = "W"
+	default:
+		panic(fmt.Sprintf("goarch=%s not supported", *goarch))
 	}
+
 	fmt.Fprintf(buf, "TEXT ·Sys_%s(SB),NOSPLIT,$%d-%d\n", call.name, frameSize, argSize+retSize)
+
 	if _, ok := blockingSyscalls[call.name]; ok {
 		fmt.Fprintf(buf, "\tCALL runtime·entersyscall(SB)\n")
 	}
 	off := 0
 	for i, t := range call.argTypes {
 		name := call.argNames[i]
-		suffix := "Q"
+		suffix := suffix8
 		if typeSize(t) == 4 {
-			suffix = "L"
+			suffix = suffix4
 		}
-		for off%typeSize(t) != 0 {
+		sz := typeSize(t)
+		if *goarch == "arm64" && sz == 1 {
+			sz = 8
+		}
+		for off%sz != 0 {
 			// Add padding until the offset is aligned to the type we are accessing
 			off++
 		}
 
-		reg := amd64RegArgs[i]
-		fmt.Fprintf(buf, "\tMOV%s %s+%d(FP), %s\n", suffix, name, off, reg)
-		off += typeSize(t)
+		fmt.Fprintf(buf, "\tMOV%s %s+%d(FP), %s\n", suffix, name, off, regArgs[i])
+		off += sz
 	}
-	if len(call.argTypes) >= 7 {
-		fmt.Fprintf(buf, "\tMOVQ SP, BP   // BP is preserved across vsdo call by the x86-64 ABI\n")
-		fmt.Fprintf(buf, "\tANDQ $~15, SP // stack alignment for x86-64 ABI\n")
-		if len(call.argTypes) == 8 {
-			fmt.Fprintf(buf, "\tPUSHQ R13\n")
+	switch *goarch {
+	case "amd64":
+		if len(call.argTypes) >= 7 {
+			fmt.Fprintf(buf, "\tMOVQ SP, BP   // BP is preserved across vsdo call by the x86-64 ABI\n")
+			fmt.Fprintf(buf, "\tANDQ $~15, SP // stack alignment for x86-64 ABI\n")
+			if len(call.argTypes) == 8 {
+				fmt.Fprintf(buf, "\tPUSHQ R13\n")
+			}
+			fmt.Fprintf(buf, "\tPUSHQ R12\n")
 		}
-		fmt.Fprintf(buf, "\tPUSHQ R12\n")
-	}
-	fmt.Fprintf(buf, "\tMOVQ vdso_mx_%s(SB), AX\n", call.name)
-	fmt.Fprintf(buf, "\tCALL AX\n")
-	if len(call.argTypes) >= 7 {
-		fmt.Fprintf(buf, "\tPOPQ R12\n")
-		if len(call.argTypes) == 8 {
-			fmt.Fprintf(buf, "\tPOPQ R13\n")
+		fmt.Fprintf(buf, "\tMOVQ vdso_mx_%s(SB), AX\n", call.name)
+		fmt.Fprintf(buf, "\tCALL AX\n")
+		if len(call.argTypes) >= 7 {
+			fmt.Fprintf(buf, "\tPOPQ R12\n")
+			if len(call.argTypes) == 8 {
+				fmt.Fprintf(buf, "\tPOPQ R13\n")
+			}
+			fmt.Fprintf(buf, "\tMOVQ BP, SP\n")
 		}
-		fmt.Fprintf(buf, "\tMOVQ BP, SP\n")
+	case "arm64":
+		fmt.Fprintf(buf, "\tBL vdso_mx_%s(SB)\n", call.name)
 	}
 	if retSize := typeSize(call.ret); retSize > 0 {
-		suffix := "Q"
+		suffix := suffix8
 		if retSize == 4 {
-			suffix = "L"
+			suffix = suffix4
 		}
-		fmt.Fprintf(buf, "\tMOV%s AX, ret+%d(FP)\n", suffix, argSize)
+		fmt.Fprintf(buf, "\tMOV%s %s, ret+%d(FP)\n", suffix, retReg, argSize)
 	}
 	if _, ok := blockingSyscalls[call.name]; ok {
-		fmt.Fprintf(buf, "\tCALL runtime·exitsyscall(SB)\n")
+		fmt.Fprintf(buf, "\t%s runtime·exitsyscall(SB)\n", callIns)
 	}
 	fmt.Fprintf(buf, "\tRET\n")
 }
