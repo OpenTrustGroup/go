@@ -14,10 +14,6 @@
 static void* threadentry(void*);
 static void (*setg_gcc)(void*);
 
-// these will be set in gcc_android_amd64.c for android-specific customization.
-void (*x_cgo_inittls)(void);
-void* (*x_cgo_threadentry)(void*);
-
 void
 x_cgo_init(G* g, void (*setg)(void*))
 {

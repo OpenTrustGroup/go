@@ -9,6 +9,9 @@
 #ifdef GOOS_linux
 #define TLS_linux
 #endif
+#ifdef GOOS_fuchsia
+#define TLS_linux
+#endif
 #ifdef TLS_linux
 #define TPIDR TPIDR_EL0
 #define MRS_TPIDR_R0 WORD $0xd53bd040 // MRS TPIDR_EL0, R0
