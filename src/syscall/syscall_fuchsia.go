@@ -71,9 +71,11 @@ const (
 )
 
 type Stat_t struct {
-	Dev  uint64
-	Ino  uint64
-	Size uint64
+	Dev        uint64
+	Ino        uint64
+	Size       uint64
+	CreateTime uint64
+	ModifyTime uint64
 }
 
 func Getpid() (pid int) {
@@ -350,6 +352,8 @@ func Fstat(fd int, stat *Stat_t) (err error) {
 	stat.Dev = 0
 	stat.Ino = attr.Inode
 	stat.Size = attr.Size
+	stat.CreateTime = attr.CreateTime
+	stat.ModifyTime = attr.ModifyTime
 	return nil
 }
 

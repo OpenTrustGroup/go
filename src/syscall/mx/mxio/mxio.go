@@ -114,7 +114,7 @@ var IoctlDevmgrUnmountFS = IoctlNum(IoctlKindDefault, IoctlFamilyDevmgr, 1)
 // IoPortCreate wraps the corresponding syscall
 func IoPortCreate(options uint32) (mx.Handle, error) {
 	var h mx.Handle
-	if status := mx.Sys_port_create(options, &h); status <= 0 {
+	if status := mx.Sys_port_create(options, &h); status != mx.ErrOk {
 		return 0, status
 	}
 	return h, nil
@@ -147,10 +147,12 @@ func IoPortBind(handle mx.Handle, key uint64, source mx.Handle, signals mx.Signa
 }
 
 type Vnattr struct {
-	Mode     Vtype
-	Reserved uint32
-	Inode    uint64
-	Size     uint64
+	Mode       Vtype
+	Reserved   uint32
+	Inode      uint64
+	Size       uint64
+	CreateTime uint64
+	ModifyTime uint64
 }
 
 type Vtype uint32
