@@ -41,16 +41,16 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 	if !msg.IsValid() {
 		return 0, mx.ErrInvalidArgs
 	}
-	rpipe, err := mx.MsgPipeCreate(mxio.FlagReplyPipe)
+	rpipe0, rpipe1, err := mx.NewChannel(mxio.FlagReplyPipe)
 	if err != nil {
 		return 0, err
 	}
 
 	// Package the reply pipe into the message itself
 	msg.SetReplyPipe()
-	msg.Handle[msg.Hcount] = rpipe[1]
+	msg.Handle[msg.Hcount] = rpipe1
 	msg.Hcount++
-	rh := rpipe[0]
+	rh := rpipe0
 	defer rh.Close() // Our end of the reply pipe -- close it before returning
 
 	// Send the message (containing the reply pipe) over the RIO handle

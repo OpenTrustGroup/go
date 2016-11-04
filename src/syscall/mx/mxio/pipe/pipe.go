@@ -7,8 +7,6 @@
 package pipe
 
 import (
-	"unsafe"
-
 	"syscall/mx"
 	"syscall/mx/mxio"
 )
@@ -18,22 +16,20 @@ type Pipe struct {
 }
 
 func NewPipe() (*Pipe, *Pipe, error) {
-	var h0, h1 mx.Handle
-	status := mx.Sys_socket_create(0, &h0, &h1)
-	if status < 0 {
-		return nil, nil, status
+	h0, h1, err := mx.NewSocket(0)
+	if err != nil {
+		return nil, nil, err
 	}
 	return &Pipe{h0}, &Pipe{h1}, nil
 }
 
 func (f *Pipe) Read(data []byte) (n int, err error) {
 	for {
-		var actual uint
-		status := mx.Sys_socket_read(f.h, 0, unsafe.Pointer(&data[0]), uint(len(data)), &actual)
-		if status == mx.ErrOk {
-			return int(actual), nil
+		n, err = f.h.ReadSocket(data, 0)
+		if err == nil {
+			return n, nil
 		}
-		if status == mx.ErrShouldWait {
+		if err == mx.ErrShouldWait {
 			pending, err := f.h.WaitOne(mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite)
 			if err != nil {
 				return 0, err
@@ -47,18 +43,17 @@ func (f *Pipe) Read(data []byte) (n int, err error) {
 			// impossible
 			return 0, mx.ErrInternal
 		}
-		return 0, status
+		return 0, err
 	}
 }
 
-func (f *Pipe) Write(data []byte) (int, error) {
+func (f *Pipe) Write(data []byte) (n int, err error) {
 	for {
-		var actual uint
-		status := mx.Sys_socket_write(f.h, 0, unsafe.Pointer(&data[0]), uint(len(data)), &actual)
-		if status == mx.ErrOk {
-			return int(actual), nil
+		n, err = f.h.WriteSocket(data, 0)
+		if err == nil {
+			return n, nil
 		}
-		if status == mx.ErrShouldWait {
+		if err == mx.ErrShouldWait {
 			pending, err := f.h.WaitOne(mx.SignalWritable|mx.SignalPeerClosed, mx.TimensecInfinite)
 			if err != nil {
 				return 0, err
@@ -72,7 +67,7 @@ func (f *Pipe) Write(data []byte) (int, error) {
 			// impossible
 			return 0, mx.ErrInternal
 		}
-		return 0, status
+		return 0, err
 	}
 }
 

@@ -162,16 +162,16 @@ TEXT ·Sys_log_read(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_handle_close(handle Handle) Status
-TEXT ·Sys_handle_close(SB),NOSPLIT,$0-12
+// func sys_handle_close(handle Handle) Status
+TEXT ·sys_handle_close(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
 	MOVQ vdso_mx_handle_close(SB), AX
 	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
-// func Sys_handle_duplicate(handle Handle, rights Rights, out *Handle) Status
-TEXT ·Sys_handle_duplicate(SB),NOSPLIT,$0-20
+// func sys_handle_duplicate(handle Handle, rights Rights, out *Handle) Status
+TEXT ·sys_handle_duplicate(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVL rights+4(FP), SI
 	MOVQ out+8(FP), DX
@@ -180,8 +180,8 @@ TEXT ·Sys_handle_duplicate(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_handle_wait_one(handle Handle, waitfor Signals, timeout Time, observed *Signals) Status
-TEXT ·Sys_handle_wait_one(SB),NOSPLIT,$0-28
+// func sys_handle_wait_one(handle Handle, waitfor Signals, timeout Time, observed *Signals) Status
+TEXT ·sys_handle_wait_one(SB),NOSPLIT,$0-28
 	CALL runtime·entersyscall(SB)
 	MOVL handle+0(FP), DI
 	MOVL waitfor+4(FP), SI
@@ -193,8 +193,8 @@ TEXT ·Sys_handle_wait_one(SB),NOSPLIT,$0-28
 	CALL runtime·exitsyscall(SB)
 	RET
 
-// func Sys_handle_wait_many(items *WaitItem, count uint32, timeout Time) Status
-TEXT ·Sys_handle_wait_many(SB),NOSPLIT,$0-28
+// func sys_handle_wait_many(items *WaitItem, count uint32, timeout Time) Status
+TEXT ·sys_handle_wait_many(SB),NOSPLIT,$0-28
 	CALL runtime·entersyscall(SB)
 	MOVQ items+0(FP), DI
 	MOVL count+8(FP), SI
@@ -289,8 +289,8 @@ TEXT ·Sys_thread_arch_prctl(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_channel_create(options uint32, out0 *Handle, out1 *Handle) Status
-TEXT ·Sys_channel_create(SB),NOSPLIT,$0-28
+// func sys_channel_create(options uint32, out0 *Handle, out1 *Handle) Status
+TEXT ·sys_channel_create(SB),NOSPLIT,$0-28
 	MOVL options+0(FP), DI
 	MOVQ out0+8(FP), SI
 	MOVQ out1+16(FP), DX
@@ -299,8 +299,8 @@ TEXT ·Sys_channel_create(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_channel_read(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, actual_bytes *uint32, handles *Handle, num_handles uint32, actual_handles *uint32) Status
-TEXT ·Sys_channel_read(SB),NOSPLIT,$32-60
+// func sys_channel_read(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, actual_bytes *uint32, handles *Handle, num_handles uint32, actual_handles *uint32) Status
+TEXT ·sys_channel_read(SB),NOSPLIT,$32-60
 	MOVL handle+0(FP), DI
 	MOVL options+4(FP), SI
 	MOVQ bytes+8(FP), DX
@@ -321,8 +321,8 @@ TEXT ·Sys_channel_read(SB),NOSPLIT,$32-60
 	MOVL AX, ret+56(FP)
 	RET
 
-// func Sys_channel_write(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, handles *Handle, num_handles uint32) Status
-TEXT ·Sys_channel_write(SB),NOSPLIT,$0-44
+// func sys_channel_write(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, handles *Handle, num_handles uint32) Status
+TEXT ·sys_channel_write(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
 	MOVL options+4(FP), SI
 	MOVQ bytes+8(FP), DX
@@ -966,8 +966,8 @@ TEXT ·Sys_acpi_cache_flush(SB),NOSPLIT,$0-12
 	MOVL AX, ret+8(FP)
 	RET
 
-// func Sys_socket_create(options uint32, out0 *Handle, out1 *Handle) Status
-TEXT ·Sys_socket_create(SB),NOSPLIT,$0-28
+// func sys_socket_create(options uint32, out0 *Handle, out1 *Handle) Status
+TEXT ·sys_socket_create(SB),NOSPLIT,$0-28
 	MOVL options+0(FP), DI
 	MOVQ out0+8(FP), SI
 	MOVQ out1+16(FP), DX
@@ -976,8 +976,8 @@ TEXT ·Sys_socket_create(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_socket_write(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
-TEXT ·Sys_socket_write(SB),NOSPLIT,$0-36
+// func sys_socket_write(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
+TEXT ·sys_socket_write(SB),NOSPLIT,$0-36
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
 	MOVQ buffer+8(FP), DX
@@ -988,8 +988,8 @@ TEXT ·Sys_socket_write(SB),NOSPLIT,$0-36
 	MOVL AX, ret+32(FP)
 	RET
 
-// func Sys_socket_read(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
-TEXT ·Sys_socket_read(SB),NOSPLIT,$0-36
+// func sys_socket_read(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
+TEXT ·sys_socket_read(SB),NOSPLIT,$0-36
 	MOVL handle+0(FP), DI
 	MOVL flags+4(FP), SI
 	MOVQ buffer+8(FP), DX

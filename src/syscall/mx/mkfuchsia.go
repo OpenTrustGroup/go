@@ -6,6 +6,13 @@
 
 // Parses syscalls.inc of Fuchsia's magenta kernel and produces Go
 // assembly for calling the system calls.
+//
+// Regenerate syscall/mx with:
+//
+//	go run mkfuchsia.go -stubs > syscalls_fuchsia.go
+//	go run mkfuchsia.go -goarch=amd64 > syscalls_fuchsia_amd64.s
+//	go run mkfuchsia.go -goarch=arm64 > syscalls_fuchsia_arm64.s
+//	gofmt -w *.go
 package main
 
 import (
@@ -111,36 +118,6 @@ package mx
 
 import "unsafe"
 
-type (
-	Status             int32   // mx_status_t
-	Handle             int32   // mx_handle_t
-	Time               uint64  // mx_time_t, nanoseconds
-	Koid               uint64  // mx_koid_t
-	Signals            uint32  // mx_signals_t
-	Rights             uint32  // mx_rights_t
-	Vaddr              uintptr // mx_vaddr_t
-	Paddr              uintptr // mx_paddr_t
-	ExceptionStatus    uint32  // mx_exception_status_t
-	ExceptionBehaviour uint32  // mx_exception_behaviour_t
-
-	ProcessInfo struct {
-		Len        uint
-		ReturnCode int
-	} // mx_process_info_t
-
-	WaitSetResult struct {
-		Cookie     uint64
-		WaitResult Status
-		Observed   Signals
-	} // mx_waitset_result_t
-
-	WaitItem struct {
-		Handle  Handle
-		WaitFor Signals
-		Pending Signals
-	} // mx_wait_item_t
-)
-
 `
 
 const asmHeader = `
@@ -156,7 +133,7 @@ const asmHeader = `
 `
 
 func printStub(buf *bytes.Buffer, call magentaSyscallDef) {
-	fmt.Fprintf(buf, "func Sys_%s(", call.name)
+	fmt.Fprintf(buf, "func %s(", call.sysname())
 	for i, name := range call.argNames {
 		if call.argTypes[i] == (magentaType{}) {
 			continue
@@ -237,7 +214,7 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 		panic(fmt.Sprintf("goarch=%s not supported", *goarch))
 	}
 
-	fmt.Fprintf(buf, "TEXT ·Sys_%s(SB),NOSPLIT,$%d-%d\n", call.name, frameSize, argSize+retSize)
+	fmt.Fprintf(buf, "TEXT ·%s(SB),NOSPLIT,$%d-%d\n", call.sysname(), frameSize, argSize+retSize)
 
 	if _, ok := blockingSyscalls[call.name]; ok {
 		fmt.Fprintf(buf, "\tCALL runtime·entersyscall(SB)\n")
@@ -724,6 +701,31 @@ type magentaSyscallDef struct {
 	ret      magentaType
 	argNames []string
 	argTypes []magentaType
+}
+
+func (call magentaSyscallDef) sysname() string {
+	if call.exported() {
+		return "Sys_" + call.name
+	}
+	return "sys_" + call.name
+}
+
+func (call magentaSyscallDef) exported() bool {
+	switch call.name {
+	case "handle_close",
+		"handle_duplicate",
+		"handle_wait_one",
+		"handle_wait_many",
+		"channel_create",
+		"channel_read",
+		"channel_write",
+		"socket_create",
+		"socket_read",
+		"socket_write":
+		return false
+	default:
+		return true
+	}
 }
 
 type magentaType struct {

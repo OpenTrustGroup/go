@@ -45,7 +45,7 @@ func sysMmap(ptr unsafe.Pointer, len uintptr, flags uint32) {
 	)
 	mxFlags := uint32(MX_VM_FLAG_PERM_READ | MX_VM_FLAG_PERM_WRITE)
 	status := mx.Sys_process_map_vm(mx.ProcHandle, h, 0, uint(len), (*uintptr)(ptr), mxFlags)
-	mx.Sys_handle_close(h)
+	h.Close()
 	if status != mx.ErrOk {
 		println("runtime: mx.Sys_process_map_vm failed, err=", status)
 		exit(2)

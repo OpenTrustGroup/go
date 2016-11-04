@@ -9,36 +9,6 @@ package mx
 
 import "unsafe"
 
-type (
-	Status             int32   // mx_status_t
-	Handle             int32   // mx_handle_t
-	Time               uint64  // mx_time_t, nanoseconds
-	Koid               uint64  // mx_koid_t
-	Signals            uint32  // mx_signals_t
-	Rights             uint32  // mx_rights_t
-	Vaddr              uintptr // mx_vaddr_t
-	Paddr              uintptr // mx_paddr_t
-	ExceptionStatus    uint32  // mx_exception_status_t
-	ExceptionBehaviour uint32  // mx_exception_behaviour_t
-
-	ProcessInfo struct {
-		Len        uint
-		ReturnCode int
-	} // mx_process_info_t
-
-	WaitSetResult struct {
-		Cookie     uint64
-		WaitResult Status
-		Observed   Signals
-	} // mx_waitset_result_t
-
-	WaitItem struct {
-		Handle  Handle
-		WaitFor Signals
-		Pending Signals
-	} // mx_wait_item_t
-)
-
 //go:cgo_import_dynamic vdso_mx_process_exit mx_process_exit "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_time_get mx_time_get "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_nanosleep mx_nanosleep "libmagenta.so.abi"
@@ -404,19 +374,19 @@ func Sys_log_read(handle Handle, len uint32, buffer unsafe.Pointer, flags uint32
 
 //go:noescape
 //go:nosplit
-func Sys_handle_close(handle Handle) Status
+func sys_handle_close(handle Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_handle_duplicate(handle Handle, rights Rights, out *Handle) Status
+func sys_handle_duplicate(handle Handle, rights Rights, out *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_handle_wait_one(handle Handle, waitfor Signals, timeout Time, observed *Signals) Status
+func sys_handle_wait_one(handle Handle, waitfor Signals, timeout Time, observed *Signals) Status
 
 //go:noescape
 //go:nosplit
-func Sys_handle_wait_many(items *WaitItem, count uint32, timeout Time) Status
+func sys_handle_wait_many(items *WaitItem, count uint32, timeout Time) Status
 
 //go:noescape
 //go:nosplit
@@ -452,15 +422,15 @@ func Sys_thread_arch_prctl(handle Handle, op uint32, value_ptr *uintptr) Status
 
 //go:noescape
 //go:nosplit
-func Sys_channel_create(options uint32, out0 *Handle, out1 *Handle) Status
+func sys_channel_create(options uint32, out0 *Handle, out1 *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_channel_read(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, actual_bytes *uint32, handles *Handle, num_handles uint32, actual_handles *uint32) Status
+func sys_channel_read(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, actual_bytes *uint32, handles *Handle, num_handles uint32, actual_handles *uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_channel_write(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, handles *Handle, num_handles uint32) Status
+func sys_channel_write(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, handles *Handle, num_handles uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -708,15 +678,15 @@ func Sys_acpi_cache_flush(handle Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_socket_create(options uint32, out0 *Handle, out1 *Handle) Status
+func sys_socket_create(options uint32, out0 *Handle, out1 *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_socket_write(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
+func sys_socket_write(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_socket_read(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
+func sys_socket_read(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit

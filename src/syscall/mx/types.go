@@ -6,6 +6,26 @@
 
 package mx
 
+type Status int32   // mx_status_t
+type Handle int32   // mx_handle_t
+type Time uint64    // mx_time_t, nanoseconds
+type Signals uint32 // mx_signals_t
+type Rights uint32  // mx_rights_t
+type Paddr uintptr  // mx_paddr_t
+
+type WaitSetResult struct {
+	Cookie     uint64
+	WaitResult Status
+	Observed   Signals
+} // mx_waitset_result_t
+
+type WaitItem struct {
+	Handle  Handle
+	WaitFor Signals
+	Pending Signals
+} // mx_wait_item_t
+
+// Status codes. See magenta/system/public/magenta/errors.h
 const (
 	ErrOk Status = -iota
 	ErrInternal
@@ -28,8 +48,8 @@ const (
 	_ // -18
 	_ // -19
 	ErrBadState
-	ErrFlowControl
-	ErrNotReady
+	_ // -21
+	_ // -22
 	ErrTimedOut
 	ErrHandleClosed
 	ErrRemoteClosed
@@ -48,9 +68,9 @@ const (
 	_ // -38
 	_ // -39
 	ErrIO
-	ErrI2CNack
-	ErrChecksumFail
-	_ // -43
+	ErrIORefused
+	ErrIODataIntegrity
+	ErrIODataLoss
 	_ // -44
 	_ // -45
 	_ // -46
@@ -60,7 +80,7 @@ const (
 	ErrBadPath
 	ErrNotDir
 	ErrNotFile
-	ErrRecurseTooDeep
+	_ // -53
 	ErrWrongType
 )
 
