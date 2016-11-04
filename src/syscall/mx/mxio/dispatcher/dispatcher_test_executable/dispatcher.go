@@ -98,7 +98,7 @@ func main() {
 	writeMessageVerifySum(6, 10)
 	writeMessageVerifySum(15, 25)
 
-	if err := mx.HandleClose(handles[1]); err != nil {
+	if err := handles[1].Close(); err != nil {
 		panic(err)
 	}
 

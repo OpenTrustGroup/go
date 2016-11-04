@@ -23,5 +23,10 @@ func init() {
 type cprngReader struct{}
 
 func (r *cprngReader) Read(b []byte) (n int, err error) {
-	return mx.Sys_cprng_draw(unsafe.Pointer(&b[0]), uint(len(b))), nil
+	var actual uint
+	status := mx.Sys_cprng_draw(unsafe.Pointer(&b[0]), uint(len(b)), &actual)
+	if status != mx.ErrOk {
+		return 0, status
+	}
+	return int(actual), nil
 }
