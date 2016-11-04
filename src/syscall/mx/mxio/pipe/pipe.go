@@ -30,25 +30,24 @@ func (f *Pipe) Read(data []byte) (n int, err error) {
 	for {
 		var actual uint
 		status := mx.Sys_socket_read(f.h, 0, unsafe.Pointer(&data[0]), uint(len(data)), &actual)
-		if status == 0 {
+		if status == mx.ErrOk {
 			return int(actual), nil
 		}
 		if status == mx.ErrShouldWait {
-			var pending mx.SignalsState
-			status := mx.Sys_handle_wait_one(f.h, mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite, &pending)
-			if status != 0 {
-				return 0, status
+			pending, err := f.h.WaitOne(mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite)
+			if err != nil {
+				return 0, err
 			}
-			if pending.Satisfied&mx.SignalReadable != 0 {
+			if pending&mx.SignalReadable != 0 {
 				continue
 			}
-			if pending.Satisfied&mx.SignalPeerClosed != 0 {
+			if pending&mx.SignalPeerClosed != 0 {
 				return 0, mx.ErrRemoteClosed
 			}
 			// impossible
 			return 0, mx.ErrInternal
 		}
-		// TODO(crawshaw): return non-zero status here?
+		return 0, status
 	}
 }
 
@@ -56,19 +55,18 @@ func (f *Pipe) Write(data []byte) (int, error) {
 	for {
 		var actual uint
 		status := mx.Sys_socket_write(f.h, 0, unsafe.Pointer(&data[0]), uint(len(data)), &actual)
-		if status == 0 {
+		if status == mx.ErrOk {
 			return int(actual), nil
 		}
 		if status == mx.ErrShouldWait {
-			var pending mx.SignalsState
-			status := mx.Sys_handle_wait_one(f.h, mx.SignalWritable|mx.SignalPeerClosed, mx.TimensecInfinite, &pending)
-			if status != 0 {
-				return 0, status
+			pending, err := f.h.WaitOne(mx.SignalWritable|mx.SignalPeerClosed, mx.TimensecInfinite)
+			if err != nil {
+				return 0, err
 			}
-			if pending.Satisfied&mx.SignalWritable != 0 {
+			if pending&mx.SignalWritable != 0 {
 				continue
 			}
-			if pending.Satisfied&mx.SignalPeerClosed != 0 {
+			if pending&mx.SignalPeerClosed != 0 {
 				return 0, mx.ErrRemoteClosed
 			}
 			// impossible
@@ -91,7 +89,7 @@ func (f *Pipe) Seek(offset int64, whence int) (int64, error) {
 }
 
 func (f *Pipe) Close() error {
-	if err := mx.HandleClose(f.h); err != nil {
+	if err := f.h.Close(); err != nil {
 		return err
 	}
 	f.h = 0
@@ -103,9 +101,9 @@ func (f *Pipe) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
 }
 
 func (f *Pipe) Clone() ([]mx.Handle, error) {
-	h := mx.Sys_handle_duplicate(f.h, mx.RightSameRights)
-	if h < 0 {
-		return nil, mx.Status(h)
+	h, err := f.h.Duplicate(mx.RightSameRights)
+	if err != nil {
+		return nil, err
 	}
 	return []mx.Handle{h}, nil
 }

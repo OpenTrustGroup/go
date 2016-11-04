@@ -51,7 +51,7 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 	msg.Handle[msg.Hcount] = rpipe[1]
 	msg.Hcount++
 	rh := rpipe[0]
-	defer mx.HandleClose(rh) // Our end of the reply pipe -- close it before returning
+	defer rh.Close() // Our end of the reply pipe -- close it before returning
 
 	// Send the message (containing the reply pipe) over the RIO handle
 	if err := msg.WriteMsg(r.h); err != nil {
@@ -60,11 +60,11 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 	}
 
 	// Wait for a response on the reply pipe
-	signals, err := mx.HandleWaitOne(rh, mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite)
+	signals, err := rh.WaitOne(mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite)
 	if err != nil {
 		return 0, err
-	} else if (signals.Satisfied&mx.SignalPeerClosed != 0) &&
-		(signals.Satisfied&mx.SignalReadable == 0) {
+	}
+	if signals&mx.SignalPeerClosed != 0 && signals&mx.SignalReadable == 0 {
 		return 0, mx.ErrRemoteClosed
 	}
 
@@ -80,7 +80,7 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 	}
 	// The kernel ensures that the reply pipe endpoint is the last handle returned
 	msg.Hcount--
-	mx.HandleClose(msg.Handle[msg.Hcount])
+	msg.Handle[msg.Hcount].Close()
 
 	if !msg.IsValidIncoming(numBytes) || msg.Op() != OpStatus {
 		msg.DiscardHandles() // If these handles were transmitted poorly, drop them
@@ -222,13 +222,11 @@ func (r *RemoteIO) Close() error {
 		msg.DiscardHandles()
 	}
 
-	rioHandle := r.h
+	r.h.Close()
 	r.h = 0
-	mx.HandleClose(rioHandle)
 	if r.e > 0 {
-		rioHandle = r.e
+		r.e.Close()
 		r.e = 0
-		mx.HandleClose(rioHandle)
 	}
 
 	if err != nil {
@@ -276,7 +274,7 @@ func (r *RemoteIO) Open(path string, flags int32, mode uint32) (mxio.MXIO, error
 		println("unknown rio protocol, ", protocol)
 		// In the error case, the server may have given us handles -- close them
 		for i := range handles {
-			mx.HandleClose(handles[i])
+			handles[i].Close()
 		}
 		return nil, mx.ErrNotSupported
 	}

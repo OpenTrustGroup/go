@@ -26,17 +26,17 @@ type (
 		ReturnCode int
 	} // mx_process_info_t
 
-	SignalsState struct {
-		Satisfied   Signals
-		Satisfiable Signals
-	} // mx_signals_state_t
-
 	WaitSetResult struct {
-		Cookie       uint64
-		WaitResult   Status
-		Reserved     uint32
-		SignalsState SignalsState
+		Cookie     uint64
+		WaitResult Status
+		Observed   Signals
 	} // mx_waitset_result_t
+
+	WaitItem struct {
+		Handle  Handle
+		WaitFor Signals
+		Pending Signals
+	} // mx_wait_item_t
 )
 
 //go:cgo_import_dynamic vdso_mx_process_exit mx_process_exit "libmagenta.so.abi"
@@ -109,6 +109,7 @@ type (
 //go:cgo_import_dynamic vdso_mx_pci_query_irq_mode_caps mx_pci_query_irq_mode_caps "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_pci_set_irq_mode mx_pci_set_irq_mode "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_pci_init mx_pci_init "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_pci_add_subtract_io_range mx_pci_add_subtract_io_range "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_io_mapping_get_info mx_io_mapping_get_info "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_object_bind_exception_port mx_object_bind_exception_port "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_port_create mx_port_create "libmagenta.so.abi"
@@ -207,6 +208,7 @@ type (
 //go:linkname vdso_mx_pci_query_irq_mode_caps vdso_mx_pci_query_irq_mode_caps
 //go:linkname vdso_mx_pci_set_irq_mode vdso_mx_pci_set_irq_mode
 //go:linkname vdso_mx_pci_init vdso_mx_pci_init
+//go:linkname vdso_mx_pci_add_subtract_io_range vdso_mx_pci_add_subtract_io_range
 //go:linkname vdso_mx_io_mapping_get_info vdso_mx_io_mapping_get_info
 //go:linkname vdso_mx_object_bind_exception_port vdso_mx_object_bind_exception_port
 //go:linkname vdso_mx_port_create vdso_mx_port_create
@@ -306,6 +308,7 @@ var (
 	vdso_mx_pci_query_irq_mode_caps    uintptr
 	vdso_mx_pci_set_irq_mode           uintptr
 	vdso_mx_pci_init                   uintptr
+	vdso_mx_pci_add_subtract_io_range  uintptr
 	vdso_mx_io_mapping_get_info        uintptr
 	vdso_mx_object_bind_exception_port uintptr
 	vdso_mx_port_create                uintptr
@@ -405,19 +408,19 @@ func Sys_handle_close(handle Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_handle_duplicate(handle Handle, rights Rights) Handle
+func Sys_handle_duplicate(handle Handle, rights Rights, out *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_handle_wait_one(handle Handle, signals Signals, timeout Time, signals_state *SignalsState) Status
+func Sys_handle_wait_one(handle Handle, waitfor Signals, timeout Time, observed *Signals) Status
 
 //go:noescape
 //go:nosplit
-func Sys_handle_wait_many(count uint32, handles *Handle, signals *Signals, timeout Time, result_index *uint32, signals_states *SignalsState) Status
+func Sys_handle_wait_many(items *WaitItem, count uint32, timeout Time) Status
 
 //go:noescape
 //go:nosplit
-func Sys_handle_replace(handle Handle, rights Rights) Handle
+func Sys_handle_replace(handle Handle, rights Rights, out *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -425,11 +428,11 @@ func Sys_object_signal(handle Handle, clear_mask uint32, set_mask uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_object_get_info(handle Handle, topic uint32, topic_size uint16, buffer unsafe.Pointer, buffer_size uint) int
+func Sys_object_get_info(handle Handle, topic uint32, topic_size uint16, buffer unsafe.Pointer, buffer_size uint, actual_size *uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_object_get_child(handle Handle, koid uint64, rights Rights) Handle
+func Sys_object_get_child(handle Handle, koid uint64, rights Rights, out *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -501,7 +504,7 @@ func Sys_event_create(options uint32, out *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_eventpair_create(out_handles *Handle, flags uint32) Status
+func Sys_eventpair_create(options uint32, out0 *Handle, out1 *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -517,15 +520,15 @@ func Sys_futex_requeue(wake_ptr *int, wake_count uint32, current_value int, requ
 
 //go:noescape
 //go:nosplit
-func Sys_vmo_create(size uint64) Handle
+func Sys_vmo_create(size uint64, options uint32, out *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_vmo_read(handle Handle, data unsafe.Pointer, offset uint64, len uint) int
+func Sys_vmo_read(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_vmo_write(handle Handle, data unsafe.Pointer, offset uint64, len uint) int
+func Sys_vmo_write(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
@@ -553,7 +556,7 @@ func Sys_alloc_device_memory(handle Handle, len uint32, out_paddr *Paddr, out_va
 
 //go:noescape
 //go:nosplit
-func Sys_cprng_draw(buffer unsafe.Pointer, len uint) int
+func Sys_cprng_draw(buffer unsafe.Pointer, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
@@ -617,6 +620,10 @@ func Sys_pci_init(handle Handle, init_buf *int, len uint32) Status
 
 //go:noescape
 //go:nosplit
+func Sys_pci_add_subtract_io_range(handle Handle, mmio bool, base uint64, len uint64, add bool) Status
+
+//go:noescape
+//go:nosplit
 func Sys_io_mapping_get_info(handle Handle, out_vaddr unsafe.Pointer, out_size *uint64) Status
 
 //go:noescape
@@ -669,11 +676,11 @@ func Sys_datapipe_end_read(handle Handle, read uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_waitset_create() Handle
+func Sys_waitset_create(options uint32, out *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_waitset_add(waitset_handle Handle, handle Handle, signals Signals, cookie uint64) Status
+func Sys_waitset_add(waitset_handle Handle, cookie uint64, handle Handle, signals Signals) Status
 
 //go:noescape
 //go:nosplit
@@ -681,7 +688,7 @@ func Sys_waitset_remove(waitset_handle Handle, cookie uint64) Status
 
 //go:noescape
 //go:nosplit
-func Sys_waitset_wait(waitset_handle Handle, timeout Time, num_results *uint32, results *WaitSetResult, max_results *uint32) Status
+func Sys_waitset_wait(waitset_handle Handle, timeout Time, results *WaitSetResult, count *uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -713,11 +720,11 @@ func Sys_socket_read(handle Handle, flags uint32, buffer unsafe.Pointer, len uin
 
 //go:noescape
 //go:nosplit
-func Sys_thread_read_state(handle Handle, kind uint32, buffer unsafe.Pointer, buffer_len *uint32) Status
+func Sys_thread_read_state(handle Handle, kind uint32, state unsafe.Pointer, len uint32, actual *uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_thread_write_state(handle Handle, kind uint32, buffer unsafe.Pointer, buffer_len uint32) Status
+func Sys_thread_write_state(handle Handle, kind uint32, state unsafe.Pointer, len uint32) Status
 
 //go:noescape
 //go:nosplit

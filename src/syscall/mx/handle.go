@@ -18,41 +18,33 @@ var (
 	ProcHandle  Handle
 )
 
-func HandleClose(handle Handle) error {
-	if status := Sys_handle_close(handle); status != ErrOk {
+func (h Handle) Close() error {
+	if status := Sys_handle_close(h); status != ErrOk {
 		return status
 	}
 	return nil
 }
 
-func HandleDuplicate(handle Handle, rights Rights) (Handle, error) {
-	dupHandle := Sys_handle_duplicate(handle, rights)
-	if dupHandle <= 0 {
-		return 0, Status(dupHandle)
+func (h Handle) Duplicate(rights Rights) (Handle, error) {
+	var dup Handle
+	if status := Sys_handle_duplicate(h, rights, &dup); status != ErrOk {
+		return 0, status
 	}
-	return dupHandle, nil
+	return dup, nil
 }
 
-func HandleWaitOne(handle Handle, signals Signals, timeout Time) (SignalsState, error) {
-	var sigState SignalsState
-	status := Sys_handle_wait_one(handle, signals, timeout, &sigState)
-	if status != ErrOk {
-		return sigState, status
+func (h Handle) WaitOne(waitFor Signals, timeout Time) (observed Signals, err error) {
+	if status := Sys_handle_wait_one(h, waitFor, timeout, &observed); status != ErrOk {
+		return observed, status
 	}
-	return sigState, nil
+	return observed, nil
 }
 
-func HandleWaitMany(handles []Handle, signals []Signals, timeout Time) (uint32, []SignalsState, error) {
-	if len(handles) != len(signals) || len(handles) < 1 {
-		return 0, nil, ErrInvalidArgs
+func WaitMany(items []WaitItem, timeout Time) error {
+	if status := Sys_handle_wait_many(&items[0], uint32(len(items)), timeout); status != ErrOk {
+		return status
 	}
-	var resultIndex uint32
-	resultSignals := make([]SignalsState, len(handles))
-	status := Sys_handle_wait_many(uint32(len(handles)), &handles[0], &signals[0], timeout, &resultIndex, &resultSignals[0])
-	if status != ErrOk {
-		return resultIndex, resultSignals, status
-	}
-	return resultIndex, resultSignals, nil
+	return nil
 }
 
 // TODO: s/MsgPipe/Channel/

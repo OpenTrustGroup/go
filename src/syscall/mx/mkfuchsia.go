@@ -128,17 +128,17 @@ type (
 		ReturnCode int
 	} // mx_process_info_t
 
-	SignalsState struct {
-		Satisfied   Signals
-		Satisfiable Signals
-	} // mx_signals_state_t
-
 	WaitSetResult struct {
-		Cookie       uint64
-		WaitResult   Status
-		Reserved     uint32
-		SignalsState SignalsState
+		Cookie     uint64
+		WaitResult Status
+		Observed   Signals
 	} // mx_waitset_result_t
+
+	WaitItem struct {
+		Handle  Handle
+		WaitFor Signals
+		Pending Signals
+	} // mx_wait_item_t
 )
 
 `
@@ -387,10 +387,10 @@ func printGoType(buf *bytes.Buffer, t magentaType) {
 		fmt.Fprint(buf, "Handle")
 	case mx_signals_t:
 		fmt.Fprint(buf, "Signals")
-	case mx_signals_state_t:
-		fmt.Fprint(buf, "SignalsState")
 	case mx_waitset_result_t:
 		fmt.Fprint(buf, "WaitSetResult")
+	case mx_wait_item_t:
+		fmt.Fprint(buf, "WaitItem")
 	case mx_rights_t:
 		fmt.Fprint(buf, "Rights")
 	case mx_vaddr_t:
@@ -754,6 +754,7 @@ const (
 	mx_signals_t
 	mx_signals_state_t
 	mx_waitset_result_t
+	mx_wait_item_t
 	mx_rights_t
 	mx_vaddr_t
 	mx_paddr_t
@@ -785,6 +786,7 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"mx_signals_t":             mx_signals_t,
 	"mx_signals_state_t":       mx_signals_state_t,
 	"mx_waitset_result_t":      mx_waitset_result_t,
+	"mx_wait_item_t":           mx_wait_item_t,
 	"mx_rights_t":              mx_rights_t,
 	"mx_vaddr_t":               mx_vaddr_t,
 	"mx_paddr_t":               mx_paddr_t,

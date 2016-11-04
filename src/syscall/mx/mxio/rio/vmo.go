@@ -41,11 +41,12 @@ func (f *VMOFile) Read(data []byte) (n int, err error) {
 	if len(data) == 0 {
 		return 0, err
 	}
-	n = mx.Sys_vmo_read(f.h, unsafe.Pointer(&data[0]), uint64(f.at), uint(len(data)))
-	if n < 0 {
-		return 0, mx.Status(n)
+	var actual uint
+	status := mx.Sys_vmo_read(f.h, unsafe.Pointer(&data[0]), uint64(f.at), uint(len(data)), &actual)
+	if status != mx.ErrOk {
+		return 0, status
 	}
-	f.at += int64(n)
+	f.at += int64(actual)
 	return n, err
 }
 
@@ -80,7 +81,7 @@ func (f *VMOFile) Seek(offset int64, whence int) (int64, error) {
 }
 
 func (f *VMOFile) Close() error {
-	if err := mx.HandleClose(f.h); err != nil {
+	if err := f.h.Close(); err != nil {
 		return err
 	}
 	f.h = 0

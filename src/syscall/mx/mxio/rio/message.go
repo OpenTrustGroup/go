@@ -149,6 +149,6 @@ func (m *Msg) IsValidIncoming(size uint32) bool {
 // DiscardHandles throws away any handles that might exist within the message
 func (m *Msg) DiscardHandles() {
 	for i := uint32(0); i < m.Hcount; i++ {
-		mx.HandleClose(m.Handle[i])
+		m.Handle[i].Close()
 	}
 }

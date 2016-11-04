@@ -74,7 +74,7 @@ func New(callback DispatcherCallback) (*Dispatcher, error) {
 // Closes a dispatcher, shutting down all handles added to the dispatcher and preventing additional
 // handles from being added.
 func (d *Dispatcher) close() {
-	mx.HandleClose(d.ioport)
+	d.ioport.Close()
 }
 
 func (d *Dispatcher) destroyHandler(hr *handler, handlerID uint64, doCloseCallback bool) {
@@ -89,7 +89,7 @@ func (d *Dispatcher) destroyHandler(hr *handler, handlerID uint64, doCloseCallba
 // Unbind a handler from the dispatcher to prevent further messages from arriving.
 func (d *Dispatcher) disconnectHandler(hr *handler, handlerID uint64, doCloseCallback bool) {
 	// close handle, so we get no further messages
-	mx.HandleClose(hr.h)
+	hr.h.Close()
 
 	// Send a "SignalSignaled" close message to shut down the handler
 	var packet mxio.Packet
