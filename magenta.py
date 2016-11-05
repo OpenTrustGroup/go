@@ -9,8 +9,8 @@
 import argparse
 import os
 import stat
+import subprocess
 import sys
-from subprocess import call
 from shutil import copyfile
 from shutil import rmtree
 
@@ -34,9 +34,9 @@ def main():
     os.environ['GOROOT_BOOTSTRAP'] = args.go_bootstrap_path
     os.environ['CGO_ENABLED'] = '1'
 
-    # TODO(smklein): Convert CC_FOR_TARGET from gccwrap to clangwrap.
+    os.environ['FUCHSIA'] = args.fuchsia_root
     os.environ['MAGENTA'] = os.path.join(args.fuchsia_root, 'magenta')
-    os.environ['CC_FOR_TARGET'] = os.path.join(go_dir, 'misc/fuchsia/gccwrap.sh')
+    os.environ['CC_FOR_TARGET'] = os.path.join(go_dir, 'misc/fuchsia/clangwrap.sh')
 
     # Host
     os.environ['GOHOSTOS'] = args.go_host_os
@@ -52,9 +52,11 @@ def main():
     rmtree(os.path.join(go_dir, 'pkg/fuchsia_' + args.go_target_arch + '_shared'), True)
 
     # Actually compile Go
-    r = call(['./make.bash'], env=os.environ)
-    if r != 0:
-        return r
+    try:
+        subprocess.check_output(['./make.bash'], env=os.environ, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        print e.output
+        return e.returncode
 
     # Copy the output binary into a known location
     copyfile(os.path.join(go_dir, 'bin/go'), args.go_output_path)

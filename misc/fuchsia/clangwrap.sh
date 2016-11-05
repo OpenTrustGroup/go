@@ -29,12 +29,12 @@ else
 	exit 1
 fi
 
-if [ "$SDK" == "" ]; then
-	echo "clangwrap.sh: missing fuchsia SDK env variable" >&2
+if [ "$FUCHSIA" == "" ]; then
+	echo "clangwrap.sh: missing FUCHSIA env variable" >&2
 	exit 1
 fi
 
-exec ${SDK}/toolchain/clang+llvm-${HOST_ARCH}-${HOST_OS}/bin/clang \
+exec ${FUCHSIA}/buildtools/toolchain/clang+llvm-${HOST_ARCH}-${HOST_OS}/bin/clang \
 	--target=${TARGET_ARCH}-fuchsia \
-	--sysroot=${SDK}/../out/sysroot/${TARGET_ARCH}-fuchsia \
+	--sysroot=${FUCHSIA}/out/sysroot/${TARGET_ARCH}-fuchsia \
 	"$@"
