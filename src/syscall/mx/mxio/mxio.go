@@ -147,8 +147,8 @@ func IoPortBind(handle mx.Handle, key uint64, source mx.Handle, signals mx.Signa
 }
 
 type Vnattr struct {
+	Valid      uint32
 	Mode       Vtype
-	Reserved   uint32
 	Inode      uint64
 	Size       uint64
 	CreateTime uint64

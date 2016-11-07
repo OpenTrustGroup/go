@@ -349,7 +349,7 @@ func Fstat(fd int, stat *Stat_t) (err error) {
 	if err != nil {
 		return err
 	}
-	stat.Dev = 0
+	stat.Dev = uint64(attr.Mode)
 	stat.Ino = attr.Inode
 	stat.Size = attr.Size
 	stat.CreateTime = attr.CreateTime
