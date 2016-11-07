@@ -47,7 +47,7 @@ func main() {
 			handlerCb(-1)
 		} else {
 			data := make([]byte, 8)
-			numBytes, numHandles, err := mx.MsgPipeRead(h, data, nil, 0)
+			numBytes, numHandles, err := h.ReadChannel(data, nil, 0)
 			if err != nil {
 				if err == mx.ErrBadState {
 					// This error implies there are no messages currently in the pipe
@@ -68,14 +68,12 @@ func main() {
 		panic(err)
 	}
 	go d.Serve()
-	handles, err := mx.MsgPipeCreate(0)
+	h0, h1, err := mx.NewChannel(0)
 	if err != nil {
 		panic(err)
-	} else if len(handles) != 2 {
-		panic("Unexpected number of handles")
 	}
 
-	if err := d.AddHandler(handles[0], sumCb, expectedCookie); err != nil {
+	if err := d.AddHandler(h0, sumCb, expectedCookie); err != nil {
 		panic(err)
 	}
 
@@ -85,7 +83,7 @@ func main() {
 
 	writeMessageVerifySum := func(val, expectedSum int64) {
 		buf := (*[8]byte)(unsafe.Pointer(&val))[:]
-		if err := mx.MsgPipeWrite(handles[1], buf, nil, 0); err != nil {
+		if err := h1.WriteChannel(buf, nil, 0); err != nil {
 			panic(err)
 		}
 		seenSum := <-c
@@ -98,7 +96,7 @@ func main() {
 	writeMessageVerifySum(6, 10)
 	writeMessageVerifySum(15, 25)
 
-	if err := handles[1].Close(); err != nil {
+	if err := h1.Close(); err != nil {
 		panic(err)
 	}
 

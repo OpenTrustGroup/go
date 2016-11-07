@@ -28,17 +28,17 @@ func CreateRIOServer() *dispatcher.Dispatcher {
 
 // Create a pair of handles, and add one end to the RIO server, along with a RIO Server callback.
 func CreateRIOClient(d *dispatcher.Dispatcher, cb rio.ServerHandler, cookie int64) *rio.RemoteIO {
-	handles, err := mx.MsgPipeCreate(0)
+	h0, h1, err := mx.NewChannel(0)
 	if err != nil {
 		panic(err)
 	}
 
-	if err := d.AddHandler(handles[0], cb, cookie); err != nil {
+	if err := d.AddHandler(h0, cb, cookie); err != nil {
 		panic(err)
 	}
 
 	// TODO(smklein): Add 'event' handle to clientHandles when testing 'wait'
-	client, err := rio.New([]mx.Handle{handles[1]})
+	client, err := rio.New([]mx.Handle{h1})
 	if err != nil {
 		panic(err)
 	}
@@ -86,11 +86,11 @@ var testData = []struct {
 
 func checkOpen(client *rio.RemoteIO, opIndex int) {
 	// Create the expected return handle here, since dummy values would be rejected.
-	testHandles, err := mx.MsgPipeCreate(0)
+	h0, _, err := mx.NewChannel(0)
 	if err != nil {
 		panic(err)
 	}
-	testData[opIndex].outHandles = []mx.Handle{testHandles[0]}
+	testData[opIndex].outHandles = []mx.Handle{h0}
 	_, err = client.Open(string(testData[opIndex].inData), testData[opIndex].inArg, uint32(testData[opIndex].inArg2))
 	if err != nil {
 		panic(err)
@@ -99,11 +99,11 @@ func checkOpen(client *rio.RemoteIO, opIndex int) {
 
 func checkClone(client *rio.RemoteIO, opIndex int) {
 	// Create the expected return handle here, since dummy values would be rejected.
-	testHandles, err := mx.MsgPipeCreate(0)
+	h0, _, err := mx.NewChannel(0)
 	if err != nil {
 		panic(err)
 	}
-	testData[opIndex].outHandles = []mx.Handle{testHandles[0]}
+	testData[opIndex].outHandles = []mx.Handle{h0}
 	handles, err := client.Clone()
 	if err != nil {
 		panic(err)
@@ -147,11 +147,11 @@ func checkSeek(client *rio.RemoteIO, opIndex int) {
 func checkIoctl(client *rio.RemoteIO, opIndex int) {
 	if testData[opIndex].inArg2 == int64(mxio.IoctlDevmgrMountFS) {
 		// Create the expected return handle here, since dummy values would be rejected.
-		testHandles, err := mx.MsgPipeCreate(0)
+		h0, _, err := mx.NewChannel(0)
 		if err != nil {
 			panic(err)
 		}
-		testData[opIndex].outHandles = []mx.Handle{testHandles[0]}
+		testData[opIndex].outHandles = []mx.Handle{h0}
 	}
 
 	outData, outHandles, err := client.Ioctl(uint32(testData[opIndex].inArg2), testData[opIndex].inData)
