@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # This uses the Fuchsia clang and Magenta sysroot.
 set -eu
 
