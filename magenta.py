@@ -56,7 +56,8 @@ def main():
         subprocess.check_output(['./make.bash'], env=os.environ, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         print e.output
-        return e.returncode
+        print "FAILED: Go compiler toolchain build"
+        return 1
 
     # Copy the output binary into a known location
     copyfile(os.path.join(go_dir, 'bin/go'), args.go_output_path)
