@@ -36,7 +36,7 @@ def main():
 
     os.environ['FUCHSIA'] = args.fuchsia_root
     os.environ['MAGENTA'] = os.path.join(args.fuchsia_root, 'magenta')
-    os.environ['CC_FOR_TARGET'] = os.path.join(go_dir, 'misc/fuchsia/clangwrap.sh')
+    os.environ['CC_FOR_TARGET'] = os.path.join(go_dir, 'misc/fuchsia/gccwrap.sh')
 
     # Host
     os.environ['GOHOSTOS'] = args.go_host_os
