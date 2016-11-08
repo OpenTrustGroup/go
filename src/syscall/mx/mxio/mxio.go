@@ -155,6 +155,12 @@ type Vnattr struct {
 	ModifyTime uint64
 }
 
+const (
+	AttrCtime = 1 << iota
+	AttrMtime
+	AttrAtime
+)
+
 type Vtype uint32
 
 // bit-compatible with POSIX stat

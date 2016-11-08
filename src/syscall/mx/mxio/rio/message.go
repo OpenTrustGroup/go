@@ -48,6 +48,16 @@ const (
 	OpWriteAt
 	OpTruncate
 	OpRename
+	OpConnect
+	OpBind
+	OpListen
+	OpGetSockname
+	OpGetPeerName
+	OpSetSockOpt
+	OpGetSockOpt
+	OpGetAddrInfo
+	OpSetAttr
+	OpSync
 	OpNumOps // The total number of operations
 
 	OpReplyPipe = 0x01000000
