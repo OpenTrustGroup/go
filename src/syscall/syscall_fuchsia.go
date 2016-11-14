@@ -194,6 +194,15 @@ func Rename(oldpath, newpath string) (err error) {
 	return err
 }
 
+func Fsync(fd int) (err error) {
+	fdsMu.Lock()
+	f := fds[fd-fdsOff]
+	fdsMu.Unlock()
+
+	_, err = f.Misc(rio.OpSync, 0, nil, nil)
+	return err
+}
+
 func Fchdir(fd int) (err error) {
 	panic("syscall.Fchdir TODO")
 }

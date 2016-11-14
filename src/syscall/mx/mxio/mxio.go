@@ -108,6 +108,15 @@ const (
 	IoctlFamilyDevmgr
 )
 
+var IoctlDeviceBind = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 0)
+var IoctlDeviceWatchDir = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevice, 1)
+var IoctlDeviceGetEventHandle = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevice, 2)
+var IoctlDeviceGetDriverName = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 3)
+var IoctlDeviceGetDeviceName = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 4)
+var IoctlDeviceDebugSuspend = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 5)
+var IoctlDeviceDebugResume = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 6)
+var IoctlDeviceSync = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 7)
+
 var IoctlDevmgrMountFS = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevmgr, 0)
 var IoctlDevmgrUnmountFS = IoctlNum(IoctlKindDefault, IoctlFamilyDevmgr, 1)
 

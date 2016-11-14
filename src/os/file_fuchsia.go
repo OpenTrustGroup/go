@@ -28,7 +28,12 @@ func (f *File) Truncate(size int64) error {
 }
 
 func (f *File) Sync() error {
-	// TODO(smklein): Implement
+	if f == nil {
+		return ErrInvalid
+	}
+	if e := syscall.Fsync(f.fd); e != nil {
+		return e
+	}
 	return nil
 }
 
