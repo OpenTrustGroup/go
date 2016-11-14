@@ -55,7 +55,7 @@ func main() {
 	cpp := exec.Command(
 		"cpp",
 		"-DMAGENTA_SYSCALL_DEF=MAGENTA_SYSCALL_DEF",
-		"-DMAGENTA_DDKCALL_DEF=MAGENTA_DDKCALL_DEF",
+		"-DMAGENTA_VDSOCALL_DEF=MAGENTA_VDSOCALL_DEF",
 		syscallsFile,
 	)
 	b, err := cpp.CombinedOutput()
@@ -395,24 +395,15 @@ func (p *parser) parse() (syscalls []magentaSyscallDef, err error) {
 	}
 
 	p.nextRune()
-parseLoop:
 	for {
 		t, lit := p.nextToken()
-		if t == tokenIdent && lit == "MAGENTA_DDKCALL_DEF" {
-			for {
-				t, lit := p.nextToken()
-				switch t {
-				case ')':
-					continue parseLoop
-				case tokenEOF:
-					return nil, p.errorf("unexpected EOF")
-				case tokenBad:
-					return nil, p.errorf("unexpected token: %q (literal %q)", t, lit)
-				}
+		if t == tokenIdent {
+			syscall := (lit == "MAGENTA_SYSCALL_DEF")
+			vdsocall := (lit == "MAGENTA_VDSOCALL_DEF")
+			if !syscall && !vdsocall {
+				return nil, p.errorf("Unexpected token: %s", lit)
 			}
-		}
-		if t == tokenIdent && lit == "MAGENTA_SYSCALL_DEF" {
-			call, err := p.parseSyscall()
+			call, err := p.parseSyscall(vdsocall)
 			if err != nil {
 				return nil, err
 			}
@@ -439,18 +430,20 @@ func (p *parser) expect(want token) {
 	}
 }
 
-func (p *parser) parseSyscall() (call magentaSyscallDef, err error) {
+func (p *parser) parseSyscall(vdsocall bool) (call magentaSyscallDef, err error) {
 	p.expect('(')
-	p.nextNumber() // skip first slot count
-	p.expect(',')
-	p.nextNumber() // skip second slot count
-	p.expect(',')
-	n := p.nextNumber()
-	call.number, err = strconv.Atoi(n)
-	if err != nil {
-		return magentaSyscallDef{}, err
+	if !vdsocall {
+		p.nextNumber() // skip first slot count
+		p.expect(',')
+		p.nextNumber() // skip second slot count
+		p.expect(',')
+		n := p.nextNumber()
+		call.number, err = strconv.Atoi(n)
+		if err != nil {
+			return magentaSyscallDef{}, err
+		}
+		p.expect(',')
 	}
-	p.expect(',')
 	typ, err := p.parseType()
 	if err != nil {
 		return magentaSyscallDef{}, err

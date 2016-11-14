@@ -129,9 +129,9 @@ func IoPortQueue(handle mx.Handle, packet *Packet, size uint) error {
 }
 
 // IoPortWait wraps the corresponding syscall
-func IoPortWait(handle mx.Handle, size uint) (*Packet, error) {
+func IoPortWait(handle mx.Handle, timeout mx.Time, size uint) (*Packet, error) {
 	var packet Packet
-	status := mx.Sys_port_wait(handle, unsafe.Pointer(&packet), size)
+	status := mx.Sys_port_wait(handle, timeout, unsafe.Pointer(&packet), size)
 	if status != mx.ErrOk {
 		return nil, status
 	}

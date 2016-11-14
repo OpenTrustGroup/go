@@ -9,44 +9,41 @@ package mx
 
 import "unsafe"
 
-//go:cgo_import_dynamic vdso_mx_process_exit mx_process_exit "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_time_get mx_time_get "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_nanosleep mx_nanosleep "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_num_cpus mx_num_cpus "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_debug_read mx_debug_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_debug_write mx_debug_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_debug_send_command mx_debug_send_command "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_debug_transfer_handle mx_debug_transfer_handle "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_process_read_memory mx_process_read_memory "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_process_write_memory mx_process_write_memory "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_ktrace_read mx_ktrace_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_ktrace_control mx_ktrace_control "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_ktrace_write mx_ktrace_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_log_create mx_log_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_log_write mx_log_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_log_read mx_log_read "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_handle_close mx_handle_close "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_handle_duplicate mx_handle_duplicate "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_handle_replace mx_handle_replace "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_handle_wait_one mx_handle_wait_one "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_handle_wait_many mx_handle_wait_many "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_handle_replace mx_handle_replace "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_object_signal mx_object_signal "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_object_signal_peer mx_object_signal_peer "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_object_get_property mx_object_get_property "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_object_set_property mx_object_set_property "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_object_get_info mx_object_get_info "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_object_get_child mx_object_get_child "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_thread_create mx_thread_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_thread_start mx_thread_start "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_thread_exit mx_thread_exit "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_thread_arch_prctl mx_thread_arch_prctl "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_object_bind_exception_port mx_object_bind_exception_port "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_channel_create mx_channel_create "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_channel_read mx_channel_read "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_channel_write mx_channel_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_interrupt_create mx_interrupt_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_interrupt_complete mx_interrupt_complete "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_socket_create mx_socket_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_socket_write mx_socket_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_socket_read mx_socket_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_thread_exit mx_thread_exit "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_thread_create mx_thread_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_thread_start mx_thread_start "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_thread_read_state mx_thread_read_state "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_thread_write_state mx_thread_write_state "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_process_exit mx_process_exit "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_process_create mx_process_create "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_process_start mx_process_start "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_process_map_vm mx_process_map_vm "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_process_unmap_vm mx_process_unmap_vm "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_process_protect_vm mx_process_protect_vm "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_process_read_memory mx_process_read_memory "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_process_write_memory mx_process_write_memory "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_job_create mx_job_create "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_task_resume mx_task_resume "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_task_kill mx_task_kill "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_event_create mx_event_create "libmagenta.so.abi"
@@ -54,17 +51,47 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_futex_wait mx_futex_wait "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_futex_wake mx_futex_wake "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_futex_requeue mx_futex_requeue "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_waitset_create mx_waitset_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_waitset_add mx_waitset_add "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_waitset_remove mx_waitset_remove "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_waitset_wait mx_waitset_wait "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_port_create mx_port_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_port_queue mx_port_queue "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_port_wait mx_port_wait "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_port_bind mx_port_bind "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_vmo_create mx_vmo_create "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_vmo_read mx_vmo_read "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_vmo_write mx_vmo_write "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_vmo_get_size mx_vmo_get_size "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_vmo_set_size mx_vmo_set_size "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_vmo_op_range mx_vmo_op_range "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_cprng_draw mx_cprng_draw "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_cprng_add_entropy mx_cprng_add_entropy "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_create mx_datapipe_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_write mx_datapipe_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_read mx_datapipe_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_begin_write mx_datapipe_begin_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_end_write mx_datapipe_end_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_begin_read mx_datapipe_begin_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_datapipe_end_read mx_datapipe_end_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_log_create mx_log_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_log_write mx_log_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_log_read mx_log_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_ktrace_read mx_ktrace_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_ktrace_control mx_ktrace_control "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_ktrace_write mx_ktrace_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_thread_arch_prctl mx_thread_arch_prctl "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_debug_transfer_handle mx_debug_transfer_handle "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_debug_read mx_debug_read "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_debug_write mx_debug_write "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_debug_send_command mx_debug_send_command "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_interrupt_create mx_interrupt_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_interrupt_complete mx_interrupt_complete "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_interrupt_wait mx_interrupt_wait "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_mmap_device_io mx_mmap_device_io "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_mmap_device_memory mx_mmap_device_memory "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_alloc_device_memory mx_alloc_device_memory "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_cprng_draw mx_cprng_draw "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_cprng_add_entropy mx_cprng_add_entropy "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_io_mapping_get_info mx_io_mapping_get_info "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_bootloader_fb_get_info mx_bootloader_fb_get_info "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_set_framebuffer mx_set_framebuffer "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_pci_get_nth_device mx_pci_get_nth_device "libmagenta.so.abi"
@@ -80,72 +107,44 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_pci_set_irq_mode mx_pci_set_irq_mode "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_pci_init mx_pci_init "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_pci_add_subtract_io_range mx_pci_add_subtract_io_range "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_io_mapping_get_info mx_io_mapping_get_info "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_object_bind_exception_port mx_object_bind_exception_port "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_port_create mx_port_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_port_queue mx_port_queue "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_port_wait mx_port_wait "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_port_bind mx_port_bind "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_create mx_datapipe_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_write mx_datapipe_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_read mx_datapipe_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_begin_write mx_datapipe_begin_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_end_write mx_datapipe_end_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_begin_read mx_datapipe_begin_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_end_read mx_datapipe_end_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_waitset_create mx_waitset_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_waitset_add mx_waitset_add "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_waitset_remove mx_waitset_remove "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_waitset_wait mx_waitset_wait "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_object_get_property mx_object_get_property "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_object_set_property mx_object_set_property "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_acpi_uefi_rsdp mx_acpi_uefi_rsdp "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_acpi_cache_flush mx_acpi_cache_flush "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_socket_create mx_socket_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_socket_write mx_socket_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_socket_read mx_socket_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_thread_read_state mx_thread_read_state "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_thread_write_state mx_thread_write_state "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_job_create mx_job_create "libmagenta.so.abi"
 
-//go:linkname vdso_mx_process_exit vdso_mx_process_exit
 //go:linkname vdso_mx_time_get vdso_mx_time_get
 //go:linkname vdso_mx_nanosleep vdso_mx_nanosleep
 //go:linkname vdso_mx_num_cpus vdso_mx_num_cpus
-//go:linkname vdso_mx_debug_read vdso_mx_debug_read
-//go:linkname vdso_mx_debug_write vdso_mx_debug_write
-//go:linkname vdso_mx_debug_send_command vdso_mx_debug_send_command
-//go:linkname vdso_mx_debug_transfer_handle vdso_mx_debug_transfer_handle
-//go:linkname vdso_mx_process_read_memory vdso_mx_process_read_memory
-//go:linkname vdso_mx_process_write_memory vdso_mx_process_write_memory
-//go:linkname vdso_mx_ktrace_read vdso_mx_ktrace_read
-//go:linkname vdso_mx_ktrace_control vdso_mx_ktrace_control
-//go:linkname vdso_mx_ktrace_write vdso_mx_ktrace_write
-//go:linkname vdso_mx_log_create vdso_mx_log_create
-//go:linkname vdso_mx_log_write vdso_mx_log_write
-//go:linkname vdso_mx_log_read vdso_mx_log_read
 //go:linkname vdso_mx_handle_close vdso_mx_handle_close
 //go:linkname vdso_mx_handle_duplicate vdso_mx_handle_duplicate
+//go:linkname vdso_mx_handle_replace vdso_mx_handle_replace
 //go:linkname vdso_mx_handle_wait_one vdso_mx_handle_wait_one
 //go:linkname vdso_mx_handle_wait_many vdso_mx_handle_wait_many
-//go:linkname vdso_mx_handle_replace vdso_mx_handle_replace
 //go:linkname vdso_mx_object_signal vdso_mx_object_signal
+//go:linkname vdso_mx_object_signal_peer vdso_mx_object_signal_peer
+//go:linkname vdso_mx_object_get_property vdso_mx_object_get_property
+//go:linkname vdso_mx_object_set_property vdso_mx_object_set_property
 //go:linkname vdso_mx_object_get_info vdso_mx_object_get_info
 //go:linkname vdso_mx_object_get_child vdso_mx_object_get_child
-//go:linkname vdso_mx_thread_create vdso_mx_thread_create
-//go:linkname vdso_mx_thread_start vdso_mx_thread_start
-//go:linkname vdso_mx_thread_exit vdso_mx_thread_exit
-//go:linkname vdso_mx_thread_arch_prctl vdso_mx_thread_arch_prctl
+//go:linkname vdso_mx_object_bind_exception_port vdso_mx_object_bind_exception_port
 //go:linkname vdso_mx_channel_create vdso_mx_channel_create
 //go:linkname vdso_mx_channel_read vdso_mx_channel_read
 //go:linkname vdso_mx_channel_write vdso_mx_channel_write
-//go:linkname vdso_mx_interrupt_create vdso_mx_interrupt_create
-//go:linkname vdso_mx_interrupt_complete vdso_mx_interrupt_complete
+//go:linkname vdso_mx_socket_create vdso_mx_socket_create
+//go:linkname vdso_mx_socket_write vdso_mx_socket_write
+//go:linkname vdso_mx_socket_read vdso_mx_socket_read
+//go:linkname vdso_mx_thread_exit vdso_mx_thread_exit
+//go:linkname vdso_mx_thread_create vdso_mx_thread_create
+//go:linkname vdso_mx_thread_start vdso_mx_thread_start
+//go:linkname vdso_mx_thread_read_state vdso_mx_thread_read_state
+//go:linkname vdso_mx_thread_write_state vdso_mx_thread_write_state
+//go:linkname vdso_mx_process_exit vdso_mx_process_exit
 //go:linkname vdso_mx_process_create vdso_mx_process_create
 //go:linkname vdso_mx_process_start vdso_mx_process_start
 //go:linkname vdso_mx_process_map_vm vdso_mx_process_map_vm
 //go:linkname vdso_mx_process_unmap_vm vdso_mx_process_unmap_vm
 //go:linkname vdso_mx_process_protect_vm vdso_mx_process_protect_vm
+//go:linkname vdso_mx_process_read_memory vdso_mx_process_read_memory
+//go:linkname vdso_mx_process_write_memory vdso_mx_process_write_memory
+//go:linkname vdso_mx_job_create vdso_mx_job_create
 //go:linkname vdso_mx_task_resume vdso_mx_task_resume
 //go:linkname vdso_mx_task_kill vdso_mx_task_kill
 //go:linkname vdso_mx_event_create vdso_mx_event_create
@@ -153,17 +152,47 @@ import "unsafe"
 //go:linkname vdso_mx_futex_wait vdso_mx_futex_wait
 //go:linkname vdso_mx_futex_wake vdso_mx_futex_wake
 //go:linkname vdso_mx_futex_requeue vdso_mx_futex_requeue
+//go:linkname vdso_mx_waitset_create vdso_mx_waitset_create
+//go:linkname vdso_mx_waitset_add vdso_mx_waitset_add
+//go:linkname vdso_mx_waitset_remove vdso_mx_waitset_remove
+//go:linkname vdso_mx_waitset_wait vdso_mx_waitset_wait
+//go:linkname vdso_mx_port_create vdso_mx_port_create
+//go:linkname vdso_mx_port_queue vdso_mx_port_queue
+//go:linkname vdso_mx_port_wait vdso_mx_port_wait
+//go:linkname vdso_mx_port_bind vdso_mx_port_bind
 //go:linkname vdso_mx_vmo_create vdso_mx_vmo_create
 //go:linkname vdso_mx_vmo_read vdso_mx_vmo_read
 //go:linkname vdso_mx_vmo_write vdso_mx_vmo_write
 //go:linkname vdso_mx_vmo_get_size vdso_mx_vmo_get_size
 //go:linkname vdso_mx_vmo_set_size vdso_mx_vmo_set_size
 //go:linkname vdso_mx_vmo_op_range vdso_mx_vmo_op_range
+//go:linkname vdso_mx_cprng_draw vdso_mx_cprng_draw
+//go:linkname vdso_mx_cprng_add_entropy vdso_mx_cprng_add_entropy
+//go:linkname vdso_mx_datapipe_create vdso_mx_datapipe_create
+//go:linkname vdso_mx_datapipe_write vdso_mx_datapipe_write
+//go:linkname vdso_mx_datapipe_read vdso_mx_datapipe_read
+//go:linkname vdso_mx_datapipe_begin_write vdso_mx_datapipe_begin_write
+//go:linkname vdso_mx_datapipe_end_write vdso_mx_datapipe_end_write
+//go:linkname vdso_mx_datapipe_begin_read vdso_mx_datapipe_begin_read
+//go:linkname vdso_mx_datapipe_end_read vdso_mx_datapipe_end_read
+//go:linkname vdso_mx_log_create vdso_mx_log_create
+//go:linkname vdso_mx_log_write vdso_mx_log_write
+//go:linkname vdso_mx_log_read vdso_mx_log_read
+//go:linkname vdso_mx_ktrace_read vdso_mx_ktrace_read
+//go:linkname vdso_mx_ktrace_control vdso_mx_ktrace_control
+//go:linkname vdso_mx_ktrace_write vdso_mx_ktrace_write
+//go:linkname vdso_mx_thread_arch_prctl vdso_mx_thread_arch_prctl
+//go:linkname vdso_mx_debug_transfer_handle vdso_mx_debug_transfer_handle
+//go:linkname vdso_mx_debug_read vdso_mx_debug_read
+//go:linkname vdso_mx_debug_write vdso_mx_debug_write
+//go:linkname vdso_mx_debug_send_command vdso_mx_debug_send_command
+//go:linkname vdso_mx_interrupt_create vdso_mx_interrupt_create
+//go:linkname vdso_mx_interrupt_complete vdso_mx_interrupt_complete
+//go:linkname vdso_mx_interrupt_wait vdso_mx_interrupt_wait
 //go:linkname vdso_mx_mmap_device_io vdso_mx_mmap_device_io
 //go:linkname vdso_mx_mmap_device_memory vdso_mx_mmap_device_memory
 //go:linkname vdso_mx_alloc_device_memory vdso_mx_alloc_device_memory
-//go:linkname vdso_mx_cprng_draw vdso_mx_cprng_draw
-//go:linkname vdso_mx_cprng_add_entropy vdso_mx_cprng_add_entropy
+//go:linkname vdso_mx_io_mapping_get_info vdso_mx_io_mapping_get_info
 //go:linkname vdso_mx_bootloader_fb_get_info vdso_mx_bootloader_fb_get_info
 //go:linkname vdso_mx_set_framebuffer vdso_mx_set_framebuffer
 //go:linkname vdso_mx_pci_get_nth_device vdso_mx_pci_get_nth_device
@@ -179,73 +208,45 @@ import "unsafe"
 //go:linkname vdso_mx_pci_set_irq_mode vdso_mx_pci_set_irq_mode
 //go:linkname vdso_mx_pci_init vdso_mx_pci_init
 //go:linkname vdso_mx_pci_add_subtract_io_range vdso_mx_pci_add_subtract_io_range
-//go:linkname vdso_mx_io_mapping_get_info vdso_mx_io_mapping_get_info
-//go:linkname vdso_mx_object_bind_exception_port vdso_mx_object_bind_exception_port
-//go:linkname vdso_mx_port_create vdso_mx_port_create
-//go:linkname vdso_mx_port_queue vdso_mx_port_queue
-//go:linkname vdso_mx_port_wait vdso_mx_port_wait
-//go:linkname vdso_mx_port_bind vdso_mx_port_bind
-//go:linkname vdso_mx_datapipe_create vdso_mx_datapipe_create
-//go:linkname vdso_mx_datapipe_write vdso_mx_datapipe_write
-//go:linkname vdso_mx_datapipe_read vdso_mx_datapipe_read
-//go:linkname vdso_mx_datapipe_begin_write vdso_mx_datapipe_begin_write
-//go:linkname vdso_mx_datapipe_end_write vdso_mx_datapipe_end_write
-//go:linkname vdso_mx_datapipe_begin_read vdso_mx_datapipe_begin_read
-//go:linkname vdso_mx_datapipe_end_read vdso_mx_datapipe_end_read
-//go:linkname vdso_mx_waitset_create vdso_mx_waitset_create
-//go:linkname vdso_mx_waitset_add vdso_mx_waitset_add
-//go:linkname vdso_mx_waitset_remove vdso_mx_waitset_remove
-//go:linkname vdso_mx_waitset_wait vdso_mx_waitset_wait
-//go:linkname vdso_mx_object_get_property vdso_mx_object_get_property
-//go:linkname vdso_mx_object_set_property vdso_mx_object_set_property
 //go:linkname vdso_mx_acpi_uefi_rsdp vdso_mx_acpi_uefi_rsdp
 //go:linkname vdso_mx_acpi_cache_flush vdso_mx_acpi_cache_flush
-//go:linkname vdso_mx_socket_create vdso_mx_socket_create
-//go:linkname vdso_mx_socket_write vdso_mx_socket_write
-//go:linkname vdso_mx_socket_read vdso_mx_socket_read
-//go:linkname vdso_mx_thread_read_state vdso_mx_thread_read_state
-//go:linkname vdso_mx_thread_write_state vdso_mx_thread_write_state
-//go:linkname vdso_mx_job_create vdso_mx_job_create
 
 var (
-	vdso_mx_process_exit               uintptr
 	vdso_mx_time_get                   uintptr
 	vdso_mx_nanosleep                  uintptr
 	vdso_mx_num_cpus                   uintptr
-	vdso_mx_debug_read                 uintptr
-	vdso_mx_debug_write                uintptr
-	vdso_mx_debug_send_command         uintptr
-	vdso_mx_debug_transfer_handle      uintptr
-	vdso_mx_process_read_memory        uintptr
-	vdso_mx_process_write_memory       uintptr
-	vdso_mx_ktrace_read                uintptr
-	vdso_mx_ktrace_control             uintptr
-	vdso_mx_ktrace_write               uintptr
-	vdso_mx_log_create                 uintptr
-	vdso_mx_log_write                  uintptr
-	vdso_mx_log_read                   uintptr
 	vdso_mx_handle_close               uintptr
 	vdso_mx_handle_duplicate           uintptr
+	vdso_mx_handle_replace             uintptr
 	vdso_mx_handle_wait_one            uintptr
 	vdso_mx_handle_wait_many           uintptr
-	vdso_mx_handle_replace             uintptr
 	vdso_mx_object_signal              uintptr
+	vdso_mx_object_signal_peer         uintptr
+	vdso_mx_object_get_property        uintptr
+	vdso_mx_object_set_property        uintptr
 	vdso_mx_object_get_info            uintptr
 	vdso_mx_object_get_child           uintptr
-	vdso_mx_thread_create              uintptr
-	vdso_mx_thread_start               uintptr
-	vdso_mx_thread_exit                uintptr
-	vdso_mx_thread_arch_prctl          uintptr
+	vdso_mx_object_bind_exception_port uintptr
 	vdso_mx_channel_create             uintptr
 	vdso_mx_channel_read               uintptr
 	vdso_mx_channel_write              uintptr
-	vdso_mx_interrupt_create           uintptr
-	vdso_mx_interrupt_complete         uintptr
+	vdso_mx_socket_create              uintptr
+	vdso_mx_socket_write               uintptr
+	vdso_mx_socket_read                uintptr
+	vdso_mx_thread_exit                uintptr
+	vdso_mx_thread_create              uintptr
+	vdso_mx_thread_start               uintptr
+	vdso_mx_thread_read_state          uintptr
+	vdso_mx_thread_write_state         uintptr
+	vdso_mx_process_exit               uintptr
 	vdso_mx_process_create             uintptr
 	vdso_mx_process_start              uintptr
 	vdso_mx_process_map_vm             uintptr
 	vdso_mx_process_unmap_vm           uintptr
 	vdso_mx_process_protect_vm         uintptr
+	vdso_mx_process_read_memory        uintptr
+	vdso_mx_process_write_memory       uintptr
+	vdso_mx_job_create                 uintptr
 	vdso_mx_task_resume                uintptr
 	vdso_mx_task_kill                  uintptr
 	vdso_mx_event_create               uintptr
@@ -253,17 +254,47 @@ var (
 	vdso_mx_futex_wait                 uintptr
 	vdso_mx_futex_wake                 uintptr
 	vdso_mx_futex_requeue              uintptr
+	vdso_mx_waitset_create             uintptr
+	vdso_mx_waitset_add                uintptr
+	vdso_mx_waitset_remove             uintptr
+	vdso_mx_waitset_wait               uintptr
+	vdso_mx_port_create                uintptr
+	vdso_mx_port_queue                 uintptr
+	vdso_mx_port_wait                  uintptr
+	vdso_mx_port_bind                  uintptr
 	vdso_mx_vmo_create                 uintptr
 	vdso_mx_vmo_read                   uintptr
 	vdso_mx_vmo_write                  uintptr
 	vdso_mx_vmo_get_size               uintptr
 	vdso_mx_vmo_set_size               uintptr
 	vdso_mx_vmo_op_range               uintptr
+	vdso_mx_cprng_draw                 uintptr
+	vdso_mx_cprng_add_entropy          uintptr
+	vdso_mx_datapipe_create            uintptr
+	vdso_mx_datapipe_write             uintptr
+	vdso_mx_datapipe_read              uintptr
+	vdso_mx_datapipe_begin_write       uintptr
+	vdso_mx_datapipe_end_write         uintptr
+	vdso_mx_datapipe_begin_read        uintptr
+	vdso_mx_datapipe_end_read          uintptr
+	vdso_mx_log_create                 uintptr
+	vdso_mx_log_write                  uintptr
+	vdso_mx_log_read                   uintptr
+	vdso_mx_ktrace_read                uintptr
+	vdso_mx_ktrace_control             uintptr
+	vdso_mx_ktrace_write               uintptr
+	vdso_mx_thread_arch_prctl          uintptr
+	vdso_mx_debug_transfer_handle      uintptr
+	vdso_mx_debug_read                 uintptr
+	vdso_mx_debug_write                uintptr
+	vdso_mx_debug_send_command         uintptr
+	vdso_mx_interrupt_create           uintptr
+	vdso_mx_interrupt_complete         uintptr
+	vdso_mx_interrupt_wait             uintptr
 	vdso_mx_mmap_device_io             uintptr
 	vdso_mx_mmap_device_memory         uintptr
 	vdso_mx_alloc_device_memory        uintptr
-	vdso_mx_cprng_draw                 uintptr
-	vdso_mx_cprng_add_entropy          uintptr
+	vdso_mx_io_mapping_get_info        uintptr
 	vdso_mx_bootloader_fb_get_info     uintptr
 	vdso_mx_set_framebuffer            uintptr
 	vdso_mx_pci_get_nth_device         uintptr
@@ -279,38 +310,9 @@ var (
 	vdso_mx_pci_set_irq_mode           uintptr
 	vdso_mx_pci_init                   uintptr
 	vdso_mx_pci_add_subtract_io_range  uintptr
-	vdso_mx_io_mapping_get_info        uintptr
-	vdso_mx_object_bind_exception_port uintptr
-	vdso_mx_port_create                uintptr
-	vdso_mx_port_queue                 uintptr
-	vdso_mx_port_wait                  uintptr
-	vdso_mx_port_bind                  uintptr
-	vdso_mx_datapipe_create            uintptr
-	vdso_mx_datapipe_write             uintptr
-	vdso_mx_datapipe_read              uintptr
-	vdso_mx_datapipe_begin_write       uintptr
-	vdso_mx_datapipe_end_write         uintptr
-	vdso_mx_datapipe_begin_read        uintptr
-	vdso_mx_datapipe_end_read          uintptr
-	vdso_mx_waitset_create             uintptr
-	vdso_mx_waitset_add                uintptr
-	vdso_mx_waitset_remove             uintptr
-	vdso_mx_waitset_wait               uintptr
-	vdso_mx_object_get_property        uintptr
-	vdso_mx_object_set_property        uintptr
 	vdso_mx_acpi_uefi_rsdp             uintptr
 	vdso_mx_acpi_cache_flush           uintptr
-	vdso_mx_socket_create              uintptr
-	vdso_mx_socket_write               uintptr
-	vdso_mx_socket_read                uintptr
-	vdso_mx_thread_read_state          uintptr
-	vdso_mx_thread_write_state         uintptr
-	vdso_mx_job_create                 uintptr
 )
-
-//go:noescape
-//go:nosplit
-func Sys_process_exit(retcode int)
 
 //go:noescape
 //go:nosplit
@@ -326,59 +328,15 @@ func Sys_num_cpus() uint
 
 //go:noescape
 //go:nosplit
-func Sys_debug_read(_ Handle, buffer unsafe.Pointer, length uint32) Status
-
-//go:noescape
-//go:nosplit
-func Sys_debug_write(buffer unsafe.Pointer, length uint32) Status
-
-//go:noescape
-//go:nosplit
-func Sys_debug_send_command(_ Handle, buffer unsafe.Pointer, length uint32) Status
-
-//go:noescape
-//go:nosplit
-func Sys_debug_transfer_handle(proc Handle, handle Handle) Handle
-
-//go:noescape
-//go:nosplit
-func Sys_process_read_memory(proc Handle, vaddr uintptr, buffer unsafe.Pointer, len uint, actual *uint) Status
-
-//go:noescape
-//go:nosplit
-func Sys_process_write_memory(proc Handle, vaddr uintptr, buffer unsafe.Pointer, len uint, actual *uint) Status
-
-//go:noescape
-//go:nosplit
-func Sys_ktrace_read(handle Handle, ptr unsafe.Pointer, off uint32, len uint32) int
-
-//go:noescape
-//go:nosplit
-func Sys_ktrace_control(handle Handle, action uint32, options uint32, _ unsafe.Pointer) Status
-
-//go:noescape
-//go:nosplit
-func Sys_ktrace_write(handle Handle, id uint32, arg0 uint32, arg1 uint32) Status
-
-//go:noescape
-//go:nosplit
-func Sys_log_create(flags uint32) Handle
-
-//go:noescape
-//go:nosplit
-func Sys_log_write(handle Handle, len uint32, buffer unsafe.Pointer, flags uint32) Status
-
-//go:noescape
-//go:nosplit
-func Sys_log_read(handle Handle, len uint32, buffer unsafe.Pointer, flags uint32) Status
-
-//go:noescape
-//go:nosplit
 func sys_handle_close(handle Handle) Status
 
 //go:noescape
 //go:nosplit
 func sys_handle_duplicate(handle Handle, rights Rights, out *Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_handle_replace(handle Handle, rights Rights, out *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -390,11 +348,19 @@ func sys_handle_wait_many(items *WaitItem, count uint32, timeout Time) Status
 
 //go:noescape
 //go:nosplit
-func Sys_handle_replace(handle Handle, rights Rights, out *Handle) Status
+func Sys_object_signal(handle Handle, clear_mask uint32, set_mask uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_object_signal(handle Handle, clear_mask uint32, set_mask uint32) Status
+func Sys_object_signal_peer(handle Handle, clear_mask uint32, set_mask uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_object_get_property(handle Handle, property uint32, value unsafe.Pointer, size uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_object_set_property(handle Handle, property uint32, value unsafe.Pointer, size uint) Status
 
 //go:noescape
 //go:nosplit
@@ -406,19 +372,7 @@ func Sys_object_get_child(handle Handle, koid uint64, rights Rights, out *Handle
 
 //go:noescape
 //go:nosplit
-func Sys_thread_create(process Handle, name *uint8, name_len uint32, flags uint32, out *Handle) Status
-
-//go:noescape
-//go:nosplit
-func Sys_thread_start(handle Handle, thread_entry uintptr, stack uintptr, arg1 uintptr, arg2 uintptr) Status
-
-//go:noescape
-//go:nosplit
-func Sys_thread_exit()
-
-//go:noescape
-//go:nosplit
-func Sys_thread_arch_prctl(handle Handle, op uint32, value_ptr *uintptr) Status
+func Sys_object_bind_exception_port(object Handle, eport Handle, key uint64, options uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -434,15 +388,43 @@ func sys_channel_write(handle Handle, options uint32, bytes unsafe.Pointer, num_
 
 //go:noescape
 //go:nosplit
-func Sys_interrupt_create(handle Handle, vector uint32, flags uint32) Handle
+func sys_socket_create(options uint32, out0 *Handle, out1 *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_interrupt_complete(handle Handle) Status
+func sys_socket_write(handle Handle, options uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_process_create(name *uint8, name_len uint32, flags uint32, out *Handle) Handle
+func sys_socket_read(handle Handle, options uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_thread_exit()
+
+//go:noescape
+//go:nosplit
+func Sys_thread_create(process Handle, name *uint8, name_len uint32, options uint32, out *Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_thread_start(handle Handle, thread_entry uintptr, stack uintptr, arg1 uintptr, arg2 uintptr) Status
+
+//go:noescape
+//go:nosplit
+func Sys_thread_read_state(handle Handle, kind uint32, state unsafe.Pointer, len uint32, actual *uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_thread_write_state(handle Handle, kind uint32, state unsafe.Pointer, len uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_process_exit(retcode int)
+
+//go:noescape
+//go:nosplit
+func Sys_process_create(name *uint8, name_len uint32, options uint32, out *Handle) Handle
 
 //go:noescape
 //go:nosplit
@@ -450,7 +432,7 @@ func Sys_process_start(process_handle Handle, thread_handle Handle, entry uintpt
 
 //go:noescape
 //go:nosplit
-func Sys_process_map_vm(proc_handle Handle, vmo_handle Handle, offset uint64, len uint, ptr *uintptr, flags uint32) Status
+func Sys_process_map_vm(proc_handle Handle, vmo_handle Handle, offset uint64, len uint, ptr *uintptr, options uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -459,6 +441,18 @@ func Sys_process_unmap_vm(proc_handle Handle, address uintptr, len uint) Status
 //go:noescape
 //go:nosplit
 func Sys_process_protect_vm(proc_handle Handle, address uintptr, len uint, prot uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_process_read_memory(proc Handle, vaddr uintptr, buffer unsafe.Pointer, len uint, actual *uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_process_write_memory(proc Handle, vaddr uintptr, buffer unsafe.Pointer, len uint, actual *uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_job_create(parent_job Handle, options uint32, out *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -490,6 +484,38 @@ func Sys_futex_requeue(wake_ptr *int, wake_count uint32, current_value int, requ
 
 //go:noescape
 //go:nosplit
+func Sys_waitset_create(options uint32, out *Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_waitset_add(waitset_handle Handle, cookie uint64, handle Handle, signals Signals) Status
+
+//go:noescape
+//go:nosplit
+func Sys_waitset_remove(waitset_handle Handle, cookie uint64) Status
+
+//go:noescape
+//go:nosplit
+func Sys_waitset_wait(waitset_handle Handle, timeout Time, results *WaitSetResult, count *uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_port_create(options uint32, out *Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_port_queue(handle Handle, packet unsafe.Pointer, size uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_port_wait(handle Handle, timeout Time, packet unsafe.Pointer, size uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_port_bind(handle Handle, key uint64, source Handle, signals Signals) Status
+
+//go:noescape
+//go:nosplit
 func Sys_vmo_create(size uint64, options uint32, out *Handle) Status
 
 //go:noescape
@@ -514,6 +540,98 @@ func Sys_vmo_op_range(handle Handle, op uint32, offset uint64, size uint64, buff
 
 //go:noescape
 //go:nosplit
+func Sys_cprng_draw(buffer unsafe.Pointer, len uint, actual *uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_cprng_add_entropy(buffer unsafe.Pointer, len uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_create(options uint32, element_size uint, capacity uint, consumer_handle *Handle) Handle
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_write(handle Handle, options uint32, requested uint, buffer unsafe.Pointer) int
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_read(handle Handle, options uint32, requested uint, buffer unsafe.Pointer) int
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_begin_write(handle Handle, options uint32, buffer *uintptr) int
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_end_write(handle Handle, written uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_begin_read(handle Handle, options uint32, buffer *uintptr) int
+
+//go:noescape
+//go:nosplit
+func Sys_datapipe_end_read(handle Handle, read uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_log_create(options uint32) Handle
+
+//go:noescape
+//go:nosplit
+func Sys_log_write(handle Handle, len uint32, buffer unsafe.Pointer, options uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_log_read(handle Handle, len uint32, buffer unsafe.Pointer, options uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_ktrace_read(handle Handle, ptr unsafe.Pointer, off uint32, len uint32) int
+
+//go:noescape
+//go:nosplit
+func Sys_ktrace_control(handle Handle, action uint32, options uint32, _ unsafe.Pointer) Status
+
+//go:noescape
+//go:nosplit
+func Sys_ktrace_write(handle Handle, id uint32, arg0 uint32, arg1 uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_thread_arch_prctl(handle Handle, op uint32, value_ptr *uintptr) Status
+
+//go:noescape
+//go:nosplit
+func Sys_debug_transfer_handle(proc Handle, handle Handle) Handle
+
+//go:noescape
+//go:nosplit
+func Sys_debug_read(_ Handle, buffer unsafe.Pointer, length uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_debug_write(buffer unsafe.Pointer, length uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_debug_send_command(_ Handle, buffer unsafe.Pointer, length uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_interrupt_create(handle Handle, vector uint32, options uint32) Handle
+
+//go:noescape
+//go:nosplit
+func Sys_interrupt_complete(handle Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_interrupt_wait(handle Handle) Status
+
+//go:noescape
+//go:nosplit
 func Sys_mmap_device_io(handle Handle, io_addr uint32, len uint32) Status
 
 //go:noescape
@@ -526,11 +644,7 @@ func Sys_alloc_device_memory(handle Handle, len uint32, out_paddr *Paddr, out_va
 
 //go:noescape
 //go:nosplit
-func Sys_cprng_draw(buffer unsafe.Pointer, len uint, actual *uint) Status
-
-//go:noescape
-//go:nosplit
-func Sys_cprng_add_entropy(buffer unsafe.Pointer, len uint) Status
+func Sys_io_mapping_get_info(handle Handle, out_vaddr unsafe.Pointer, out_size *uint64) Status
 
 //go:noescape
 //go:nosplit
@@ -594,108 +708,8 @@ func Sys_pci_add_subtract_io_range(handle Handle, mmio bool, base uint64, len ui
 
 //go:noescape
 //go:nosplit
-func Sys_io_mapping_get_info(handle Handle, out_vaddr unsafe.Pointer, out_size *uint64) Status
-
-//go:noescape
-//go:nosplit
-func Sys_object_bind_exception_port(object Handle, eport Handle, key uint64, options uint32) Status
-
-//go:noescape
-//go:nosplit
-func Sys_port_create(options uint32, out *Handle) Status
-
-//go:noescape
-//go:nosplit
-func Sys_port_queue(handle Handle, packet unsafe.Pointer, size uint) Status
-
-//go:noescape
-//go:nosplit
-func Sys_port_wait(handle Handle, packet unsafe.Pointer, size uint) Status
-
-//go:noescape
-//go:nosplit
-func Sys_port_bind(handle Handle, key uint64, source Handle, signals Signals) Status
-
-//go:noescape
-//go:nosplit
-func Sys_datapipe_create(options uint32, element_size uint, capacity uint, consumer_handle *Handle) Handle
-
-//go:noescape
-//go:nosplit
-func Sys_datapipe_write(handle Handle, flags uint32, requested uint, buffer unsafe.Pointer) int
-
-//go:noescape
-//go:nosplit
-func Sys_datapipe_read(handle Handle, flags uint32, requested uint, buffer unsafe.Pointer) int
-
-//go:noescape
-//go:nosplit
-func Sys_datapipe_begin_write(handle Handle, flags uint32, buffer *uintptr) int
-
-//go:noescape
-//go:nosplit
-func Sys_datapipe_end_write(handle Handle, written uint) Status
-
-//go:noescape
-//go:nosplit
-func Sys_datapipe_begin_read(handle Handle, flags uint32, buffer *uintptr) int
-
-//go:noescape
-//go:nosplit
-func Sys_datapipe_end_read(handle Handle, read uint) Status
-
-//go:noescape
-//go:nosplit
-func Sys_waitset_create(options uint32, out *Handle) Status
-
-//go:noescape
-//go:nosplit
-func Sys_waitset_add(waitset_handle Handle, cookie uint64, handle Handle, signals Signals) Status
-
-//go:noescape
-//go:nosplit
-func Sys_waitset_remove(waitset_handle Handle, cookie uint64) Status
-
-//go:noescape
-//go:nosplit
-func Sys_waitset_wait(waitset_handle Handle, timeout Time, results *WaitSetResult, count *uint32) Status
-
-//go:noescape
-//go:nosplit
-func Sys_object_get_property(handle Handle, property uint32, value unsafe.Pointer, size uint) Status
-
-//go:noescape
-//go:nosplit
-func Sys_object_set_property(handle Handle, property uint32, value unsafe.Pointer, size uint) Status
-
-//go:noescape
-//go:nosplit
 func Sys_acpi_uefi_rsdp(handle Handle) uint32
 
 //go:noescape
 //go:nosplit
 func Sys_acpi_cache_flush(handle Handle) Status
-
-//go:noescape
-//go:nosplit
-func sys_socket_create(options uint32, out0 *Handle, out1 *Handle) Status
-
-//go:noescape
-//go:nosplit
-func sys_socket_write(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
-
-//go:noescape
-//go:nosplit
-func sys_socket_read(handle Handle, flags uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
-
-//go:noescape
-//go:nosplit
-func Sys_thread_read_state(handle Handle, kind uint32, state unsafe.Pointer, len uint32, actual *uint32) Status
-
-//go:noescape
-//go:nosplit
-func Sys_thread_write_state(handle Handle, kind uint32, state unsafe.Pointer, len uint32) Status
-
-//go:noescape
-//go:nosplit
-func Sys_job_create(parent_job Handle, flags uint32, out *Handle) Status

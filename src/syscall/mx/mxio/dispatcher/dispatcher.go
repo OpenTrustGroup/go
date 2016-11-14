@@ -107,7 +107,7 @@ func (d *Dispatcher) disconnectHandler(hr *handler, handlerID uint64, doCloseCal
 func (d *Dispatcher) Serve() {
 	for {
 		// Wait for any handler to be ready
-		packet, err := mxio.IoPortWait(d.ioport, mxio.PacketSize)
+		packet, err := mxio.IoPortWait(d.ioport, mx.TimensecInfinite, mxio.PacketSize)
 		if err != nil {
 			d.close()
 			return
