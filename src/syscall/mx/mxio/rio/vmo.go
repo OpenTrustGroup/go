@@ -14,7 +14,7 @@ import (
 )
 
 type VMOFile struct {
-	h   mx.Handle
+	h   mx.VMO
 	off int64
 	len int64
 	end int64
@@ -24,7 +24,7 @@ type VMOFile struct {
 func NewVMOFile(handle mx.Handle, extra []byte) (*VMOFile, error) {
 	// mxio_vmofile_create
 	f := &VMOFile{
-		h:   handle,
+		h:   mx.VMO(handle),
 		off: *(*int64)(unsafe.Pointer(&extra[0:8][0])),
 		len: *(*int64)(unsafe.Pointer(&extra[8:16][0])),
 	}
@@ -41,12 +41,8 @@ func (f *VMOFile) Read(data []byte) (n int, err error) {
 	if len(data) == 0 {
 		return 0, err
 	}
-	var actual uint
-	status := mx.Sys_vmo_read(f.h, unsafe.Pointer(&data[0]), uint64(f.at), uint(len(data)), &actual)
-	if status != mx.ErrOk {
-		return 0, status
-	}
-	f.at += int64(actual)
+	n, err = f.h.Read(data, uint64(f.at))
+	f.at += int64(n)
 	return n, err
 }
 

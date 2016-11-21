@@ -30,6 +30,15 @@ TEXT ·Sys_num_cpus(SB),NOSPLIT,$0-8
 	MOVQ AX, ret+0(FP)
 	RET
 
+// func Sys_version_get(version *uint8, version_len uint32) Status
+TEXT ·Sys_version_get(SB),NOSPLIT,$0-20
+	MOVQ version+0(FP), DI
+	MOVL version_len+8(FP), SI
+	MOVQ vdso_mx_version_get(SB), AX
+	CALL AX
+	MOVL AX, ret+16(FP)
+	RET
+
 // func sys_handle_close(handle Handle) Status
 TEXT ·sys_handle_close(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
@@ -125,14 +134,14 @@ TEXT ·Sys_object_set_property(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_object_get_info(handle Handle, topic uint32, topic_size uint16, buffer unsafe.Pointer, buffer_size uint, actual_size *uint) Status
+// func Sys_object_get_info(handle Handle, topic uint32, buffer unsafe.Pointer, buffer_size uint, actual_count *uint, avail_count *uint) Status
 TEXT ·Sys_object_get_info(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
 	MOVL topic+4(FP), SI
-	MOVQ topic_size+8(FP), DX
-	MOVQ buffer+16(FP), CX
-	MOVQ buffer_size+24(FP), R8
-	MOVQ actual_size+32(FP), R9
+	MOVQ buffer+8(FP), DX
+	MOVQ buffer_size+16(FP), CX
+	MOVQ actual_count+24(FP), R8
+	MOVQ avail_count+32(FP), R9
 	MOVQ vdso_mx_object_get_info(SB), AX
 	CALL AX
 	MOVL AX, ret+40(FP)
@@ -299,15 +308,16 @@ TEXT ·Sys_process_exit(SB),NOSPLIT,$0-8
 	CALL AX
 	RET
 
-// func Sys_process_create(name *uint8, name_len uint32, options uint32, out *Handle) Handle
-TEXT ·Sys_process_create(SB),NOSPLIT,$0-28
-	MOVQ name+0(FP), DI
-	MOVL name_len+8(FP), SI
-	MOVL options+12(FP), DX
-	MOVQ out+16(FP), CX
+// func Sys_process_create(job Handle, name *uint8, name_len uint32, options uint32, out *Handle) Handle
+TEXT ·Sys_process_create(SB),NOSPLIT,$0-36
+	MOVL job+0(FP), DI
+	MOVQ name+8(FP), SI
+	MOVL name_len+16(FP), DX
+	MOVL options+20(FP), CX
+	MOVQ out+24(FP), R8
 	MOVQ vdso_mx_process_create(SB), AX
 	CALL AX
-	MOVL AX, ret+24(FP)
+	MOVL AX, ret+32(FP)
 	RET
 
 // func Sys_process_start(process_handle Handle, thread_handle Handle, entry uintptr, stack uintptr, arg_handle Handle, arg2 uintptr) Status
@@ -543,8 +553,8 @@ TEXT ·Sys_port_bind(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_vmo_create(size uint64, options uint32, out *Handle) Status
-TEXT ·Sys_vmo_create(SB),NOSPLIT,$0-28
+// func sys_vmo_create(size uint64, options uint32, out *Handle) Status
+TEXT ·sys_vmo_create(SB),NOSPLIT,$0-28
 	MOVQ size+0(FP), DI
 	MOVL options+8(FP), SI
 	MOVQ out+16(FP), DX
@@ -553,8 +563,8 @@ TEXT ·Sys_vmo_create(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_vmo_read(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
-TEXT ·Sys_vmo_read(SB),NOSPLIT,$0-44
+// func sys_vmo_read(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
+TEXT ·sys_vmo_read(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
 	MOVQ data+8(FP), SI
 	MOVQ offset+16(FP), DX
@@ -565,8 +575,8 @@ TEXT ·Sys_vmo_read(SB),NOSPLIT,$0-44
 	MOVL AX, ret+40(FP)
 	RET
 
-// func Sys_vmo_write(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
-TEXT ·Sys_vmo_write(SB),NOSPLIT,$0-44
+// func sys_vmo_write(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
+TEXT ·sys_vmo_write(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
 	MOVQ data+8(FP), SI
 	MOVQ offset+16(FP), DX
@@ -577,8 +587,8 @@ TEXT ·Sys_vmo_write(SB),NOSPLIT,$0-44
 	MOVL AX, ret+40(FP)
 	RET
 
-// func Sys_vmo_get_size(handle Handle, size *uint64) Status
-TEXT ·Sys_vmo_get_size(SB),NOSPLIT,$0-20
+// func sys_vmo_get_size(handle Handle, size *uint64) Status
+TEXT ·sys_vmo_get_size(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVQ size+8(FP), SI
 	MOVQ vdso_mx_vmo_get_size(SB), AX
@@ -586,8 +596,8 @@ TEXT ·Sys_vmo_get_size(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_vmo_set_size(handle Handle, size uint64) Status
-TEXT ·Sys_vmo_set_size(SB),NOSPLIT,$0-20
+// func sys_vmo_set_size(handle Handle, size uint64) Status
+TEXT ·sys_vmo_set_size(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
 	MOVQ size+8(FP), SI
 	MOVQ vdso_mx_vmo_set_size(SB), AX
@@ -595,8 +605,8 @@ TEXT ·Sys_vmo_set_size(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_vmo_op_range(handle Handle, op uint32, offset uint64, size uint64, buffer unsafe.Pointer, buffer_size uint) Status
-TEXT ·Sys_vmo_op_range(SB),NOSPLIT,$0-44
+// func sys_vmo_op_range(handle Handle, op uint32, offset uint64, size uint64, buffer unsafe.Pointer, buffer_size uint) Status
+TEXT ·sys_vmo_op_range(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
 	MOVL op+4(FP), SI
 	MOVQ offset+8(FP), DX
@@ -608,8 +618,8 @@ TEXT ·Sys_vmo_op_range(SB),NOSPLIT,$0-44
 	MOVL AX, ret+40(FP)
 	RET
 
-// func Sys_cprng_draw(buffer unsafe.Pointer, len uint, actual *uint) Status
-TEXT ·Sys_cprng_draw(SB),NOSPLIT,$0-28
+// func sys_cprng_draw(buffer unsafe.Pointer, len uint, actual *uint) Status
+TEXT ·sys_cprng_draw(SB),NOSPLIT,$0-28
 	MOVQ buffer+0(FP), DI
 	MOVQ len+8(FP), SI
 	MOVQ actual+16(FP), DX
@@ -728,15 +738,16 @@ TEXT ·Sys_log_read(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_ktrace_read(handle Handle, ptr unsafe.Pointer, off uint32, len uint32) int
-TEXT ·Sys_ktrace_read(SB),NOSPLIT,$0-32
+// func Sys_ktrace_read(handle Handle, data unsafe.Pointer, offset uint32, len uint32, actual *uint32) Status
+TEXT ·Sys_ktrace_read(SB),NOSPLIT,$0-36
 	MOVL handle+0(FP), DI
-	MOVQ ptr+8(FP), SI
-	MOVL off+16(FP), DX
+	MOVQ data+8(FP), SI
+	MOVL offset+16(FP), DX
 	MOVL len+20(FP), CX
+	MOVQ actual+24(FP), R8
 	MOVQ vdso_mx_ktrace_read(SB), AX
 	CALL AX
-	MOVQ AX, ret+24(FP)
+	MOVL AX, ret+32(FP)
 	RET
 
 // func Sys_ktrace_control(handle Handle, action uint32, options uint32, _ unsafe.Pointer) Status
@@ -1048,6 +1059,50 @@ TEXT ·Sys_acpi_uefi_rsdp(SB),NOSPLIT,$0-12
 TEXT ·Sys_acpi_cache_flush(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
 	MOVQ vdso_mx_acpi_cache_flush(SB), AX
+	CALL AX
+	MOVL AX, ret+8(FP)
+	RET
+
+// func Sys_resource_create(parent_handle Handle, records *Rrec, count uint32, resource_out *Handle, msgpipe_out *Handle) Status
+TEXT ·Sys_resource_create(SB),NOSPLIT,$0-44
+	MOVL parent_handle+0(FP), DI
+	MOVQ records+8(FP), SI
+	MOVL count+16(FP), DX
+	MOVQ resource_out+24(FP), CX
+	MOVQ msgpipe_out+32(FP), R8
+	MOVQ vdso_mx_resource_create(SB), AX
+	CALL AX
+	MOVL AX, ret+40(FP)
+	RET
+
+// func Sys_resource_get_handle(handle Handle, index uint32, options uint32, out *Handle) Status
+TEXT ·Sys_resource_get_handle(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVL index+4(FP), SI
+	MOVL options+8(FP), DX
+	MOVQ out+16(FP), CX
+	MOVQ vdso_mx_resource_get_handle(SB), AX
+	CALL AX
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_resource_do_action(handle Handle, index uint32, action uint32, arg0 uint32, arg1 uint32) Status
+TEXT ·Sys_resource_do_action(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVL index+4(FP), SI
+	MOVL action+8(FP), DX
+	MOVL arg0+12(FP), CX
+	MOVL arg1+16(FP), R8
+	MOVQ vdso_mx_resource_do_action(SB), AX
+	CALL AX
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_resource_connect(handle Handle, msgpipe Handle) Status
+TEXT ·Sys_resource_connect(SB),NOSPLIT,$0-12
+	MOVL handle+0(FP), DI
+	MOVL msgpipe+4(FP), SI
+	MOVQ vdso_mx_resource_connect(SB), AX
 	CALL AX
 	MOVL AX, ret+8(FP)
 	RET

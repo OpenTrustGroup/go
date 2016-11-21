@@ -16,6 +16,39 @@ var (
 	ProcHandle  Handle
 )
 
+type Socket Handle
+
+func (s Socket) Read(data []byte, flags uint32) (n int, err error) {
+	var actual uint
+	status := sys_socket_read(Handle(s), 0, unsafe.Pointer(&data[0]), uint(len(data)), &actual)
+	if status != ErrOk {
+		return int(actual), status
+	}
+	return int(actual), nil
+}
+
+func (s Socket) Write(data []byte, flags uint32) (n int, err error) {
+	var actual uint
+	status := sys_socket_write(Handle(s), 0, unsafe.Pointer(&data[0]), uint(len(data)), &actual)
+	if status != ErrOk {
+		return int(actual), status
+	}
+	return int(actual), nil
+}
+
+func (s Socket) Close() error { return Handle(s).Close() }
+func (s Socket) WaitOne(waitFor Signals, timeout Time) (Signals, error) {
+	return Handle(s).WaitOne(waitFor, timeout)
+}
+
+func NewSocket(flags uint32) (s0, s1 Socket, err error) {
+	var h0, h1 Handle
+	if status := sys_socket_create(flags, &h0, &h1); status != ErrOk {
+		return 0, 0, status
+	}
+	return Socket(h0), Socket(h1), nil
+}
+
 func (h Handle) Close() error {
 	if status := sys_handle_close(h); status != ErrOk {
 		return status
@@ -45,39 +78,17 @@ func WaitMany(items []WaitItem, timeout Time) error {
 	return nil
 }
 
-func NewChannel(flags uint32) (h0, h1 Handle, err error) {
-	if status := sys_channel_create(flags, &h0, &h1); status != ErrOk {
-		return 0, 0, status
-	}
-	return h0, h1, nil
+type Channel struct {
+	Handle Handle
 }
 
-func NewSocket(flags uint32) (h0, h1 Handle, err error) {
-	if status := sys_socket_create(flags, &h0, &h1); status != ErrOk {
-		return 0, 0, status
-	}
-	return h0, h1, nil
+func (s *Channel) Close() error {
+	err := s.Handle.Close()
+	s.Handle = 0
+	return err
 }
 
-func (h Handle) ReadSocket(data []byte, flags uint32) (n int, err error) {
-	var actual uint
-	status := sys_socket_read(h, 0, unsafe.Pointer(&data[0]), uint(len(data)), &actual)
-	if status != ErrOk {
-		return int(actual), status
-	}
-	return int(actual), nil
-}
-
-func (h Handle) WriteSocket(data []byte, flags uint32) (n int, err error) {
-	var actual uint
-	status := sys_socket_write(h, 0, unsafe.Pointer(&data[0]), uint(len(data)), &actual)
-	if status != ErrOk {
-		return int(actual), status
-	}
-	return int(actual), nil
-}
-
-func (h Handle) ReadChannel(data []byte, handles []Handle, flags uint32) (numBytes, numHandles uint32, err error) {
+func (c *Channel) Read(data []byte, handles []Handle, flags uint32) (numBytes, numHandles uint32, err error) {
 	numBytes = uint32(len(data))
 	numHandles = uint32(len(handles))
 	var dataPtr unsafe.Pointer
@@ -88,13 +99,13 @@ func (h Handle) ReadChannel(data []byte, handles []Handle, flags uint32) (numByt
 	if len(handles) > 0 {
 		handlePtr = &handles[0]
 	}
-	if status := sys_channel_read(h, flags, dataPtr, numBytes, &numBytes, handlePtr, numHandles, &numHandles); status != ErrOk {
+	if status := sys_channel_read(c.Handle, flags, dataPtr, numBytes, &numBytes, handlePtr, numHandles, &numHandles); status != ErrOk {
 		err = status
 	}
 	return
 }
 
-func (h Handle) WriteChannel(data []byte, handles []Handle, flags uint32) error {
+func (c *Channel) Write(data []byte, handles []Handle, flags uint32) error {
 	var dataPtr unsafe.Pointer
 	if len(data) > 0 {
 		dataPtr = unsafe.Pointer(&data[0])
@@ -103,9 +114,116 @@ func (h Handle) WriteChannel(data []byte, handles []Handle, flags uint32) error 
 	if len(handles) > 0 {
 		handlePtr = &handles[0]
 	}
-	status := sys_channel_write(h, flags, dataPtr, uint32(len(data)), handlePtr, uint32(len(handles)))
+	status := sys_channel_write(c.Handle, flags, dataPtr, uint32(len(data)), handlePtr, uint32(len(handles)))
 	if status != ErrOk {
 		return status
 	}
 	return nil
+}
+
+func NewChannel(flags uint32) (c0, c1 *Channel, err error) {
+	c0, c1 = new(Channel), new(Channel)
+	if status := sys_channel_create(flags, &c0.Handle, &c1.Handle); status != ErrOk {
+		return nil, nil, status
+	}
+	return c0, c1, nil
+}
+
+type Port struct {
+	Handle Handle
+}
+
+func (p *Port) Close() error {
+	err := p.Handle.Close()
+	p.Handle = 0
+	return err
+}
+
+func (p *Port) Queue(packet []byte) error {
+	if status := Sys_port_queue(p.Handle, unsafe.Pointer(&packet[0]), uint(len(packet))); status != ErrOk {
+		return status
+	}
+	return nil
+}
+
+func (p *Port) Wait(packet []byte, timeout Time) error {
+	if status := Sys_port_wait(p.Handle, timeout, unsafe.Pointer(&packet[0]), uint(len(packet))); status != ErrOk {
+		return status
+	}
+	return nil
+}
+
+func (p *Port) Bind(key uint64, source Handle, signals Signals) error {
+	if status := Sys_port_bind(p.Handle, key, source, signals); status != ErrOk {
+		return status
+	}
+	return nil
+}
+
+func NewPort(options uint32) (*Port, error) {
+	p := new(Port)
+	if status := Sys_port_create(options, &p.Handle); status != ErrOk {
+		return nil, status
+	}
+	return p, nil
+}
+
+type VMO Handle
+
+func (vmo VMO) Read(b []byte, offset uint64) (n int, err error) {
+	var actual uint
+	if status := sys_vmo_read(Handle(vmo), unsafe.Pointer(&b[0]), offset, uint(len(b)), &actual); status != ErrOk {
+		return int(actual), status
+	}
+	return int(actual), nil
+}
+
+func (vmo VMO) Write(b []byte, offset uint64) (n int, err error) {
+	var actual uint
+	if status := sys_vmo_write(Handle(vmo), unsafe.Pointer(&b[0]), offset, uint(len(b)), &actual); status != ErrOk {
+		return int(actual), status
+	}
+	return int(actual), nil
+}
+
+func (vmo VMO) Size() (uint64, error) {
+	var size uint64
+	if status := sys_vmo_get_size(Handle(vmo), &size); status != ErrOk {
+		return size, status
+	}
+	return size, nil
+}
+
+func (vmo VMO) SetSize(size uint64) error {
+	if status := sys_vmo_set_size(Handle(vmo), size); status != ErrOk {
+		return status
+	}
+	return nil
+}
+
+func (vmo VMO) OpRange(op uint32, offset, size uint64, b []byte) error {
+	if status := sys_vmo_op_range(Handle(vmo), op, offset, size, unsafe.Pointer(&b[0]), uint(len(b))); status != ErrOk {
+		return status
+	}
+	return nil
+}
+
+func (vmo VMO) Close() error {
+	return Handle(vmo).Close()
+}
+
+func NewVMO(size uint64, options uint32) (VMO, error) {
+	var h Handle
+	if status := sys_vmo_create(size, options, &h); status != ErrOk {
+		return 0, status
+	}
+	return VMO(h), nil
+}
+
+func RandRead(b []byte) (n int, err error) {
+	var actual uint
+	if status := sys_cprng_draw(unsafe.Pointer(&b[0]), uint(len(b)), &actual); status != ErrOk {
+		return int(actual), status
+	}
+	return int(actual), nil
 }

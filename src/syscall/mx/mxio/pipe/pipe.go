@@ -12,25 +12,25 @@ import (
 )
 
 type Pipe struct {
-	h mx.Handle
+	s mx.Socket
 }
 
 func NewPipe() (*Pipe, *Pipe, error) {
-	h0, h1, err := mx.NewSocket(0)
+	s0, s1, err := mx.NewSocket(0)
 	if err != nil {
 		return nil, nil, err
 	}
-	return &Pipe{h0}, &Pipe{h1}, nil
+	return &Pipe{s0}, &Pipe{s1}, nil
 }
 
 func (f *Pipe) Read(data []byte) (n int, err error) {
 	for {
-		n, err = f.h.ReadSocket(data, 0)
+		n, err = f.s.Read(data, 0)
 		if err == nil {
 			return n, nil
 		}
 		if err == mx.ErrShouldWait {
-			pending, err := f.h.WaitOne(mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite)
+			pending, err := f.s.WaitOne(mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite)
 			if err != nil {
 				return 0, err
 			}
@@ -49,12 +49,12 @@ func (f *Pipe) Read(data []byte) (n int, err error) {
 
 func (f *Pipe) Write(data []byte) (n int, err error) {
 	for {
-		n, err = f.h.WriteSocket(data, 0)
+		n, err = f.s.Write(data, 0)
 		if err == nil {
 			return n, nil
 		}
 		if err == mx.ErrShouldWait {
-			pending, err := f.h.WaitOne(mx.SignalWritable|mx.SignalPeerClosed, mx.TimensecInfinite)
+			pending, err := f.s.WaitOne(mx.SignalWritable|mx.SignalPeerClosed, mx.TimensecInfinite)
 			if err != nil {
 				return 0, err
 			}
@@ -84,10 +84,10 @@ func (f *Pipe) Seek(offset int64, whence int) (int64, error) {
 }
 
 func (f *Pipe) Close() error {
-	if err := f.h.Close(); err != nil {
+	if err := f.s.Close(); err != nil {
 		return err
 	}
-	f.h = 0
+	f.s = 0
 	return nil
 }
 
@@ -96,7 +96,7 @@ func (f *Pipe) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
 }
 
 func (f *Pipe) Clone() ([]mx.Handle, error) {
-	h, err := f.h.Duplicate(mx.RightSameRights)
+	h, err := mx.Handle(f.s).Duplicate(mx.RightSameRights)
 	if err != nil {
 		return nil, err
 	}

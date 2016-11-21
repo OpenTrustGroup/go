@@ -16,8 +16,8 @@ import (
 // RemoteIO is an object which manages file-like operations on a remote object, accessible through a
 // handle.
 type RemoteIO struct {
-	h     mx.Handle // Message pipe handle for the RPC
-	e     mx.Handle // Event handle for device state signals
+	h     *mx.Channel // Message pipe handle for the RPC
+	e     mx.Handle   // Event handle for device state signals
 	flags uint32
 }
 
@@ -25,7 +25,7 @@ type RemoteIO struct {
 func New(handle []mx.Handle) (*RemoteIO, error) {
 	r := &RemoteIO{}
 	if len(handle) > 0 {
-		r.h = handle[0]
+		r.h = &mx.Channel{handle[0]}
 	}
 	if len(handle) > 1 {
 		r.e = handle[1]
@@ -48,7 +48,7 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 
 	// Package the reply pipe into the message itself
 	msg.SetReplyPipe()
-	msg.Handle[msg.Hcount] = rpipe1
+	msg.Handle[msg.Hcount] = rpipe1.Handle
 	msg.Hcount++
 	rh := rpipe0
 	defer rh.Close() // Our end of the reply pipe -- close it before returning
@@ -60,7 +60,7 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 	}
 
 	// Wait for a response on the reply pipe
-	signals, err := rh.WaitOne(mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite)
+	signals, err := rh.Handle.WaitOne(mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite)
 	if err != nil {
 		return 0, err
 	}
@@ -223,7 +223,7 @@ func (r *RemoteIO) Close() error {
 	}
 
 	r.h.Close()
-	r.h = 0
+	r.h = nil
 	if r.e > 0 {
 		r.e.Close()
 		r.e = 0

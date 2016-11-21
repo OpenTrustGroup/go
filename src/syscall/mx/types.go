@@ -6,6 +6,8 @@
 
 package mx
 
+import "unsafe"
+
 type Status int32   // mx_status_t
 type Handle int32   // mx_handle_t
 type Time uint64    // mx_time_t, nanoseconds
@@ -24,6 +26,106 @@ type WaitItem struct {
 	WaitFor Signals
 	Pending Signals
 } // mx_wait_item_t
+
+const MX_MAX_NAME_LEN = 32
+
+const (
+	MX_RREC_DELETED = 0
+	MX_RREC_SELF    = 1
+	MX_RREC_DATA    = 2
+	MX_RREC_IRQ     = 3
+	MX_RREC_MMIO    = 4
+	MX_RREC_IOPORT  = 5
+)
+
+const (
+	MX_RACT_ENABLE  = 1
+	MX_RACT_DISABLE = 2
+)
+
+const (
+	MX_RREC_SELF_GENERIC = 0
+	MX_RREC_SELF_ROOT    = 1
+)
+
+type RrecSelf struct {
+	Type        uint16 // MX_RREC_SELF
+	Subtype     uint16
+	Options     uint32
+	Koid        uint64
+	RecordCount uint32
+	ChildCount  uint32
+	_           [2]uint32
+	Name        [MX_MAX_NAME_LEN]uint8
+} // mx_rrec_self_t
+
+type RrecMMIO struct {
+	Type     uint16 // MX_RREC_MMIO
+	Subtype  uint16
+	Options  uint32
+	PhysBase uint64
+	PhysSize uint64
+	_        [10]uint32
+} // mx_rrec_mmio_t
+
+type RrecIRQ struct {
+	Type     uint16 // MX_RREC_IRQ
+	Subtype  uint16
+	Options  uint32
+	IRQBase  uint32
+	IRQCount uint32
+	_        [12]uint32
+} // mx_rrec_irq_t
+
+type RrecIOPort struct {
+	Type      uint16 // MX_RREC_IOPORT
+	Subtype   uint16
+	Options   uint32
+	PortBase  uint32
+	PortCount uint32
+	_         [12]uint32
+} // mx_rrec_ioport_t
+
+type RrecData struct {
+	Type    uint16
+	Subtype uint16
+	Options uint32 // low 4 bits are count
+	Data    [56]uint8
+} // mx_rrec_data_t
+
+type Rrec struct {
+	typ uint16
+	_   [62]uint8
+} // mx_rrec_t
+
+func (r *Rrec) Box() RrecValue {
+	switch r.typ {
+	case MX_RREC_DELETED:
+		return nil
+	case MX_RREC_SELF:
+		return (*RrecSelf)(unsafe.Pointer(r))
+	case MX_RREC_DATA:
+		return (*RrecData)(unsafe.Pointer(r))
+	case MX_RREC_IRQ:
+		return (*RrecIRQ)(unsafe.Pointer(r))
+	case MX_RREC_MMIO:
+		return (*RrecMMIO)(unsafe.Pointer(r))
+	case MX_RREC_IOPORT:
+		return (*RrecIOPort)(unsafe.Pointer(r))
+	default:
+		return nil
+	}
+}
+
+type RrecValue interface {
+	rrec()
+}
+
+func (*RrecSelf) rrec()   {}
+func (*RrecData) rrec()   {}
+func (*RrecIRQ) rrec()    {}
+func (*RrecMMIO) rrec()   {}
+func (*RrecIOPort) rrec() {}
 
 // Status codes. See magenta/system/public/magenta/errors.h
 const (

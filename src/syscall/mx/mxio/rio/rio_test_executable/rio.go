@@ -33,12 +33,12 @@ func CreateRIOClient(d *dispatcher.Dispatcher, cb rio.ServerHandler, cookie int6
 		panic(err)
 	}
 
-	if err := d.AddHandler(h0, cb, cookie); err != nil {
+	if err := d.AddHandler(h0.Handle, cb, cookie); err != nil {
 		panic(err)
 	}
 
 	// TODO(smklein): Add 'event' handle to clientHandles when testing 'wait'
-	client, err := rio.New([]mx.Handle{h1})
+	client, err := rio.New([]mx.Handle{h1.Handle})
 	if err != nil {
 		panic(err)
 	}
@@ -90,7 +90,7 @@ func checkOpen(client *rio.RemoteIO, opIndex int) {
 	if err != nil {
 		panic(err)
 	}
-	testData[opIndex].outHandles = []mx.Handle{h0}
+	testData[opIndex].outHandles = []mx.Handle{h0.Handle}
 	_, err = client.Open(string(testData[opIndex].inData), testData[opIndex].inArg, uint32(testData[opIndex].inArg2))
 	if err != nil {
 		panic(err)
@@ -103,7 +103,7 @@ func checkClone(client *rio.RemoteIO, opIndex int) {
 	if err != nil {
 		panic(err)
 	}
-	testData[opIndex].outHandles = []mx.Handle{h0}
+	testData[opIndex].outHandles = []mx.Handle{h0.Handle}
 	handles, err := client.Clone()
 	if err != nil {
 		panic(err)
@@ -151,7 +151,7 @@ func checkIoctl(client *rio.RemoteIO, opIndex int) {
 		if err != nil {
 			panic(err)
 		}
-		testData[opIndex].outHandles = []mx.Handle{h0}
+		testData[opIndex].outHandles = []mx.Handle{h0.Handle}
 	}
 
 	outData, outHandles, err := client.Ioctl(uint32(testData[opIndex].inArg2), testData[opIndex].inData)

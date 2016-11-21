@@ -12,6 +12,7 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_time_get mx_time_get "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_nanosleep mx_nanosleep "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_num_cpus mx_num_cpus "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_version_get mx_version_get "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_handle_close mx_handle_close "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_handle_duplicate mx_handle_duplicate "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_handle_replace mx_handle_replace "libmagenta.so.abi"
@@ -109,10 +110,15 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_pci_add_subtract_io_range mx_pci_add_subtract_io_range "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_acpi_uefi_rsdp mx_acpi_uefi_rsdp "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_acpi_cache_flush mx_acpi_cache_flush "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_resource_create mx_resource_create "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_resource_get_handle mx_resource_get_handle "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_resource_do_action mx_resource_do_action "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_resource_connect mx_resource_connect "libmagenta.so.abi"
 
 //go:linkname vdso_mx_time_get vdso_mx_time_get
 //go:linkname vdso_mx_nanosleep vdso_mx_nanosleep
 //go:linkname vdso_mx_num_cpus vdso_mx_num_cpus
+//go:linkname vdso_mx_version_get vdso_mx_version_get
 //go:linkname vdso_mx_handle_close vdso_mx_handle_close
 //go:linkname vdso_mx_handle_duplicate vdso_mx_handle_duplicate
 //go:linkname vdso_mx_handle_replace vdso_mx_handle_replace
@@ -210,11 +216,16 @@ import "unsafe"
 //go:linkname vdso_mx_pci_add_subtract_io_range vdso_mx_pci_add_subtract_io_range
 //go:linkname vdso_mx_acpi_uefi_rsdp vdso_mx_acpi_uefi_rsdp
 //go:linkname vdso_mx_acpi_cache_flush vdso_mx_acpi_cache_flush
+//go:linkname vdso_mx_resource_create vdso_mx_resource_create
+//go:linkname vdso_mx_resource_get_handle vdso_mx_resource_get_handle
+//go:linkname vdso_mx_resource_do_action vdso_mx_resource_do_action
+//go:linkname vdso_mx_resource_connect vdso_mx_resource_connect
 
 var (
 	vdso_mx_time_get                   uintptr
 	vdso_mx_nanosleep                  uintptr
 	vdso_mx_num_cpus                   uintptr
+	vdso_mx_version_get                uintptr
 	vdso_mx_handle_close               uintptr
 	vdso_mx_handle_duplicate           uintptr
 	vdso_mx_handle_replace             uintptr
@@ -312,6 +323,10 @@ var (
 	vdso_mx_pci_add_subtract_io_range  uintptr
 	vdso_mx_acpi_uefi_rsdp             uintptr
 	vdso_mx_acpi_cache_flush           uintptr
+	vdso_mx_resource_create            uintptr
+	vdso_mx_resource_get_handle        uintptr
+	vdso_mx_resource_do_action         uintptr
+	vdso_mx_resource_connect           uintptr
 )
 
 //go:noescape
@@ -325,6 +340,10 @@ func Sys_nanosleep(nanoseconds Time) Status
 //go:noescape
 //go:nosplit
 func Sys_num_cpus() uint
+
+//go:noescape
+//go:nosplit
+func Sys_version_get(version *uint8, version_len uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -364,7 +383,7 @@ func Sys_object_set_property(handle Handle, property uint32, value unsafe.Pointe
 
 //go:noescape
 //go:nosplit
-func Sys_object_get_info(handle Handle, topic uint32, topic_size uint16, buffer unsafe.Pointer, buffer_size uint, actual_size *uint) Status
+func Sys_object_get_info(handle Handle, topic uint32, buffer unsafe.Pointer, buffer_size uint, actual_count *uint, avail_count *uint) Status
 
 //go:noescape
 //go:nosplit
@@ -424,7 +443,7 @@ func Sys_process_exit(retcode int)
 
 //go:noescape
 //go:nosplit
-func Sys_process_create(name *uint8, name_len uint32, options uint32, out *Handle) Handle
+func Sys_process_create(job Handle, name *uint8, name_len uint32, options uint32, out *Handle) Handle
 
 //go:noescape
 //go:nosplit
@@ -516,31 +535,31 @@ func Sys_port_bind(handle Handle, key uint64, source Handle, signals Signals) St
 
 //go:noescape
 //go:nosplit
-func Sys_vmo_create(size uint64, options uint32, out *Handle) Status
+func sys_vmo_create(size uint64, options uint32, out *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_vmo_read(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
+func sys_vmo_read(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_vmo_write(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
+func sys_vmo_write(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_vmo_get_size(handle Handle, size *uint64) Status
+func sys_vmo_get_size(handle Handle, size *uint64) Status
 
 //go:noescape
 //go:nosplit
-func Sys_vmo_set_size(handle Handle, size uint64) Status
+func sys_vmo_set_size(handle Handle, size uint64) Status
 
 //go:noescape
 //go:nosplit
-func Sys_vmo_op_range(handle Handle, op uint32, offset uint64, size uint64, buffer unsafe.Pointer, buffer_size uint) Status
+func sys_vmo_op_range(handle Handle, op uint32, offset uint64, size uint64, buffer unsafe.Pointer, buffer_size uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_cprng_draw(buffer unsafe.Pointer, len uint, actual *uint) Status
+func sys_cprng_draw(buffer unsafe.Pointer, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
@@ -588,7 +607,7 @@ func Sys_log_read(handle Handle, len uint32, buffer unsafe.Pointer, options uint
 
 //go:noescape
 //go:nosplit
-func Sys_ktrace_read(handle Handle, ptr unsafe.Pointer, off uint32, len uint32) int
+func Sys_ktrace_read(handle Handle, data unsafe.Pointer, offset uint32, len uint32, actual *uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -713,3 +732,19 @@ func Sys_acpi_uefi_rsdp(handle Handle) uint32
 //go:noescape
 //go:nosplit
 func Sys_acpi_cache_flush(handle Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_resource_create(parent_handle Handle, records *Rrec, count uint32, resource_out *Handle, msgpipe_out *Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_resource_get_handle(handle Handle, index uint32, options uint32, out *Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_resource_do_action(handle Handle, index uint32, action uint32, arg0 uint32, arg1 uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_resource_connect(handle Handle, msgpipe Handle) Status

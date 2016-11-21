@@ -384,6 +384,8 @@ func printGoType(buf *bytes.Buffer, t magentaType) {
 		fmt.Fprint(buf, "ExceptionStatus")
 	case mx_exception_behaviour_t:
 		fmt.Fprint(buf, "ExceptionBehaviour")
+	case mx_rrec_t:
+		fmt.Fprint(buf, "Rrec")
 	default:
 		panic(fmt.Sprintf("UNKNOWN type: %s", t.named))
 	}
@@ -714,7 +716,14 @@ func (call magentaSyscallDef) exported() bool {
 		"channel_write",
 		"socket_create",
 		"socket_read",
-		"socket_write":
+		"socket_write",
+		"vmo_read",
+		"vmo_write",
+		"vmo_get_size",
+		"vmo_set_size",
+		"vmo_create",
+		"vmo_op_range",
+		"cprng_draw":
 		return false
 	default:
 		return true
@@ -759,6 +768,7 @@ const (
 	mx_exception_status_t
 	mx_exception_behaviour_t
 	mx_function_pointer
+	mx_rrec_t
 )
 
 var magentaTypeNamedStr = map[string]magentaTypeNamed{
@@ -791,6 +801,7 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"mx_exception_status_t":    mx_exception_status_t,
 	"mx_exception_behaviour_t": mx_exception_behaviour_t,
 	"mx_function_pointer":      mx_function_pointer,
+	"mx_rrec_t":                mx_rrec_t,
 	// TODO(smklein): Remove the following temporary types. They could be blacklisted, but this is
 	// easier.
 	"mx_pcie_get_nth_info_t": mx_int,

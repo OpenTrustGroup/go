@@ -6,10 +6,7 @@
 
 package rand
 
-import (
-	"syscall/mx"
-	"unsafe"
-)
+import "syscall/mx"
 
 func init() {
 	Reader = new(cprngReader)
@@ -23,10 +20,5 @@ func init() {
 type cprngReader struct{}
 
 func (r *cprngReader) Read(b []byte) (n int, err error) {
-	var actual uint
-	status := mx.Sys_cprng_draw(unsafe.Pointer(&b[0]), uint(len(b)), &actual)
-	if status != mx.ErrOk {
-		return 0, status
-	}
-	return int(actual), nil
+	return mx.RandRead(b)
 }

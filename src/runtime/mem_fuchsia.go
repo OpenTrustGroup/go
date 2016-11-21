@@ -34,9 +34,9 @@ func sysFree(v unsafe.Pointer, n uintptr, sysStat *uint64) {
 }
 
 func sysMmap(ptr unsafe.Pointer, len uintptr, flags uint32) {
-	var h mx.Handle
-	if status := mx.Sys_vmo_create(uint64(len), 0, &h); status != mx.ErrOk {
-		println("runtime: mx.Sys_vmo_create failed, len=", len, " err=", status)
+	vmo, err := mx.NewVMO(uint64(len), 0)
+	if err != nil {
+		println("runtime: mx.NewVMO failed, len=", len, " err=", err.Error())
 		exit(2)
 	}
 	const (
@@ -44,8 +44,8 @@ func sysMmap(ptr unsafe.Pointer, len uintptr, flags uint32) {
 		MX_VM_FLAG_PERM_WRITE = 1 << 2
 	)
 	mxFlags := uint32(MX_VM_FLAG_PERM_READ | MX_VM_FLAG_PERM_WRITE)
-	status := mx.Sys_process_map_vm(mx.ProcHandle, h, 0, uint(len), (*uintptr)(ptr), mxFlags)
-	h.Close()
+	status := mx.Sys_process_map_vm(mx.ProcHandle, mx.Handle(vmo), 0, uint(len), (*uintptr)(ptr), mxFlags)
+	vmo.Close()
 	if status != mx.ErrOk {
 		println("runtime: mx.Sys_process_map_vm failed, err=", status)
 		exit(2)

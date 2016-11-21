@@ -33,7 +33,7 @@ func Handler(h mx.Handle, cb interface{}, cookie int64) error {
 		return nil
 	}
 	msg.Hcount = MessageMaxHandles + 1
-	numBytes, _, err := msg.ReadMsg(h)
+	numBytes, _, err := msg.ReadMsg(&mx.Channel{h}) // TODO: take *mx.Channel as arugment
 	if err != nil {
 		if err == mx.ErrBadState {
 			return dispatcher.ErrNoWork
@@ -83,7 +83,7 @@ func Handler(h mx.Handle, cb interface{}, cookie int64) error {
 		msg.Hcount++
 	}
 	msg.SetOp(OpStatus)
-	err = msg.WriteMsg(rh)
+	err = msg.WriteMsg(&mx.Channel{rh}) // TODO: make rh an *mx.Channel
 	if err != nil {
 		msg.DiscardHandles()
 	}
@@ -97,7 +97,7 @@ func Handler(h mx.Handle, cb interface{}, cookie int64) error {
 // TxnHandoff passes a message to srv along with a reply handle rh.
 // The other server will reply using rh, and this call will return immediately.
 // rh is not closed on error.
-func TxnHandoff(srv, rh mx.Handle, msg *Msg) error {
+func TxnHandoff(srv *mx.Channel, rh mx.Handle, msg *Msg) error {
 	msg.Magic = MessageMagic
 	msg.Handle[0] = rh
 	msg.Hcount = 1

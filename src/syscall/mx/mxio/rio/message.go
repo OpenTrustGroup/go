@@ -82,15 +82,15 @@ type Msg struct {
 }
 
 // ReadMsg reads a message from a handle
-func (m *Msg) ReadMsg(h mx.Handle) (numBytes, numHandles uint32, err error) {
+func (m *Msg) ReadMsg(h *mx.Channel) (numBytes, numHandles uint32, err error) {
 	msgBytes := (*[MessageSizeMax]byte)(unsafe.Pointer(m))
-	numBytes, numHandles, err = h.ReadChannel(msgBytes[:], m.Handle[:], 0)
+	numBytes, numHandles, err = h.Read(msgBytes[:], m.Handle[:], 0)
 	m.Hcount = numHandles
 	return
 }
 
 // WriteMsg writes a message to a handle
-func (m *Msg) WriteMsg(h mx.Handle) error {
+func (m *Msg) WriteMsg(h *mx.Channel) error {
 	msgBytes := (*[MessageSizeMax]byte)(unsafe.Pointer(m))
 
 	data := msgBytes[:MessageHeaderSize+m.Datalen]
@@ -98,7 +98,7 @@ func (m *Msg) WriteMsg(h mx.Handle) error {
 	if m.Hcount > 0 {
 		handles = m.Handle[:m.Hcount]
 	}
-	return h.WriteChannel(data, handles, 0)
+	return h.Write(data, handles, 0)
 }
 
 // HasReplyPipe returns if the message contains a reply pipe
