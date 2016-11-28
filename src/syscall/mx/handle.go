@@ -220,6 +220,30 @@ func NewVMO(size uint64, options uint32) (VMO, error) {
 	return VMO(h), nil
 }
 
+type Log struct {
+	Handle Handle
+}
+
+func NewLog(options uint32) *Log {
+	return &Log{Sys_log_create(options)}
+}
+
+func (l *Log) Write(b []byte) (n int, err error) {
+	status := Sys_log_write(l.Handle, uint32(len(b)), unsafe.Pointer(&b[0]), 0)
+	if status != ErrOk {
+		return 0, status
+	}
+	return len(b), nil
+}
+
+func (l *Log) Read(b []byte) (n int, err error) {
+	status := Sys_log_read(l.Handle, uint32(len(b)), unsafe.Pointer(&b[0]), 0)
+	if status != ErrOk {
+		return 0, status
+	}
+	return len(b), nil
+}
+
 func RandRead(b []byte) (n int, err error) {
 	var actual uint
 	if status := sys_cprng_draw(unsafe.Pointer(&b[0]), uint(len(b)), &actual); status != ErrOk {
