@@ -4,11 +4,10 @@
 
 // +build fuchsia
 
-// TODO(smklein): Convert this program to a go test once we can run `go test` on Magenta, and place
-// it in the same package as the dispatcher.
-package main
+package dispatcher_test
 
 import (
+	"testing"
 	"unsafe"
 
 	"syscall/mx"
@@ -20,8 +19,7 @@ import (
 // (a) Add the value of the message to a sum, and
 // (b) Return the sum back on a channel
 // Closing the handle will subtract 1 from the sum.
-func main() {
-	println("Dispatcher Test Executable Start...")
+func TestDispatcher(t *testing.T) {
 	c := make(chan int64)
 	sum := int64(0)
 	sumCb := func(val int64) {
@@ -33,14 +31,14 @@ func main() {
 
 	dispatcherCb := func(h mx.Handle, cb interface{}, cookie int64) error {
 		if cookie != expectedCookie {
-			panic("Unexpected cookie")
+			t.Fatalf("cookie=%q, want %q", cookie, expectedCookie)
 		}
 
 		// The type of the handler callback is independent of the underlying dispatcher.
 		// However, it must match the callback passed to AddHandler.
 		handlerCb, ok := cb.(func(value int64))
 		if !ok {
-			panic("Cannot convert handler callback to func(value int64)")
+			t.Fatal("cannot convert handler callback to func(value int64)")
 		}
 		if h == 0 {
 			// Indicates the remote side was closed
@@ -56,7 +54,7 @@ func main() {
 				}
 				return err
 			} else if numBytes != 8 || numHandles != 0 {
-				panic("Unexpected message read in dispatcher callback")
+				t.Fatal("unexpected message read in dispatcher callback")
 			}
 			val := *(*int64)(unsafe.Pointer(&data[0]))
 			handlerCb(val)
@@ -79,7 +77,7 @@ func main() {
 	}
 
 	if sum != 0 {
-		panic("Unexpected starting sum value")
+		t.Fatal("unexpected starting sum value, %d", sum)
 	}
 
 	writeMessageVerifySum := func(val, expectedSum int64) {
@@ -89,7 +87,7 @@ func main() {
 		}
 		seenSum := <-c
 		if sum != seenSum || seenSum != expectedSum {
-			panic("Unexpected sum value")
+			t.Fatal("sum=%d, seenSum=%d, want %d", sum, seenSum, expectedSum)
 		}
 	}
 	writeMessageVerifySum(1, 1)
@@ -98,16 +96,14 @@ func main() {
 	writeMessageVerifySum(15, 25)
 
 	if err := h1.Close(); err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	// Closing the handle should decrease the sum by 1.
 	seenSum := <-c
-	if sum != seenSum || seenSum != 24 {
-		panic("Unexpected closing sum value")
+	if want := int64(24); sum != seenSum || seenSum != want {
+		t.Fatal("closing sum=%d, seenSum=%d, want %d", sum, seenSum, want)
 	}
-
-	println("... Dispatcher test executable success")
 }
 
 // TODO(smklein): Test multiple handlers
