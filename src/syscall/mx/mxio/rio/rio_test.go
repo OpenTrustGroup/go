@@ -4,11 +4,11 @@
 
 // +build fuchsia
 
-// TODO(smklein): Convert this program to a go test once we can run `go test` on Magenta.
-package main
+package rio_test
 
 import (
 	"bytes"
+	"testing"
 
 	"syscall/mx"
 	"syscall/mx/mxio"
@@ -175,8 +175,7 @@ func checkClose(client *rio.RemoteIO) {
 	}
 }
 
-func main() {
-	println("Rio Test Executable start... ")
+func TestRIO(t *testing.T) {
 	testCookie := int64(0x12345678) // Checks callback plumbing
 	opIndex := 0                    // Checks that client / server are in sync
 
@@ -186,23 +185,30 @@ func main() {
 	serverCb := func(msg *rio.Msg, rh mx.Handle, cookie int64) mx.Status {
 		// Check incoming message
 		if cookie != testCookie {
-			panic("Unexpected cookie")
-		} else if rh != 0 && msg.Magic != rio.MessageMagic {
+			t.Fatalf("%d: unexpected cookie", opIndex)
+		}
+		if rh != 0 && msg.Magic != rio.MessageMagic {
 			// The 'magic' value should only be checked if the message was actually sent from the
 			// remote side, and not sent as a 'close' notification.
-			panic("Unexpected Magic")
-		} else if msg.Hcount != 0 {
-			panic("Client unexpectedly sent a handle to the server")
-		} else if testData[opIndex].inOp != msg.Op() {
-			panic("Unexpected Operation")
-		} else if testData[opIndex].inArg != msg.Arg {
-			panic("Unexpected arg")
-		} else if testData[opIndex].inArg2 != msg.Off() {
-			panic("Unexpected 'offset' (arg2)")
-		} else if len(testData[opIndex].inData) != int(msg.Datalen) {
-			panic("Unexpected data length")
-		} else if !bytes.Equal(testData[opIndex].inData, msg.Data[:msg.Datalen]) {
-			panic("Unexpected data")
+			t.Fatalf("%d: unexpected magic", opIndex)
+		}
+		if msg.Hcount != 0 {
+			t.Fatalf("%d: unexpectedly sent a handle to the server", opIndex)
+		}
+		if got, want := testData[opIndex].inOp, msg.Op(); got != want {
+			t.Fatalf("%d: inOp=%v, want %v", got, want)
+		}
+		if got, want := testData[opIndex].inArg, msg.Arg; got != want {
+			t.Fatalf("%d: inArg=%v, want %v", got, want)
+		}
+		if got, want := testData[opIndex].inArg2, msg.Off(); got != want {
+			t.Fatalf("%d: inArg2=%v, want %v", got, want)
+		}
+		if got, want := len(testData[opIndex].inData), int(msg.Datalen); got != want {
+			t.Fatalf("%d: len(inData)=%d, want %d", got, want)
+		}
+		if got, want := testData[opIndex].inData, msg.Data[:msg.Datalen]; !bytes.Equal(got, want) {
+			t.Fatalf("%d: inData=%q, want %q", got, want)
 		}
 
 		// Prepare outgoing message
@@ -216,7 +222,7 @@ func main() {
 
 	d := CreateRIOServer()
 	client := CreateRIOClient(d, serverCb, testCookie)
-	for _ = range testData {
+	for range testData {
 		switch testData[opIndex].inOp {
 		case rio.OpOpen:
 			checkOpen(client, opIndex)
@@ -233,9 +239,8 @@ func main() {
 		case rio.OpClose:
 			checkClose(client)
 		default:
-			panic("Unexpected test operation")
+			t.Fatalf("%d: unexpected test op: %v", opIndex, testData[opIndex].inOp)
 		}
 		opIndex++
 	}
-	println("... RIO test executable passed")
 }
