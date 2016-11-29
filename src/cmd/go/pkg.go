@@ -937,6 +937,10 @@ func (p *Package) load(stk *importStack, bp *build.Package, err error) *Package 
 			importPaths = append(importPaths, "runtime/cgo")
 		}
 	}
+	// Currently all fuchsia builds are externally linked.
+	if p.Name == "main" && buildContext.GOOS == "fuchsia" {
+		importPaths = append(importPaths, "runtime/cgo")
+	}
 
 	// Everything depends on runtime, except runtime, its internal
 	// subpackages, and unsafe.
