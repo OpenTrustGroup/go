@@ -288,7 +288,7 @@ func typeSize(t magentaType) int {
 		return 0
 	case mx_bool:
 		return 1
-	case mx_int, mx_uint, mx_uintptr_t:
+	case mx_int, mx_uint, mx_uintptr_t, mx_size_t:
 		return regSize
 	case mx_char:
 		return 1
@@ -311,8 +311,6 @@ func typeSize(t magentaType) int {
 	case mx_rights_t:
 		return 4
 	case mx_vaddr_t, mx_paddr_t:
-		return regSize
-	case mx_size_t, mx_ssize_t:
 		return regSize
 	case mx_process_info_t:
 		panic("cannot pass mx_process_info_t")
@@ -376,8 +374,6 @@ func printGoType(buf *bytes.Buffer, t magentaType) {
 		fmt.Fprint(buf, "Paddr")
 	case mx_size_t:
 		fmt.Fprint(buf, "uint")
-	case mx_ssize_t:
-		fmt.Fprint(buf, "int")
 	case mx_process_info_t:
 		fmt.Fprint(buf, "ProcessInfo")
 	case mx_exception_status_t:
@@ -751,6 +747,7 @@ const (
 	mx_uint32_t
 	mx_uint64_t
 	mx_uintptr_t
+	mx_size_t
 	mx_status_t
 	mx_time_t
 	mx_koid_t
@@ -762,8 +759,6 @@ const (
 	mx_rights_t
 	mx_vaddr_t
 	mx_paddr_t
-	mx_size_t
-	mx_ssize_t
 	mx_process_info_t
 	mx_exception_status_t
 	mx_exception_behaviour_t
@@ -783,6 +778,7 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"uint32_t":                 mx_uint32_t,
 	"uint64_t":                 mx_uint64_t,
 	"uintptr_t":                mx_uintptr_t,
+	"size_t":                   mx_size_t,
 	"mx_status_t":              mx_status_t, // int32_t
 	"mx_time_t":                mx_time_t,   // uint64_t nanoseconds
 	"mx_koid_t":                mx_koid_t,
@@ -795,8 +791,6 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"mx_rights_t":              mx_rights_t,
 	"mx_vaddr_t":               mx_vaddr_t,
 	"mx_paddr_t":               mx_paddr_t,
-	"mx_size_t":                mx_size_t,
-	"mx_ssize_t":               mx_ssize_t,
 	"mx_process_info_t":        mx_process_info_t,
 	"mx_exception_status_t":    mx_exception_status_t,
 	"mx_exception_behaviour_t": mx_exception_behaviour_t,
