@@ -68,13 +68,6 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_vmo_op_range mx_vmo_op_range "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_cprng_draw mx_cprng_draw "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_cprng_add_entropy mx_cprng_add_entropy "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_create mx_datapipe_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_write mx_datapipe_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_read mx_datapipe_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_begin_write mx_datapipe_begin_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_end_write mx_datapipe_end_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_begin_read mx_datapipe_begin_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_datapipe_end_read mx_datapipe_end_read "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_log_create mx_log_create "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_log_write mx_log_write "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_log_read mx_log_read "libmagenta.so.abi"
@@ -91,10 +84,11 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_interrupt_wait mx_interrupt_wait "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_mmap_device_io mx_mmap_device_io "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_mmap_device_memory mx_mmap_device_memory "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_alloc_device_memory mx_alloc_device_memory "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_io_mapping_get_info mx_io_mapping_get_info "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_vmo_create_contiguous mx_vmo_create_contiguous "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_bootloader_fb_get_info mx_bootloader_fb_get_info "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_set_framebuffer mx_set_framebuffer "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_clock_adjust mx_clock_adjust "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_pci_get_nth_device mx_pci_get_nth_device "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_pci_claim_device mx_pci_claim_device "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_pci_enable_bus_master mx_pci_enable_bus_master "libmagenta.so.abi"
@@ -114,6 +108,7 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_resource_get_handle mx_resource_get_handle "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_resource_do_action mx_resource_do_action "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_resource_connect mx_resource_connect "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_resource_accept mx_resource_accept "libmagenta.so.abi"
 
 //go:linkname vdso_mx_time_get vdso_mx_time_get
 //go:linkname vdso_mx_nanosleep vdso_mx_nanosleep
@@ -174,13 +169,6 @@ import "unsafe"
 //go:linkname vdso_mx_vmo_op_range vdso_mx_vmo_op_range
 //go:linkname vdso_mx_cprng_draw vdso_mx_cprng_draw
 //go:linkname vdso_mx_cprng_add_entropy vdso_mx_cprng_add_entropy
-//go:linkname vdso_mx_datapipe_create vdso_mx_datapipe_create
-//go:linkname vdso_mx_datapipe_write vdso_mx_datapipe_write
-//go:linkname vdso_mx_datapipe_read vdso_mx_datapipe_read
-//go:linkname vdso_mx_datapipe_begin_write vdso_mx_datapipe_begin_write
-//go:linkname vdso_mx_datapipe_end_write vdso_mx_datapipe_end_write
-//go:linkname vdso_mx_datapipe_begin_read vdso_mx_datapipe_begin_read
-//go:linkname vdso_mx_datapipe_end_read vdso_mx_datapipe_end_read
 //go:linkname vdso_mx_log_create vdso_mx_log_create
 //go:linkname vdso_mx_log_write vdso_mx_log_write
 //go:linkname vdso_mx_log_read vdso_mx_log_read
@@ -197,10 +185,11 @@ import "unsafe"
 //go:linkname vdso_mx_interrupt_wait vdso_mx_interrupt_wait
 //go:linkname vdso_mx_mmap_device_io vdso_mx_mmap_device_io
 //go:linkname vdso_mx_mmap_device_memory vdso_mx_mmap_device_memory
-//go:linkname vdso_mx_alloc_device_memory vdso_mx_alloc_device_memory
 //go:linkname vdso_mx_io_mapping_get_info vdso_mx_io_mapping_get_info
+//go:linkname vdso_mx_vmo_create_contiguous vdso_mx_vmo_create_contiguous
 //go:linkname vdso_mx_bootloader_fb_get_info vdso_mx_bootloader_fb_get_info
 //go:linkname vdso_mx_set_framebuffer vdso_mx_set_framebuffer
+//go:linkname vdso_mx_clock_adjust vdso_mx_clock_adjust
 //go:linkname vdso_mx_pci_get_nth_device vdso_mx_pci_get_nth_device
 //go:linkname vdso_mx_pci_claim_device vdso_mx_pci_claim_device
 //go:linkname vdso_mx_pci_enable_bus_master vdso_mx_pci_enable_bus_master
@@ -220,6 +209,7 @@ import "unsafe"
 //go:linkname vdso_mx_resource_get_handle vdso_mx_resource_get_handle
 //go:linkname vdso_mx_resource_do_action vdso_mx_resource_do_action
 //go:linkname vdso_mx_resource_connect vdso_mx_resource_connect
+//go:linkname vdso_mx_resource_accept vdso_mx_resource_accept
 
 var (
 	vdso_mx_time_get                   uintptr
@@ -281,13 +271,6 @@ var (
 	vdso_mx_vmo_op_range               uintptr
 	vdso_mx_cprng_draw                 uintptr
 	vdso_mx_cprng_add_entropy          uintptr
-	vdso_mx_datapipe_create            uintptr
-	vdso_mx_datapipe_write             uintptr
-	vdso_mx_datapipe_read              uintptr
-	vdso_mx_datapipe_begin_write       uintptr
-	vdso_mx_datapipe_end_write         uintptr
-	vdso_mx_datapipe_begin_read        uintptr
-	vdso_mx_datapipe_end_read          uintptr
 	vdso_mx_log_create                 uintptr
 	vdso_mx_log_write                  uintptr
 	vdso_mx_log_read                   uintptr
@@ -304,10 +287,11 @@ var (
 	vdso_mx_interrupt_wait             uintptr
 	vdso_mx_mmap_device_io             uintptr
 	vdso_mx_mmap_device_memory         uintptr
-	vdso_mx_alloc_device_memory        uintptr
 	vdso_mx_io_mapping_get_info        uintptr
+	vdso_mx_vmo_create_contiguous      uintptr
 	vdso_mx_bootloader_fb_get_info     uintptr
 	vdso_mx_set_framebuffer            uintptr
+	vdso_mx_clock_adjust               uintptr
 	vdso_mx_pci_get_nth_device         uintptr
 	vdso_mx_pci_claim_device           uintptr
 	vdso_mx_pci_enable_bus_master      uintptr
@@ -327,6 +311,7 @@ var (
 	vdso_mx_resource_get_handle        uintptr
 	vdso_mx_resource_do_action         uintptr
 	vdso_mx_resource_connect           uintptr
+	vdso_mx_resource_accept            uintptr
 )
 
 //go:noescape
@@ -339,7 +324,7 @@ func Sys_nanosleep(nanoseconds Time) Status
 
 //go:noescape
 //go:nosplit
-func Sys_num_cpus() uint
+func Sys_num_cpus() uint32
 
 //go:noescape
 //go:nosplit
@@ -443,7 +428,7 @@ func Sys_process_exit(retcode int)
 
 //go:noescape
 //go:nosplit
-func Sys_process_create(job Handle, name *uint8, name_len uint32, options uint32, out *Handle) Handle
+func Sys_process_create(job Handle, name *uint8, name_len uint32, options uint32, out *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -567,34 +552,6 @@ func Sys_cprng_add_entropy(buffer unsafe.Pointer, len uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_datapipe_create(options uint32, element_size uint, capacity uint, consumer_handle *Handle) Handle
-
-//go:noescape
-//go:nosplit
-func Sys_datapipe_write(handle Handle, options uint32, requested uint, buffer unsafe.Pointer) int
-
-//go:noescape
-//go:nosplit
-func Sys_datapipe_read(handle Handle, options uint32, requested uint, buffer unsafe.Pointer) int
-
-//go:noescape
-//go:nosplit
-func Sys_datapipe_begin_write(handle Handle, options uint32, buffer *uintptr) int
-
-//go:noescape
-//go:nosplit
-func Sys_datapipe_end_write(handle Handle, written uint) Status
-
-//go:noescape
-//go:nosplit
-func Sys_datapipe_begin_read(handle Handle, options uint32, buffer *uintptr) int
-
-//go:noescape
-//go:nosplit
-func Sys_datapipe_end_read(handle Handle, read uint) Status
-
-//go:noescape
-//go:nosplit
 func Sys_log_create(options uint32) Handle
 
 //go:noescape
@@ -611,7 +568,7 @@ func Sys_ktrace_read(handle Handle, data unsafe.Pointer, offset uint32, len uint
 
 //go:noescape
 //go:nosplit
-func Sys_ktrace_control(handle Handle, action uint32, options uint32, _ unsafe.Pointer) Status
+func Sys_ktrace_control(handle Handle, action uint32, options uint32, ptr unsafe.Pointer) Status
 
 //go:noescape
 //go:nosplit
@@ -627,7 +584,7 @@ func Sys_debug_transfer_handle(proc Handle, handle Handle) Handle
 
 //go:noescape
 //go:nosplit
-func Sys_debug_read(_ Handle, buffer unsafe.Pointer, length uint32) Status
+func Sys_debug_read(handle Handle, buffer unsafe.Pointer, length uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -635,7 +592,7 @@ func Sys_debug_write(buffer unsafe.Pointer, length uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_debug_send_command(_ Handle, buffer unsafe.Pointer, length uint32) Status
+func Sys_debug_send_command(resource_handle Handle, buffer unsafe.Pointer, length uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -659,11 +616,11 @@ func Sys_mmap_device_memory(handle Handle, paddr Paddr, len uint32, cache_policy
 
 //go:noescape
 //go:nosplit
-func Sys_alloc_device_memory(handle Handle, len uint32, out_paddr *Paddr, out_vaddr unsafe.Pointer) Status
+func Sys_io_mapping_get_info(handle Handle, out_vaddr *uintptr, out_size *uint64) Status
 
 //go:noescape
 //go:nosplit
-func Sys_io_mapping_get_info(handle Handle, out_vaddr unsafe.Pointer, out_size *uint64) Status
+func Sys_vmo_create_contiguous(rsrc_handle Handle, size uint, out *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -672,6 +629,10 @@ func Sys_bootloader_fb_get_info(format *uint32, width *uint32, height *uint32, s
 //go:noescape
 //go:nosplit
 func Sys_set_framebuffer(handle Handle, vaddr unsafe.Pointer, len uint32, format uint32, width uint32, height uint32, stride uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_clock_adjust(handle Handle, clock_id uint32, offset int64) Status
 
 //go:noescape
 //go:nosplit
@@ -735,7 +696,7 @@ func Sys_acpi_cache_flush(handle Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_resource_create(parent_handle Handle, records *Rrec, count uint32, resource_out *Handle, msgpipe_out *Handle) Status
+func Sys_resource_create(parent_handle Handle, records *Rrec, count uint32, resource_out *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -747,4 +708,8 @@ func Sys_resource_do_action(handle Handle, index uint32, action uint32, arg0 uin
 
 //go:noescape
 //go:nosplit
-func Sys_resource_connect(handle Handle, msgpipe Handle) Status
+func Sys_resource_connect(handle Handle, channel Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_resource_accept(handle Handle, channel *Handle) Status
