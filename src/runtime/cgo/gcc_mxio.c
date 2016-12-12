@@ -9,6 +9,8 @@
 
 #include <stdlib.h>
 #include <magenta/processargs.h>
+// TODO(teisenbe): Remove this #define once vmar compat syscalls
+#define WITHOUT_COMPAT_SYSCALLS 1
 #include <magenta/syscalls.h>
 #include <mxio/io.h>
 #include <mxio/util.h>
@@ -21,6 +23,7 @@ struct mxio_init {
 	mx_handle_t stdioClone;
 	mx_handle_t cwd;
 	mx_handle_t processSelf;
+	mx_handle_t vmarRootSelf;
 	int32_t unused;
 	int32_t envlen;
 	char**  environ;
@@ -57,6 +60,7 @@ x_cgo_get_mxio_root(struct mxio_init *handles)
 	}
 
 	handles->processSelf = mx_process_self();
+	handles->vmarRootSelf = mx_vmar_root_self();
 
 	for (char** env = environ; env; env++) {
 		handles->envlen++;

@@ -40,14 +40,14 @@ func sysMmap(ptr unsafe.Pointer, len uintptr, flags uint32) {
 		exit(2)
 	}
 	const (
-		MX_VM_FLAG_PERM_READ  = 1 << 1
-		MX_VM_FLAG_PERM_WRITE = 1 << 2
+		MX_VM_FLAG_PERM_READ  = 1 << 0
+		MX_VM_FLAG_PERM_WRITE = 1 << 1
 	)
 	mxFlags := uint32(MX_VM_FLAG_PERM_READ | MX_VM_FLAG_PERM_WRITE)
-	status := mx.Sys_process_map_vm(mx.ProcHandle, mx.Handle(vmo), 0, uint(len), (*uintptr)(ptr), mxFlags)
+	status := mx.Sys_vmar_map(mx.VmarRootHandle, 0, mx.Handle(vmo), 0, uint(len), mxFlags, (*uintptr)(ptr))
 	vmo.Close()
 	if status != mx.ErrOk {
-		println("runtime: mx.Sys_process_map_vm failed, err=", status)
+		println("runtime: mx.Sys_vmar_map failed, err=", status)
 		exit(2)
 	}
 }

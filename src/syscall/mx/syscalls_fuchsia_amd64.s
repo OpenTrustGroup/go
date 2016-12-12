@@ -308,16 +308,17 @@ TEXT ·Sys_process_exit(SB),NOSPLIT,$0-8
 	CALL AX
 	RET
 
-// func Sys_process_create(job Handle, name *uint8, name_len uint32, options uint32, out *Handle) Status
-TEXT ·Sys_process_create(SB),NOSPLIT,$0-36
+// func Sys_process_create(job Handle, name *uint8, name_len uint32, options uint32, proc_handle *Handle, vmar_handle *Handle) Handle
+TEXT ·Sys_process_create(SB),NOSPLIT,$0-44
 	MOVL job+0(FP), DI
 	MOVQ name+8(FP), SI
 	MOVL name_len+16(FP), DX
 	MOVL options+20(FP), CX
-	MOVQ out+24(FP), R8
+	MOVQ proc_handle+24(FP), R8
+	MOVQ vmar_handle+32(FP), R9
 	MOVQ vdso_mx_process_create(SB), AX
 	CALL AX
-	MOVL AX, ret+32(FP)
+	MOVL AX, ret+40(FP)
 	RET
 
 // func Sys_process_start(process_handle Handle, thread_handle Handle, entry uintptr, stack uintptr, arg_handle Handle, arg2 uintptr) Status
@@ -331,40 +332,6 @@ TEXT ·Sys_process_start(SB),NOSPLIT,$0-44
 	MOVQ vdso_mx_process_start(SB), AX
 	CALL AX
 	MOVL AX, ret+40(FP)
-	RET
-
-// func Sys_process_map_vm(proc_handle Handle, vmo_handle Handle, offset uint64, len uint, ptr *uintptr, options uint32) Status
-TEXT ·Sys_process_map_vm(SB),NOSPLIT,$0-44
-	MOVL proc_handle+0(FP), DI
-	MOVL vmo_handle+4(FP), SI
-	MOVQ offset+8(FP), DX
-	MOVQ len+16(FP), CX
-	MOVQ ptr+24(FP), R8
-	MOVL options+32(FP), R9
-	MOVQ vdso_mx_process_map_vm(SB), AX
-	CALL AX
-	MOVL AX, ret+40(FP)
-	RET
-
-// func Sys_process_unmap_vm(proc_handle Handle, address uintptr, len uint) Status
-TEXT ·Sys_process_unmap_vm(SB),NOSPLIT,$0-28
-	MOVL proc_handle+0(FP), DI
-	MOVQ address+8(FP), SI
-	MOVQ len+16(FP), DX
-	MOVQ vdso_mx_process_unmap_vm(SB), AX
-	CALL AX
-	MOVL AX, ret+24(FP)
-	RET
-
-// func Sys_process_protect_vm(proc_handle Handle, address uintptr, len uint, prot uint32) Status
-TEXT ·Sys_process_protect_vm(SB),NOSPLIT,$0-36
-	MOVL proc_handle+0(FP), DI
-	MOVQ address+8(FP), SI
-	MOVQ len+16(FP), DX
-	MOVL prot+24(FP), CX
-	MOVQ vdso_mx_process_protect_vm(SB), AX
-	CALL AX
-	MOVL AX, ret+32(FP)
 	RET
 
 // func Sys_process_read_memory(proc Handle, vaddr uintptr, buffer unsafe.Pointer, len uint, actual *uint) Status
@@ -551,6 +518,67 @@ TEXT ·Sys_port_bind(SB),NOSPLIT,$0-28
 	MOVQ vdso_mx_port_bind(SB), AX
 	CALL AX
 	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_vmar_allocate(parent_vmar_handle Handle, offset uint, size uint, flags uint32, child_vmar *Handle, child_addr *uintptr) Status
+TEXT ·Sys_vmar_allocate(SB),NOSPLIT,$0-52
+	MOVL parent_vmar_handle+0(FP), DI
+	MOVQ offset+8(FP), SI
+	MOVQ size+16(FP), DX
+	MOVL flags+24(FP), CX
+	MOVQ child_vmar+32(FP), R8
+	MOVQ child_addr+40(FP), R9
+	MOVQ vdso_mx_vmar_allocate(SB), AX
+	CALL AX
+	MOVL AX, ret+48(FP)
+	RET
+
+// func Sys_vmar_destroy(vmar_handle Handle) Status
+TEXT ·Sys_vmar_destroy(SB),NOSPLIT,$0-12
+	MOVL vmar_handle+0(FP), DI
+	MOVQ vdso_mx_vmar_destroy(SB), AX
+	CALL AX
+	MOVL AX, ret+8(FP)
+	RET
+
+// func Sys_vmar_map(vmar_handle Handle, vmar_offset uint, vmo_handle Handle, vmo_offset uint64, len uint, flags uint32, mapped_addr *uintptr) Status
+TEXT ·Sys_vmar_map(SB),NOSPLIT,$24-60
+	MOVL vmar_handle+0(FP), DI
+	MOVQ vmar_offset+8(FP), SI
+	MOVL vmo_handle+16(FP), DX
+	MOVQ vmo_offset+24(FP), CX
+	MOVQ len+32(FP), R8
+	MOVL flags+40(FP), R9
+	MOVQ mapped_addr+48(FP), R12
+	MOVQ SP, BP   // BP is preserved across vsdo call by the x86-64 ABI
+	ANDQ $~15, SP // stack alignment for x86-64 ABI
+	PUSHQ R12
+	MOVQ vdso_mx_vmar_map(SB), AX
+	CALL AX
+	POPQ R12
+	MOVQ BP, SP
+	MOVL AX, ret+56(FP)
+	RET
+
+// func Sys_vmar_unmap(vmar_handle Handle, addr uintptr, len uint) Status
+TEXT ·Sys_vmar_unmap(SB),NOSPLIT,$0-28
+	MOVL vmar_handle+0(FP), DI
+	MOVQ addr+8(FP), SI
+	MOVQ len+16(FP), DX
+	MOVQ vdso_mx_vmar_unmap(SB), AX
+	CALL AX
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_vmar_protect(vmar_handle Handle, addr uintptr, len uint, prot uint32) Status
+TEXT ·Sys_vmar_protect(SB),NOSPLIT,$0-36
+	MOVL vmar_handle+0(FP), DI
+	MOVQ addr+8(FP), SI
+	MOVQ len+16(FP), DX
+	MOVL prot+24(FP), CX
+	MOVQ vdso_mx_vmar_protect(SB), AX
+	CALL AX
+	MOVL AX, ret+32(FP)
 	RET
 
 // func sys_vmo_create(size uint64, options uint32, out *Handle) Status

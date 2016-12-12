@@ -39,9 +39,6 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_process_exit mx_process_exit "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_process_create mx_process_create "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_process_start mx_process_start "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_process_map_vm mx_process_map_vm "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_process_unmap_vm mx_process_unmap_vm "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_process_protect_vm mx_process_protect_vm "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_process_read_memory mx_process_read_memory "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_process_write_memory mx_process_write_memory "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_job_create mx_job_create "libmagenta.so.abi"
@@ -60,6 +57,11 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_port_queue mx_port_queue "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_port_wait mx_port_wait "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_port_bind mx_port_bind "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_vmar_allocate mx_vmar_allocate "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_vmar_destroy mx_vmar_destroy "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_vmar_map mx_vmar_map "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_vmar_unmap mx_vmar_unmap "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_vmar_protect mx_vmar_protect "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_vmo_create mx_vmo_create "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_vmo_read mx_vmo_read "libmagenta.so.abi"
 //go:cgo_import_dynamic vdso_mx_vmo_write mx_vmo_write "libmagenta.so.abi"
@@ -140,9 +142,6 @@ import "unsafe"
 //go:linkname vdso_mx_process_exit vdso_mx_process_exit
 //go:linkname vdso_mx_process_create vdso_mx_process_create
 //go:linkname vdso_mx_process_start vdso_mx_process_start
-//go:linkname vdso_mx_process_map_vm vdso_mx_process_map_vm
-//go:linkname vdso_mx_process_unmap_vm vdso_mx_process_unmap_vm
-//go:linkname vdso_mx_process_protect_vm vdso_mx_process_protect_vm
 //go:linkname vdso_mx_process_read_memory vdso_mx_process_read_memory
 //go:linkname vdso_mx_process_write_memory vdso_mx_process_write_memory
 //go:linkname vdso_mx_job_create vdso_mx_job_create
@@ -161,6 +160,11 @@ import "unsafe"
 //go:linkname vdso_mx_port_queue vdso_mx_port_queue
 //go:linkname vdso_mx_port_wait vdso_mx_port_wait
 //go:linkname vdso_mx_port_bind vdso_mx_port_bind
+//go:linkname vdso_mx_vmar_allocate vdso_mx_vmar_allocate
+//go:linkname vdso_mx_vmar_destroy vdso_mx_vmar_destroy
+//go:linkname vdso_mx_vmar_map vdso_mx_vmar_map
+//go:linkname vdso_mx_vmar_unmap vdso_mx_vmar_unmap
+//go:linkname vdso_mx_vmar_protect vdso_mx_vmar_protect
 //go:linkname vdso_mx_vmo_create vdso_mx_vmo_create
 //go:linkname vdso_mx_vmo_read vdso_mx_vmo_read
 //go:linkname vdso_mx_vmo_write vdso_mx_vmo_write
@@ -242,9 +246,6 @@ var (
 	vdso_mx_process_exit               uintptr
 	vdso_mx_process_create             uintptr
 	vdso_mx_process_start              uintptr
-	vdso_mx_process_map_vm             uintptr
-	vdso_mx_process_unmap_vm           uintptr
-	vdso_mx_process_protect_vm         uintptr
 	vdso_mx_process_read_memory        uintptr
 	vdso_mx_process_write_memory       uintptr
 	vdso_mx_job_create                 uintptr
@@ -263,6 +264,11 @@ var (
 	vdso_mx_port_queue                 uintptr
 	vdso_mx_port_wait                  uintptr
 	vdso_mx_port_bind                  uintptr
+	vdso_mx_vmar_allocate              uintptr
+	vdso_mx_vmar_destroy               uintptr
+	vdso_mx_vmar_map                   uintptr
+	vdso_mx_vmar_unmap                 uintptr
+	vdso_mx_vmar_protect               uintptr
 	vdso_mx_vmo_create                 uintptr
 	vdso_mx_vmo_read                   uintptr
 	vdso_mx_vmo_write                  uintptr
@@ -428,23 +434,11 @@ func Sys_process_exit(retcode int)
 
 //go:noescape
 //go:nosplit
-func Sys_process_create(job Handle, name *uint8, name_len uint32, options uint32, out *Handle) Status
+func Sys_process_create(job Handle, name *uint8, name_len uint32, options uint32, proc_handle *Handle, vmar_handle *Handle) Handle
 
 //go:noescape
 //go:nosplit
 func Sys_process_start(process_handle Handle, thread_handle Handle, entry uintptr, stack uintptr, arg_handle Handle, arg2 uintptr) Status
-
-//go:noescape
-//go:nosplit
-func Sys_process_map_vm(proc_handle Handle, vmo_handle Handle, offset uint64, len uint, ptr *uintptr, options uint32) Status
-
-//go:noescape
-//go:nosplit
-func Sys_process_unmap_vm(proc_handle Handle, address uintptr, len uint) Status
-
-//go:noescape
-//go:nosplit
-func Sys_process_protect_vm(proc_handle Handle, address uintptr, len uint, prot uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -517,6 +511,26 @@ func Sys_port_wait(handle Handle, timeout Time, packet unsafe.Pointer, size uint
 //go:noescape
 //go:nosplit
 func Sys_port_bind(handle Handle, key uint64, source Handle, signals Signals) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_allocate(parent_vmar_handle Handle, offset uint, size uint, flags uint32, child_vmar *Handle, child_addr *uintptr) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_destroy(vmar_handle Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_map(vmar_handle Handle, vmar_offset uint, vmo_handle Handle, vmo_offset uint64, len uint, flags uint32, mapped_addr *uintptr) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_unmap(vmar_handle Handle, addr uintptr, len uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_protect(vmar_handle Handle, addr uintptr, len uint, prot uint32) Status
 
 //go:noescape
 //go:nosplit
