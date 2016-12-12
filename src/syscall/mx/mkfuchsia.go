@@ -296,7 +296,7 @@ func typeSize(t magentaType) int {
 		return 2
 	case mx_int32_t, mx_uint32_t:
 		return 4
-	case mx_uint64_t:
+	case mx_int64_t, mx_uint64_t:
 		return 8
 	case mx_status_t:
 		return 4
@@ -348,6 +348,8 @@ func printGoType(buf *bytes.Buffer, t magentaType) {
 		fmt.Fprint(buf, "int32")
 	case mx_uint32_t:
 		fmt.Fprint(buf, "uint32")
+	case mx_int64_t:
+		fmt.Fprint(buf, "int64")
 	case mx_uint64_t:
 		fmt.Fprint(buf, "uint64")
 	case mx_uintptr_t:
@@ -745,6 +747,7 @@ const (
 	mx_uint16_t
 	mx_int32_t
 	mx_uint32_t
+	mx_int64_t
 	mx_uint64_t
 	mx_uintptr_t
 	mx_size_t
@@ -772,8 +775,9 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"unsigned int":             mx_uint,
 	"int":                      mx_int,
 	"char":                     mx_char,
-	"int32_t":                  mx_int32_t,
 	"int16_t":                  mx_int16_t,
+	"int32_t":                  mx_int32_t,
+	"int64_t":                  mx_int64_t,
 	"uint16_t":                 mx_uint16_t,
 	"uint32_t":                 mx_uint32_t,
 	"uint64_t":                 mx_uint64_t,
