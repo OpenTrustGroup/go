@@ -10,6 +10,7 @@ import (
 )
 
 type ProcessState struct {
+	retCode int
 }
 
 func (p *ProcessState) userTime() time.Duration {
@@ -25,7 +26,7 @@ func (p *ProcessState) exited() bool {
 }
 
 func (p *ProcessState) success() bool {
-	panic("TODO os.success")
+	return p.retCode == 0
 }
 
 func (p *ProcessState) sys() interface{} {
@@ -38,10 +39,6 @@ func (p *ProcessState) sysUsage() interface{} {
 
 func (p *ProcessState) String() string {
 	panic("TODO os.ProcessState.String")
-}
-
-func (p *Process) wait() (ps *ProcessState, err error) {
-	panic("TODO os.Process.wait")
 }
 
 func (p *Process) release() error {
@@ -61,7 +58,12 @@ func findProcess(pid int) (p *Process, err error) {
 }
 
 func startProcess(name string, argv []string, attr *ProcAttr) (p *Process, err error) {
-	panic("TODO os.startProcess")
+	h, err := launchpadLaunchMxio(name, argv)
+	if err != nil {
+		return nil, err
+	}
+	pid := 1 // TODO: what does this even mean for us?
+	return newProcess(pid, uintptr(h)), nil
 }
 
 func hostname() (name string, err error) {
