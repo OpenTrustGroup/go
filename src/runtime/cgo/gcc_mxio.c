@@ -62,7 +62,7 @@ x_cgo_get_mxio_root(struct mxio_init *handles)
 	handles->processSelf = mx_process_self();
 	handles->vmarRootSelf = mx_vmar_root_self();
 
-	for (char** env = environ; env; env++) {
+	for (char** env = environ; *env; env++) {
 		handles->envlen++;
 	}
 	handles->environ = environ;
