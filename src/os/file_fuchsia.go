@@ -79,7 +79,18 @@ var supportsCloseOnExec = true
 func fillFileStatFromSys(fs *fileStat, name string) {
 	fs.name = basename(name)
 	fs.size = int64(fs.sys.Size)
-	// TODO fs.mode
+	fs.mode = 0
+	switch fs.sys.Dev & 0xf000 {
+	case 0x4000:
+		fs.mode = fs.mode | ModeDir
+	case 0x2000:
+		fs.mode = fs.mode | ModeCharDevice
+	case 0xa000:
+		fs.mode = fs.mode | ModeSymlink
+	case 0xc000:
+		fs.mode = fs.mode | ModeSocket
+	}
+	// TODO IsRegular, Perm
 }
 
 func atime(fi FileInfo) time.Time {
