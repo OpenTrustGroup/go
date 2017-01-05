@@ -5,9 +5,9 @@
 package net
 
 func probeIPv4Stack() bool {
-	panic("TODO")
+	return false
 }
 
 func probeIPv6Stack() (supportsIPv6, supportsIPv4map bool) {
-	panic("TODO")
+	return false, false
 }
