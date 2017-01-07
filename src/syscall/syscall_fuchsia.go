@@ -111,8 +111,6 @@ func Exit(code int) {
 	mx.Sys_process_exit(code)
 }
 
-func Getpagesize() int { return 4096 }
-
 const ImplementsGetwd = false
 
 func Getwd() (wd string, err error) {

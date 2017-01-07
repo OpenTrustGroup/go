@@ -40,10 +40,13 @@ func (mode *BuildMode) Set(s string) error {
 	default:
 		return fmt.Errorf("invalid buildmode: %q", s)
 	case "exe":
+		if obj.GOOS == "fuchsia" {
+			return badmode()
+		}
 		*mode = BuildmodeExe
 	case "pie":
 		switch obj.GOOS {
-		case "android", "linux":
+		case "android", "linux", "fuchsia":
 		default:
 			return badmode()
 		}

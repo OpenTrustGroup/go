@@ -5,11 +5,40 @@
 package os
 
 import (
+	"errors"
+	"io"
 	"syscall"
 	"time"
 
 	"syscall/mx/mxio/pipe"
 )
+
+func (f *File) readdir(n int) (fi []FileInfo, err error) {
+	dirname := f.name
+	if dirname == "" {
+		dirname = "."
+	}
+	names, err := f.Readdirnames(n)
+	fi = make([]FileInfo, 0, len(names))
+	for _, filename := range names {
+		fip, lerr := lstat(dirname + "/" + filename)
+		if IsNotExist(lerr) {
+			// File disappeared between readdir + stat.
+			// Just treat it as if it didn't exist.
+			continue
+		}
+		if lerr != nil {
+			return fi, lerr
+		}
+		fi = append(fi, fip)
+	}
+	if len(fi) == 0 && err == nil && n > 0 {
+		// Per File.Readdir, the slice must be non-empty or err
+		// must be non-nil if n > 0.
+		err = io.EOF
+	}
+	return fi, err
+}
 
 func (f *File) readdirnames(n int) (names []string, err error) {
 	return syscall.Readdirnames(f.fd, n)
@@ -96,4 +125,8 @@ func fillFileStatFromSys(fs *fileStat, name string) {
 func atime(fi FileInfo) time.Time {
 	// TODO: mxio doesn't have atime yet
 	return time.Time{}
+}
+
+func executable() (string, error) {
+	return "", errors.New("os.Executable not supported on fuchsia")
 }

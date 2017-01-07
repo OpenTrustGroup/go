@@ -60,6 +60,7 @@ func osinit() {
 	}
 
 	ncpu = int32(mx.Sys_num_cpus())
+	physPageSize = 4096
 }
 
 // Filled in by runtime/cgo when linked into binary.
@@ -221,7 +222,7 @@ func unixnanotime() int64 {
 
 var logger mx.Handle
 var logBufferArray [1024]byte
-var logBuffer []byte
+var logBufferN int
 
 //go:nosplit
 func write(fd uintptr, buf unsafe.Pointer, n int32) int32 {
@@ -231,16 +232,16 @@ func write(fd uintptr, buf unsafe.Pointer, n int32) int32 {
 		// print's implementation.
 		if logger <= 0 {
 			logger = mx.Sys_log_create(0)
-			logBuffer = logBufferArray[:0]
+			logBufferN = 0
 		}
 		if logger > 0 {
 			// Sys_log_write adds a newline to output buffers. To prevent fragmented logs, we buffer
 			// output until a newline character is encountered.
-			logBuffer = append(logBuffer, (*[1 << 30]byte)(buf)[:n]...)
-			if logBuffer[len(logBuffer)-1] == '\n' {
-				status := mx.Sys_log_write(logger, uint32(len(logBuffer)), unsafe.Pointer(&logBuffer[0]), 0)
+			logBufferN += copy(logBufferArray[logBufferN:], (*[1 << 30]byte)(buf)[:n])
+			if logBufferArray[logBufferN-1] == '\n' {
+				status := mx.Sys_log_write(logger, uint32(logBufferN), unsafe.Pointer(&logBufferArray[0]), 0)
 				// Flush buffer, regardless of status returned from write
-				logBuffer = logBuffer[:0]
+				logBufferN = 0
 				if status < 0 {
 					return int32(status)
 				}
