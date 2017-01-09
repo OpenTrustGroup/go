@@ -199,3 +199,8 @@ const (
 	VtypeIWOTH Vtype = 0000002
 	VtypeIXOTH Vtype = 0000001
 )
+
+const (
+	HandleTypeRemote = 0x11
+	HandleTypePipe   = 0x12
+)

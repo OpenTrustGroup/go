@@ -294,6 +294,17 @@ const (
 	RightNone       = Rights(0)
 )
 
+// Topics for object_get_info
+const (
+	ObjectInfoHandleValid = iota
+	ObjectInfoHandleBasic
+	ObjectInfoProcess
+	ObjectInfoProcessThreads
+	ObjectInfoResourceChildren
+	ObjectInfoResourceRecords
+	ObjectInfoVMAR
+)
+
 const (
 	TimensecInfinite = Time(0xFFFFFFFFFFFFFFFF)
 )

@@ -489,7 +489,7 @@ func TestExtraFilesFDShuffle(t *testing.T) {
 func TestExtraFiles(t *testing.T) {
 	testenv.MustHaveExec(t)
 
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == "windows" || runtime.GOOS == "fuchsia" {
 		t.Skipf("skipping test on %q", runtime.GOOS)
 	}
 
@@ -564,7 +564,7 @@ func TestExtraFiles(t *testing.T) {
 }
 
 func TestExtraFilesRace(t *testing.T) {
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == "windows" || runtime.GOOS == "fuchsia" {
 		t.Skip("no operating system support; skipping")
 	}
 	listen := func() net.Listener {

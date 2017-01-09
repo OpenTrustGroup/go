@@ -295,7 +295,14 @@ func Seek(fd int, offset int64, whence int) (off int64, err error) {
 }
 
 func Close(fd int) (err error) {
+	if fd < fdsOff {
+		return EINVAL
+	}
 	fdsMu.Lock()
+	if fd-fdsOff > len(fds) {
+		fdsMu.Unlock()
+		return EINVAL
+	}
 	f := fds[fd-fdsOff]
 	fds[fd-fdsOff] = nil
 	fdsMu.Unlock()
@@ -322,6 +329,20 @@ func Open(path string, mode int, perm uint32) (fd int, err error) {
 		return -1, err
 	}
 	return OpenMXIO(f), nil
+}
+
+func MXIOForFD(fd int) mxio.MXIO {
+	if fd < fdsOff {
+		return nil
+	}
+	fdsMu.Lock()
+	if fd-fdsOff > len(fds) {
+		fdsMu.Unlock()
+		return nil
+	}
+	f := fds[fd-fdsOff]
+	fdsMu.Unlock()
+	return f
 }
 
 func OpenMXIO(f mxio.MXIO) (fd int) {

@@ -6,6 +6,7 @@ package os
 
 import (
 	"errors"
+	"syscall/mx"
 	"time"
 )
 
@@ -13,16 +14,19 @@ type ProcessState struct {
 	retCode int
 }
 
-func (p *ProcessState) userTime() time.Duration {
-	panic("TODO os.userTime")
-}
-
-func (p *ProcessState) systemTime() time.Duration {
-	panic("TODO os.systemTime")
-}
-
 func (p *ProcessState) exited() bool {
-	panic("TODO os.exited")
+	panic("TODO os.Exited")
+}
+
+func (p *ProcessState) Pid() int {
+	panic("TODO os.Pid")
+}
+
+func (p *ProcessState) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return "exit status " + itoa(p.retCode)
 }
 
 func (p *ProcessState) success() bool {
@@ -37,16 +41,17 @@ func (p *ProcessState) sysUsage() interface{} {
 	panic("TODO os.sysUsage")
 }
 
-func (p *ProcessState) String() string {
-	panic("TODO os.ProcessState.String")
+func (p *ProcessState) systemTime() time.Duration {
+	panic("TODO os.systemTime")
+}
+
+func (p *ProcessState) userTime() time.Duration {
+	panic("TODO os.userTime")
 }
 
 func (p *Process) release() error {
-	panic("TODO os.Process.release")
-}
-
-func (p *Process) kill() error {
-	panic("TODO os.Process.kill")
+	procHandle := mx.Handle(p.handle)
+	return procHandle.Close()
 }
 
 func (p *Process) signal(sig Signal) error {
@@ -58,7 +63,7 @@ func findProcess(pid int) (p *Process, err error) {
 }
 
 func startProcess(name string, argv []string, attr *ProcAttr) (p *Process, err error) {
-	h, err := launchpadLaunchMxio(name, argv)
+	h, err := launchpadLaunchMxio(name, argv, attr)
 	if err != nil {
 		return nil, err
 	}
