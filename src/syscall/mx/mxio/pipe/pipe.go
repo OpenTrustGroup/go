@@ -31,7 +31,7 @@ func (f *Pipe) Read(data []byte) (n int, err error) {
 			return n, nil
 		}
 		if err == mx.ErrRemoteClosed {
-			return 0, EOF
+			return 0, mx.EOF
 		}
 		if err == mx.ErrShouldWait {
 			pending, err := f.s.WaitOne(mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite)
@@ -42,7 +42,7 @@ func (f *Pipe) Read(data []byte) (n int, err error) {
 				continue
 			}
 			if pending&mx.SignalPeerClosed != 0 {
-				return 0, EOF
+				return 0, mx.EOF
 			}
 			// impossible
 			return 0, mx.ErrInternal
