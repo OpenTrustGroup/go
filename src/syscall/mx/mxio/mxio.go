@@ -203,4 +203,5 @@ const (
 const (
 	HandleTypeRemote = 0x11
 	HandleTypePipe   = 0x12
+	HandleTypeCWD    = 0x15
 )

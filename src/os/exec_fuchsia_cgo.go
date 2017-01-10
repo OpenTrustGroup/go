@@ -80,6 +80,38 @@ func launchpadTransferFileToTargetFd(lp *C.launchpad_t, f *File, target int) err
 	return nil
 }
 
+func launchpadSetWd(lp *C.launchpad_t, dir string) error {
+	f, err := Open(dir)
+	if err != nil {
+		return err
+	}
+	m := syscall.MXIOForFD(int(f.Fd()))
+	if m == nil {
+		return ErrNotExist
+	}
+	handles, err := m.Clone()
+	if err != nil {
+		return ErrInvalid
+	}
+	handlesC := make([]C.mx_handle_t, mxio.MaxHandles)
+	typesC := make([]C.uint32_t, mxio.MaxHandles)
+	for i, h := range handles {
+		handlesC[i] = C.mx_handle_t(h)
+	}
+	typesC[0] = mxio.HandleTypeCWD
+	if _, ok := m.(*rio.RemoteIO); ok {
+		typesC[1] = mxio.HandleTypeRemote
+	}
+	status := mx.Status(C.launchpad_add_handles(lp, C.size_t(len(handles)), &(handlesC[0]), &(typesC[0])))
+	if status != mx.ErrOk {
+		for _, h := range handles {
+			h.Close()
+		}
+		return errors.New("transfer wd error: " + itoa(int(status)))
+	}
+	return nil
+}
+
 func launchpadLaunchMxio(name string, argv []string, attr *ProcAttr) (mx.Handle, error) {
 	nameC := C.CString(name)
 	defer C.free(unsafe.Pointer(nameC))
@@ -128,9 +160,16 @@ func launchpadLaunchMxio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 	if status != mx.ErrOk {
 		return 0, errors.New("clone_mxio_root")
 	}
-	status = mx.Status(C.launchpad_clone_mxio_cwd(lp)) // TODO: Go to Attr.Dir
-	if status != mx.ErrOk {
-		return 0, errors.New("clone_mxio_cwd")
+	if attr.Dir != "" {
+		err := launchpadSetWd(lp, attr.Dir)
+		if err != nil {
+			return 0, err
+		}
+	} else {
+		status = mx.Status(C.launchpad_clone_mxio_cwd(lp)) // TODO: Go to Attr.Dir
+		if status != mx.ErrOk {
+			return 0, errors.New("clone_mxio_cwd")
+		}
 	}
 	for i, f := range attr.Files {
 		if err := launchpadTransferFileToTargetFd(lp, f, i); err != nil {
