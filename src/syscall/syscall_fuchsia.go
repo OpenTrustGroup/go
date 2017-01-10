@@ -275,8 +275,9 @@ func Write(fd int, p []byte) (n int, err error) {
 	switch fd {
 	case Stdout, Stderr:
 		stdioMu.Lock()
-		stdio.Write(p)
+		n, err := stdio.Write(p)
 		stdioMu.Unlock()
+		return n, err
 	default:
 		fdsMu.Lock()
 		f := fds[fd-fdsOff]
