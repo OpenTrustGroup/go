@@ -41,40 +41,60 @@ func freeCStringArray(a []*C.char) {
 	}
 }
 
+// Clone an mxio to a C array of handle values and types.
+func cloneHandleToCHandleArray(m mxio.MXIO) (int, []C.mx_handle_t, []C.uint32_t, error) {
+	handles, err := m.Clone()
+	if err != nil {
+		return 0, nil, nil, ErrInvalid
+	}
+	handlesC := make([]C.mx_handle_t, mxio.MaxHandles)
+	typesC := make([]C.uint32_t, mxio.MaxHandles)
+	mxioType := 0
+	switch m.(type) {
+	case *rio.RemoteIO:
+		mxioType = mxio.HandleTypeRemote
+	case *pipe.Pipe:
+		mxioType = mxio.HandleTypePipe
+	default:
+		for _, h := range handles {
+			h.Close()
+		}
+		return 0, nil, nil, ErrInvalid
+	}
+	for i, h := range handles {
+		handlesC[i] = C.mx_handle_t(h)
+		typesC[i] = C.uint32_t(mxioType)
+	}
+	return len(handles), handlesC, typesC, nil
+}
+
+func closeAll(handles []C.mx_handle_t) {
+	for _, h := range handles {
+		if h != 0 {
+			mx.Handle(h).Close()
+		}
+	}
+}
+
 func launchpadTransferFileToTargetFd(lp *C.launchpad_t, f *File, target int) error {
 	if f == nil {
 		return nil
 	}
 	m := syscall.MXIOForFD(int(f.Fd()))
 	if m == nil {
-		return ErrNotExist
+		return ErrInvalid
 	}
-	handles, err := m.Clone()
+	numHandles, handlesC, typesC, err := cloneHandleToCHandleArray(m)
 	if err != nil {
-		return ErrInvalid
+		return err
 	}
-	handlesC := make([]C.mx_handle_t, mxio.MaxHandles)
-	typesC := make([]C.uint32_t, mxio.MaxHandles)
-	switch m.(type) {
-	case *rio.RemoteIO:
-		handlesC[0] = C.mx_handle_t(handles[0])
-		handlesC[1] = C.mx_handle_t(handles[1])
-		typesC[0] = C.uint32_t(mxio.HandleTypeRemote | target<<16)
-		typesC[1] = C.uint32_t(mxio.HandleTypeRemote | target<<16)
-	case *pipe.Pipe:
-		handlesC[0] = C.mx_handle_t(handles[0])
-		typesC[0] = C.uint32_t(mxio.HandleTypePipe | target<<16)
-	default:
-		for _, h := range handles {
-			h.Close()
-		}
-		return ErrInvalid
+	for i := 0; i < numHandles; i = i + 1 {
+		typesC[i] = typesC[i] | C.uint32_t(target<<16)
 	}
-	status := mx.Status(C.launchpad_add_handles(lp, C.size_t(len(handles)), &(handlesC[0]), &(typesC[0])))
+
+	status := mx.Status(C.launchpad_add_handles(lp, C.size_t(numHandles), &(handlesC[0]), &(typesC[0])))
 	if status != mx.ErrOk {
-		for _, h := range handles {
-			h.Close()
-		}
+		closeAll(handlesC)
 		return errors.New("transfer file")
 	}
 	return nil
@@ -89,24 +109,14 @@ func launchpadSetWd(lp *C.launchpad_t, dir string) error {
 	if m == nil {
 		return ErrNotExist
 	}
-	handles, err := m.Clone()
+	numHandles, handlesC, typesC, err := cloneHandleToCHandleArray(m)
 	if err != nil {
-		return ErrInvalid
-	}
-	handlesC := make([]C.mx_handle_t, mxio.MaxHandles)
-	typesC := make([]C.uint32_t, mxio.MaxHandles)
-	for i, h := range handles {
-		handlesC[i] = C.mx_handle_t(h)
+		return err
 	}
 	typesC[0] = mxio.HandleTypeCWD
-	if _, ok := m.(*rio.RemoteIO); ok {
-		typesC[1] = mxio.HandleTypeRemote
-	}
-	status := mx.Status(C.launchpad_add_handles(lp, C.size_t(len(handles)), &(handlesC[0]), &(typesC[0])))
+	status := mx.Status(C.launchpad_add_handles(lp, C.size_t(numHandles), &(handlesC[0]), &(typesC[0])))
 	if status != mx.ErrOk {
-		for _, h := range handles {
-			h.Close()
-		}
+		closeAll(handlesC)
 		return errors.New("transfer wd error: " + itoa(int(status)))
 	}
 	return nil
