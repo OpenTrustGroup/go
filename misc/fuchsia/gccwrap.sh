@@ -2,15 +2,20 @@
 # This uses the magenta prebuild C++ toolchain
 
 if [ "$MAGENTA" == "" ]; then
-	echo "clangwrap.sh: missing MAGENTA env variable" >&2
+	echo "gccwrap.sh: missing MAGENTA env variable" >&2
 	exit 1
 fi
 
-gccbin="$MAGENTA/prebuilt/downloads/x86_64-elf-6.2.0-$(uname)-x86_64/bin/x86_64-elf-gcc"
-
-# magenta builds go into the build configured out dir + /build-magenta
-# unclear now to pass in the global out dir
-magentabuild="$MAGENTA/../out/build-magenta/build-magenta-pc-x86-64"
+if [ "$GOARCH" == "amd64" ]; then
+	gccbin="$MAGENTA/prebuilt/downloads/x86_64-elf-6.2.0-$(uname)-x86_64/bin/x86_64-elf-gcc"
+	magentabuild="$MAGENTA/../out/build-magenta/build-magenta-pc-x86-64"
+elif [ "$GOARCH" == "arm64" ]; then
+	gccbin="$MAGENTA/prebuilt/downloads/aarch64-elf-6.2.0-$(uname)-x86_64/bin/aarch64-elf-gcc"
+	magentabuild="$MAGENTA/../out/build-magenta/build-magenta-qemu-arm64"
+else
+	echo "gccwrap.sh: unsupported GOARCH: $GOARCH" >&2
+	exit 1
+fi
 
 compiler=false
 extra_args=""
