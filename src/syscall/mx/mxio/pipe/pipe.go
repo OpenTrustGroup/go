@@ -34,14 +34,14 @@ func (f *Pipe) Read(data []byte) (n int, err error) {
 			return 0, mx.EOF
 		}
 		if err == mx.ErrShouldWait {
-			pending, err := f.s.WaitOne(mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite)
+			pending, err := f.s.WaitOne(mx.SignalSocketReadable|mx.SignalSocketPeerClosed, mx.TimensecInfinite)
 			if err != nil {
 				return 0, err
 			}
-			if pending&mx.SignalReadable != 0 {
+			if pending&mx.SignalSocketReadable != 0 {
 				continue
 			}
-			if pending&mx.SignalPeerClosed != 0 {
+			if pending&mx.SignalSocketPeerClosed != 0 {
 				return 0, mx.EOF
 			}
 			// impossible
@@ -61,14 +61,14 @@ func (f *Pipe) Write(data []byte) (n int, err error) {
 			return 0, syscall.EPIPE
 		}
 		if err == mx.ErrShouldWait {
-			pending, err := f.s.WaitOne(mx.SignalWritable|mx.SignalPeerClosed, mx.TimensecInfinite)
+			pending, err := f.s.WaitOne(mx.SignalSocketWritable|mx.SignalSocketPeerClosed, mx.TimensecInfinite)
 			if err != nil {
 				return 0, err
 			}
-			if pending&mx.SignalWritable != 0 {
+			if pending&mx.SignalSocketWritable != 0 {
 				continue
 			}
-			if pending&mx.SignalPeerClosed != 0 {
+			if pending&mx.SignalSocketPeerClosed != 0 {
 				return 0, syscall.EPIPE
 			}
 			// impossible

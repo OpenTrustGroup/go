@@ -187,16 +187,100 @@ const (
 )
 
 const (
-	SignalReadable = Signals(1 << iota)
-	SignalWritable
-	SignalPeerClosed
-	SignalSignaled
+	SignalObject0 = (1 << iota)
+	SignalObject1
+	SignalObject2
+	SignalObject3
+	SignalObject4
+	SignalObject5
+	SignalObject6
+	SignalObject7
+	SignalObject8
+	SignalObject9
+	SignalObject10
+	SignalObject11
+	SignalObject12
+	SignalObject13
+	SignalObject14
+	SignalObject15
+	SignalObject16
+	SignalObject17
+	SignalObject18
+	SignalObject19
+	SignalObject20
+	SignalObject21
+	SignalObject22
+	SignalObject23
+
 	SignalUser0
 	SignalUser1
 	SignalUser2
 	SignalUser3
-	SignalUserAll = Signals(15 << 4)
-	SignalNone    = Signals(0)
+	SignalUser4
+	SignalUser5
+	SignalUser6
+	SignalUser7
+
+	// Aliases
+	SignalHandleClosed = SignalObject23
+
+	// Event
+	SignalEventSignaled = SignalObject3
+	SignalEventMask     = SignalUserAll | SignalEventSignaled
+
+	// EventPair
+	SignalEpairSignaled   = SignalObject3
+	SignalEpairPeerClosed = SignalObject2
+
+	// Channel
+	SignalChannelReadable   = SignalObject0
+	SignalChannelWritable   = SignalObject1
+	SignalChannelPeerClosed = SignalObject2
+
+	// Socket
+	SignalSocketReadable   = SignalObject0
+	SignalSocketWritable   = SignalObject1
+	SignalSocketPeerClosed = SignalObject2
+
+	// Port
+	SignalPortReadable   = SignalObject0
+	SignalPortPeerClosed = SignalObject2
+	SignalPortSignaled   = SignalObject3
+
+	// Resource
+	SignalResourceReadable   = SignalObject0
+	SignalResourceWritable   = SignalObject1
+	SignalResourceChildAdded = SignalObject2
+
+	// Fifo
+	SignalFIFOEmpty             = SignalObject0
+	SignalFIFOFull              = SignalObject1
+	SignalFIFONotEmpty          = SignalObject2
+	SignalFIFONotFull           = SignalObject3
+	SignalFIFOProducerException = SignalObject4
+	SignalFIFOConsumerException = SignalObject5
+	SignalFIFOSignalMask        = SignalFIFOEmpty | SignalFIFOFull | SignalFIFONotEmpty | SignalFIFONotFull | SignalFIFOProducerException | SignalFIFOConsumerException
+
+	// Waitset
+	SignalWaitSetReadable   = SignalObject0
+	SignalWaitSetPeerClosed = SignalObject2
+
+	// Task signals (process, thread, job)
+	SignalTaskTerminated = SignalObject3
+	SignalTaskSignalMask = SignalObject3
+
+	// Job
+	SignalJobSignaled = SignalObject3
+
+	// Process
+	SignalProccessSignaled = SignalObject3
+
+	// Thread
+	SignalThreadSignaled = SignalObject3
+
+	SignalObjectAll = (0xfffff)
+	SignalUserAll   = Signals(15 << 4)
+	SignalNone      = Signals(0)
 )
 
 const (

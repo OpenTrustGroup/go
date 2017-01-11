@@ -60,11 +60,11 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 	}
 
 	// Wait for a response on the reply pipe
-	signals, err := rh.Handle.WaitOne(mx.SignalReadable|mx.SignalPeerClosed, mx.TimensecInfinite)
+	signals, err := rh.Handle.WaitOne(mx.SignalChannelReadable|mx.SignalChannelPeerClosed, mx.TimensecInfinite)
 	if err != nil {
 		return 0, err
 	}
-	if signals&mx.SignalPeerClosed != 0 && signals&mx.SignalReadable == 0 {
+	if signals&mx.SignalChannelPeerClosed != 0 && signals&mx.SignalChannelReadable == 0 {
 		return 0, mx.ErrRemoteClosed
 	}
 
