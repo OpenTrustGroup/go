@@ -132,8 +132,8 @@ func (m *Msg) SetMode(v uint32) {
 func (m *Msg) Protocol() mxio.Protocol {
 	return mxio.Protocol(m.arg2)
 }
-func (m *Msg) SetProtocol(v uint32) {
-	m.arg2 = int64(v)
+func (m *Msg) SetProtocol(p mxio.Protocol) {
+	m.arg2 = int64(p)
 }
 func (m *Msg) IoctlOp() uint32 {
 	return uint32(m.arg2)

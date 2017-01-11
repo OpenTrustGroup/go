@@ -73,6 +73,8 @@ const (
 	ProtocolRemote
 	// The VMOFILE protocol accesses a file as a VMO.
 	ProtocolVMOFile
+	// The SOCKET protocol provides socket access.
+	ProtocolSocket
 )
 
 // Other MXIO related constants
