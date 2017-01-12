@@ -11,6 +11,7 @@ import (
 
 	"syscall/mx"
 	"syscall/mx/mxio"
+	"syscall/mx/mxio/pipe"
 	"syscall/mx/mxio/rio"
 )
 
@@ -57,7 +58,6 @@ const (
 	EISDIR       = Errno(0x15)
 	EINVAL       = Errno(0x16)
 	ESPIPE       = Errno(0x1d)
-	EPIPE        = Errno(0x20)
 	ENAMETOOLONG = Errno(0x24)
 	ENOTEMPTY    = Errno(0x27)
 	ENOPROTOOPT  = Errno(0x5c)
@@ -65,6 +65,8 @@ const (
 	ENOTSUP      = EOPNOTSUPP
 	EFUCHSIA     = Errno(0xfa)
 )
+
+var EPIPE error = Errno(0x20)
 
 const (
 	SOMAXCONN = 0x80
@@ -247,6 +249,8 @@ func Read(fd int, p []byte) (n int, err error) {
 }
 
 func init() {
+	EPIPE = mx.EPIPE
+
 	var err error
 
 	rootMu.Lock()
@@ -264,7 +268,15 @@ func init() {
 	cwdMu.Unlock()
 
 	stdioMu.Lock()
-	stdio, err = rio.New([]mx.Handle{mx.StdioHandle})
+	switch mx.StdioHandleType {
+	case mxio.HandleTypeRemote:
+		stdio, err = rio.New([]mx.Handle{mx.StdioHandle})
+	case mxio.HandleTypePipe:
+		stdio, err = pipe.New([]mx.Handle{mx.StdioHandle})
+	default:
+		print("unknown handle type for stdio")
+		err = EINVAL
+	}
 	if err != nil {
 		println("syscall: failed to create mxio stdio: ", err.Error())
 	}

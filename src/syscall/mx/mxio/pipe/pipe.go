@@ -7,7 +7,6 @@
 package pipe
 
 import (
-	"syscall"
 	"syscall/mx"
 	"syscall/mx/mxio"
 )
@@ -22,6 +21,10 @@ func NewPipe() (*Pipe, *Pipe, error) {
 		return nil, nil, err
 	}
 	return &Pipe{s0}, &Pipe{s1}, nil
+}
+
+func New(h []mx.Handle) (*Pipe, error) {
+	return &Pipe{mx.Socket(h[0])}, nil
 }
 
 func (f *Pipe) Read(data []byte) (n int, err error) {
@@ -58,7 +61,7 @@ func (f *Pipe) Write(data []byte) (n int, err error) {
 			return n, nil
 		}
 		if err == mx.ErrRemoteClosed {
-			return 0, syscall.EPIPE
+			return 0, mx.EPIPE
 		}
 		if err == mx.ErrShouldWait {
 			pending, err := f.s.WaitOne(mx.SignalSocketWritable|mx.SignalSocketPeerClosed, mx.TimensecInfinite)
@@ -69,7 +72,7 @@ func (f *Pipe) Write(data []byte) (n int, err error) {
 				continue
 			}
 			if pending&mx.SignalSocketPeerClosed != 0 {
-				return 0, syscall.EPIPE
+				return 0, mx.EPIPE
 			}
 			// impossible
 			return 0, mx.ErrInternal

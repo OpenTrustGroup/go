@@ -319,3 +319,14 @@ var EOF error = eof{}
 type eof struct{}
 
 func (eof) Error() string { return "mx.EOF" }
+
+// EPIPE is used like syscall.EPIPE
+
+// When package syscall is linked in, at initialization this value is
+// rewritten to be equivalent to syscall.EPIPE.
+
+var EPIPE error = epipe{}
+
+type epipe struct{}
+
+func (epipe) Error() string { return "errno(32)" }

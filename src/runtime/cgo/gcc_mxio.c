@@ -21,6 +21,7 @@ extern char **environ;
 struct mxio_init {
 	mx_handle_t rootClone;
 	mx_handle_t stdioClone;
+	uint32_t stdioCloneType;
 	mx_handle_t cwd;
 	mx_handle_t processSelf;
 	mx_handle_t vmarRootSelf;
@@ -46,8 +47,7 @@ x_cgo_get_mxio_root(struct mxio_init *handles)
 		printf("runtime/cgo: mxio_clone_root failed: %d\n", r);
 		handles->rootClone = 0;
 	}
-	type = 0;
-	r = mxio_clone_fd(1, 0, &handles->stdioClone, &type);
+	r = mxio_clone_fd(1, 0, &handles->stdioClone, &handles->stdioCloneType);
 	if (r <= 0) {
 		printf("runtime/cgo: mxio_clone_fd of stdio failed: %d\n", r);
 		handles->stdioClone = 0;
