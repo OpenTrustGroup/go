@@ -108,7 +108,12 @@ var supportsCloseOnExec = true
 func fillFileStatFromSys(fs *fileStat, name string) {
 	fs.name = basename(name)
 	fs.size = int64(fs.sys.Size)
-	fs.mode = 0
+	// For now, pretend files have all bits. This should really be:
+	// fs.mode = FileMode(fs.sys.Dev & 0777)
+	// but we don't really set file modes properly and testing for executables
+	// in $PATH fails without the x bit set.
+	fs.mode = FileMode(0766)
+
 	switch fs.sys.Dev & 0xf000 {
 	case 0x4000:
 		fs.mode = fs.mode | ModeDir
@@ -119,7 +124,7 @@ func fillFileStatFromSys(fs *fileStat, name string) {
 	case 0xc000:
 		fs.mode = fs.mode | ModeSocket
 	}
-	// TODO IsRegular, Perm
+	fs.modTime = time.Unix(int64(fs.sys.ModifyTime), 0)
 }
 
 func atime(fi FileInfo) time.Time {
