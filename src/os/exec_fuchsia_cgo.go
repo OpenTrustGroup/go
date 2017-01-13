@@ -134,7 +134,7 @@ func launchpadLaunchMxio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 	envC := makeCStringArray(env)
 	defer freeCStringArray(envC)
 	jobToChild := mx.Handle(0)
-	job := mx.Handle(C.launchpad_get_mxio_job())
+	job := mx.Handle(C.mx_job_default())
 	if job > 0 {
 		err := error(nil)
 		jobToChild, err = job.Duplicate(mx.RightSameRights)
