@@ -49,8 +49,12 @@ func osinit() {
 	if _cgo_get_mxio_root != nil {
 		cgocallm0(_cgo_get_mxio_root, unsafe.Pointer(&mxioHandles))
 		mx.RootHandle = mx.Handle(mxioHandles.rootClone)
-		mx.StdioHandle = mx.Handle(mxioHandles.stdioClone)
-		mx.StdioHandleType = int(mxioHandles.stdioCloneType)
+		for i := 0; i < 3; i = i + 1 {
+			for j := 0; j < int(mxioHandles.stdioCloneNumHandles[i]); j = j + 1 {
+				mx.StdioHandles[i][j] = mxioHandles.stdioClones[i*3+j]
+			}
+			mx.StdioHandleTypes[i] = int(mxioHandles.stdioCloneTypes[i])
+		}
 		mx.CwdHandle = mx.Handle(mxioHandles.cwd)
 		mx.ProcHandle = mx.Handle(mxioHandles.processSelf)
 		mx.VmarRootHandle = mx.Handle(mxioHandles.vmarRootSelf)
@@ -174,15 +178,16 @@ func resetcpuprofiler(hz int32) {
 
 // mxio_init matches a Go struct of the same name in gcc_mxio.c.
 type mxio_init struct {
-	rootClone      mx.Handle
-	stdioClone     mx.Handle
-	stdioCloneType uint32
-	cwd            mx.Handle
-	processSelf    mx.Handle
-	vmarRootSelf   mx.Handle
-	_              int32
-	envlen         int32
-	environ        **byte
+	rootClone            mx.Handle
+	stdioClones          [9]mx.Handle // 3 * mxio.MaxHandles
+	stdioCloneNumHandles [3]uint32
+	stdioCloneTypes      [3]uint32
+	cwd                  mx.Handle
+	processSelf          mx.Handle
+	vmarRootSelf         mx.Handle
+	_                    int32
+	envlen               int32
+	environ              **byte
 }
 
 var mxioHandles mxio_init

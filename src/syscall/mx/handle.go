@@ -10,12 +10,12 @@ import "unsafe"
 
 // Process-wide MXIO handles.
 var (
-	RootHandle      Handle
-	StdioHandle     Handle
-	StdioHandleType int
-	CwdHandle       Handle
-	ProcHandle      Handle
-	VmarRootHandle  Handle
+	RootHandle       Handle
+	StdioHandles     [3][3]Handle // 3 stdio files, each with up to 3 (mxio.MaxHandles) handles
+	StdioHandleTypes [3]int
+	CwdHandle        Handle
+	ProcHandle       Handle
+	VmarRootHandle   Handle
 )
 
 type Socket Handle

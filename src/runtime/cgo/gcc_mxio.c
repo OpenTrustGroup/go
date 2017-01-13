@@ -20,8 +20,9 @@ extern char **environ;
 // mxio_init matches a Go struct of the same name in os_fuchsia.go.
 struct mxio_init {
 	mx_handle_t rootClone;
-	mx_handle_t stdioClone;
-	uint32_t stdioCloneType;
+	mx_handle_t stdioClones[3 * MXIO_MAX_HANDLES];
+	uint32_t stdioCloneNumHandles[3];
+	uint32_t stdioCloneTypes[3];
 	mx_handle_t cwd;
 	mx_handle_t processSelf;
 	mx_handle_t vmarRootSelf;
@@ -47,10 +48,20 @@ x_cgo_get_mxio_root(struct mxio_init *handles)
 		printf("runtime/cgo: mxio_clone_root failed: %d\n", r);
 		handles->rootClone = 0;
 	}
-	r = mxio_clone_fd(1, 0, &handles->stdioClone, &handles->stdioCloneType);
-	if (r <= 0) {
-		printf("runtime/cgo: mxio_clone_fd of stdio failed: %d\n", r);
-		handles->stdioClone = 0;
+	// mxio may have initialized std{in,out,err} with a single fd if the MXIO_FLAG_USE_FOR_STDIO
+	// flag was set, or have separate in/out/err fds. We clone fds {0,1,2} to separate fds for use
+	// in the Go runtime. The cloned fds aren't installed into mxio's fd table so they are only
+	// usable from Go's table.
+	for (int i = 0; i < 3; ++i) {
+		uint32_t handle_types[MXIO_MAX_HANDLES];
+		r = mxio_clone_fd(i, 0, &handles->stdioClones[i * MXIO_MAX_HANDLES], handle_types);
+		if (r <= 0) {
+			printf("runtime/cgo: mxio_clone_fd of stdio[%d] failed: %d\n", i, r);
+			handles->stdioCloneNumHandles[i] = 0;
+		} else {
+			handles->stdioCloneNumHandles[i] = r;
+			handles->stdioCloneTypes[i] = MX_HND_INFO_TYPE(handle_types[0]);
+		}
 	}
 	type = 0;
 	r = mxio_clone_cwd(&handles->cwd, &type);

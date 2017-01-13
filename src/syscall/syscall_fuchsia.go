@@ -223,7 +223,9 @@ var (
 
 var (
 	stdioMu sync.Mutex
-	stdio   mxio.MXIO
+	stdin   mxio.MXIO
+	stdout  mxio.MXIO
+	stderr  mxio.MXIO
 )
 
 const fdsOff = 1e6 // move outside the fd range of unistd.c  MXIO
@@ -234,14 +236,23 @@ var (
 )
 
 func Read(fd int, p []byte) (n int, err error) {
-	fdsMu.Lock()
-	f := fds[fd-fdsOff]
-	fdsMu.Unlock()
+	if fd == Stdin {
+		stdioMu.Lock()
+		n, err = stdin.Read(p)
+		stdioMu.Unlock()
+	} else {
+		if fd < fdsOff {
+			return 0, EINVAL
+		}
+		fdsMu.Lock()
+		f := fds[fd-fdsOff]
+		fdsMu.Unlock()
 
+		n, err = f.Read(p)
+	}
 	// An io.Reader can return n < len(p) and io.EOF.
 	// But this is the POSIX syscall read(3), which
 	// returns nil on eof.
-	n, err = f.Read(p)
 	if err == io.EOF {
 		err = nil
 	}
@@ -267,27 +278,45 @@ func init() {
 	}
 	cwdMu.Unlock()
 
-	stdioMu.Lock()
-	switch mx.StdioHandleType {
-	case mxio.HandleTypeRemote:
-		stdio, err = rio.New([]mx.Handle{mx.StdioHandle})
-	case mxio.HandleTypePipe:
-		stdio, err = pipe.New([]mx.Handle{mx.StdioHandle})
-	default:
-		print("unknown handle type for stdio")
-		err = EINVAL
+	initStdio := func(i int) (mxio.MXIO, error) {
+		switch mx.StdioHandleTypes[i] {
+		case 0:
+			return nil, EINVAL
+		case mxio.HandleTypeRemote:
+			return rio.New(mx.StdioHandles[i][:])
+		case mxio.HandleTypePipe:
+			return pipe.New([]mx.Handle{mx.StdioHandles[i][0]})
+		default:
+			println("syscall: unknown handle type for stdio: " + itoa(mx.StdioHandleTypes[i]))
+			return nil, EINVAL
+		}
 	}
+	stdioMu.Lock()
+	stdin, err = initStdio(0)
 	if err != nil {
-		println("syscall: failed to create mxio stdio: ", err.Error())
+		println("syscall: failed to create mxio stdin: ", err.Error())
+	}
+	stdout, err = initStdio(1)
+	if err != nil {
+		println("syscall: failed to create mxio stdiout: ", err.Error())
+	}
+	stderr, err = initStdio(2)
+	if err != nil {
+		println("syscall: failed to create mxio stderr: ", err.Error())
 	}
 	stdioMu.Unlock()
 }
 
 func Write(fd int, p []byte) (n int, err error) {
 	switch fd {
-	case Stdout, Stderr:
+	case Stdout:
 		stdioMu.Lock()
-		n, err := stdio.Write(p)
+		n, err := stdout.Write(p)
+		stdioMu.Unlock()
+		return n, err
+	case Stderr:
+		stdioMu.Lock()
+		n, err := stderr.Write(p)
 		stdioMu.Unlock()
 		return n, err
 	default:
@@ -337,7 +366,6 @@ func openPath(path string, mode int, perm uint32) (f mxio.MXIO, err error) {
 func Open(path string, mode int, perm uint32) (fd int, err error) {
 	f, err := openPath(path, mode, perm)
 	if err != nil {
-		println("syscall.Open: path=", path, ", err=", err.Error())
 		return -1, err
 	}
 	return OpenMXIO(f), nil
