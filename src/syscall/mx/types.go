@@ -296,7 +296,8 @@ const (
 
 // Topics for object_get_info
 const (
-	ObjectInfoHandleValid = iota
+	_ = iota
+	ObjectInfoHandleValid
 	ObjectInfoHandleBasic
 	ObjectInfoProcess
 	ObjectInfoProcessThreads

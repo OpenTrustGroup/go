@@ -210,7 +210,7 @@ func (p *Process) wait() (ps *ProcessState, err error) {
 	}
 	procInfo := C.mx_info_process_t{}
 	status := mx.Sys_object_get_info(procHandle, mx.ObjectInfoProcess, unsafe.Pointer(&procInfo), C.sizeof_mx_info_process_t, nil, nil)
-	if status != mx.ErrOk && status != mx.ErrNotEnoughBuffer {
+	if status != mx.ErrOk {
 		return nil, errors.New("error retreiving process info: " + itoa(int(status)))
 	}
 	return &ProcessState{int(procInfo.return_code)}, nil
