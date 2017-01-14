@@ -246,6 +246,10 @@ func (l *Log) Read(b []byte) (n int, err error) {
 	return len(b), nil
 }
 
+func (l *Log) Close() (err error) {
+	return l.Handle.Close()
+}
+
 func RandRead(b []byte) (n int, err error) {
 	var actual uint
 	if status := sys_cprng_draw(unsafe.Pointer(&b[0]), uint(len(b)), &actual); status != ErrOk {

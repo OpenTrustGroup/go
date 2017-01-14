@@ -11,6 +11,7 @@ import (
 
 	"syscall/mx"
 	"syscall/mx/mxio"
+	"syscall/mx/mxio/logger"
 	"syscall/mx/mxio/pipe"
 	"syscall/mx/mxio/rio"
 )
@@ -286,6 +287,8 @@ func init() {
 			return rio.New(mx.StdioHandles[i][:])
 		case mxio.HandleTypePipe:
 			return pipe.New([]mx.Handle{mx.StdioHandles[i][0]})
+		case mxio.HandleTypeLogger:
+			return logger.New(mx.StdioHandles[i][0])
 		default:
 			println("syscall: unknown handle type for stdio: " + itoa(mx.StdioHandleTypes[i]))
 			return nil, EINVAL
