@@ -18,6 +18,20 @@ var (
 	VmarRootHandle   Handle
 )
 
+type HandleInfo uint32
+
+func NewHandleInfo(t, arg uint32) HandleInfo {
+	return HandleInfo((t & 0xFFFF) | ((arg & 0xFFFF) << 16))
+}
+
+func (hi HandleInfo) Type() uint32 {
+	return uint32(hi) & 0xFFFF
+}
+
+func (hi HandleInfo) Arg() uint32 {
+	return (uint32(hi) >> 16) & 0xFFFF
+}
+
 type Socket Handle
 
 func (s Socket) Read(data []byte, flags uint32) (n int, err error) {
