@@ -22,7 +22,7 @@ extra_args=""
 
 for var in "$@"
 do
-	if [[ "$var" == "-r" ]]; then
+	if [[ "$var" == "-r" || "$var" == "-c" ]]; then
 		compiler=true
 	fi
 done
