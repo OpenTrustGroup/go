@@ -372,6 +372,14 @@ func Open(path string, mode int, perm uint32) (fd int, err error) {
 }
 
 func MXIOForFD(fd int) mxio.MXIO {
+	switch fd {
+	case Stdin:
+		return stdin
+	case Stdout:
+		return stdout
+	case Stderr:
+		return stderr
+	}
 	if fd < fdsOff {
 		return nil
 	}
