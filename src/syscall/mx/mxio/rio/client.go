@@ -172,7 +172,7 @@ func (r *RemoteIO) write(op uint32, p []byte, off int64) (int, error) {
 		if op == OpWriteAt {
 			msg.SetOff(off)
 		}
-		copy(msg.Data[:xfer], p[xferTotal:uint32(xferTotal)+xfer])
+		copy(msg.Data[:xfer], p[:xfer])
 
 		transferred, err := r.txn(&msg)
 		if err != nil {
