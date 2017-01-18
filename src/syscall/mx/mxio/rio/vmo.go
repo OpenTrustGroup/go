@@ -72,7 +72,7 @@ func (f *VMOFile) Seek(offset int64, whence int) (int64, error) {
 	if at > f.end-f.off {
 		return 0, mx.ErrOutOfRange
 	}
-	f.at = at
+	f.at = f.off + at
 	return at, nil
 }
 
