@@ -107,4 +107,3 @@ func TestDispatcher(t *testing.T) {
 }
 
 // TODO(smklein): Test multiple handlers
-// TODO(smklein): Test reply pipes

@@ -32,7 +32,7 @@ func Handler(h mx.Handle, cb interface{}, cookie int64) error {
 		serverCb(&msg, 0, cookie)
 		return nil
 	}
-	msg.Hcount = MessageMaxHandles + 1
+	msg.Hcount = MessageMaxHandles
 	numBytes, _, err := msg.ReadMsg(&mx.Channel{h}) // TODO: take *mx.Channel as arugment
 	if err != nil {
 		if err == mx.ErrBadState {
@@ -45,30 +45,16 @@ func Handler(h mx.Handle, cb interface{}, cookie int64) error {
 		return mx.ErrInvalidArgs
 	}
 
-	rh := h
-	if msg.HasReplyPipe() {
-		if msg.Hcount == 0 {
-			msg.DiscardHandles()
-			return mx.ErrInvalidArgs
-		}
-		msg.Hcount--
-		rh = msg.Handle[msg.Hcount]
-	}
 	isClose := (msg.Op() == OpClose)
-	handleToSend := mx.Handle(0)
-	if rh != h {
-		handleToSend = rh
-	}
-	status := serverCb(&msg, handleToSend, cookie)
+	status := serverCb(&msg, h, cookie)
 	msg.Arg = int32(status)
 	if mx.Status(msg.Arg) == dispatcher.ErrIndirect {
-		// The callback is handling the reply itself, and it took ownership of the reply handle
+		// The callback is handling the reply itself
 		return nil
 	} else if status < 0 || !msg.IsValid() {
 		// mx.Error case
 		msg.DiscardHandles()
 		msg.Datalen = 0
-		msg.Hcount = 0
 		if msg.Arg >= 0 {
 			// TODO(smklein): This error code may change. It currently is set to "ERR_FAULT" in
 			// Magenta, but is scheduled to change.
@@ -76,14 +62,8 @@ func Handler(h mx.Handle, cb interface{}, cookie int64) error {
 		}
 	}
 
-	// The kernel requires that a reply pipe endpoint be returned as the last handle attached to a
-	// write to that endpoint
-	if rh != h {
-		msg.Handle[msg.Hcount] = rh
-		msg.Hcount++
-	}
 	msg.SetOp(OpStatus)
-	err = msg.WriteMsg(&mx.Channel{rh}) // TODO: make rh an *mx.Channel
+	err = msg.WriteMsg(&mx.Channel{h}) // TODO: make h an *mx.Channel
 	if err != nil {
 		msg.DiscardHandles()
 	}
@@ -94,17 +74,16 @@ func Handler(h mx.Handle, cb interface{}, cookie int64) error {
 	return err
 }
 
-// TxnHandoff passes a message to srv along with a reply handle rh.
-// The other server will reply using rh, and this call will return immediately.
-// rh is not closed on error.
-func TxnHandoff(srv *mx.Channel, rh mx.Handle, msg *Msg) error {
-	msg.Magic = MessageMagic
-	msg.Handle[0] = rh
+// TxnHandoff passes a message to srv along with a reply handle 'reply'
+// The other server will reply using 'reply', and this call will return immediately.
+func TxnHandoff(srv *mx.Channel, reply mx.Handle, msg *Msg) {
+	msg.Txid = 0
+	msg.Handle[0] = reply
 	msg.Hcount = 1
-	msg.SetReplyPipe()
 
 	if !msg.IsValid() {
-		return mx.ErrInvalidArgs
+		IndirectError(reply, mx.ErrInvalidArgs)
+	} else if err := msg.WriteMsg(srv); err != nil {
+		IndirectError(reply, err.(mx.Status))
 	}
-	return msg.WriteMsg(srv)
 }

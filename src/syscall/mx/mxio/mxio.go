@@ -22,7 +22,7 @@ type MXIO interface {
 	Seek(offset int64, whence int) (int64, error)
 	Close() error
 	Open(path string, flags int32, mode uint32) (MXIO, error)
-	Clone() ([]mx.Handle, error)
+	Clone() ([]mx.Handle, error) // TODO(smklein): Pass type back from Clone
 	Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error)
 	Misc(op uint32, off int64, in, out []byte) (n int, err error)
 	// TODO(smklein): Add missing ops, like "Wait"
@@ -75,14 +75,6 @@ const (
 	ProtocolVMOFile
 	// The SOCKET protocol provides socket access.
 	ProtocolSocket
-)
-
-// Other MXIO related constants
-const (
-	// A flag to MsgPipeCreate, identifying that MsgPipeWrite MUST include itself as the last
-	// handle being transferred. Handles[1] will be created as a reply pipe, but Handles[0] will be
-	// a regular pipe.
-	FlagReplyPipe = 1 << 0
 )
 
 // MXIO Ioctls

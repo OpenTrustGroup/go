@@ -8,17 +8,19 @@
 package rio
 
 import (
+	"sync/atomic"
 	"syscall/mx"
 	"syscall/mx/mxio"
+	"syscall/mx/mxio/pipe"
 	"unsafe"
 )
 
 // RemoteIO is an object which manages file-like operations on a remote object, accessible through a
 // handle.
 type RemoteIO struct {
-	h     *mx.Channel // Message pipe handle for the RPC
-	e     mx.Handle   // Event handle for device state signals
-	flags uint32
+	h    *mx.Channel // Message pipe handle for the RPC
+	e    mx.Handle   // Event handle for device state signals
+	txid uint32      // Transaction ID used for synchronous remoteio calls
 }
 
 // New returns a new RemoteIO object
@@ -34,53 +36,25 @@ func New(handle []mx.Handle) (*RemoteIO, error) {
 }
 
 // txn completes the client-side part of the RIO transaction.
-// It creates a message pipe, writes msg (+ reply pipe), waits for a response, reads the
-// response back into msg, and signals an error if anything goes wrong along the way.
+// It wraps the raw 'Call Message' syscall with some error checking.
 func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
-	msg.Magic = MessageMagic
 	if !msg.IsValid() {
 		return 0, mx.ErrInvalidArgs
 	}
-	rpipe0, rpipe1, err := mx.NewChannel(mxio.FlagReplyPipe)
+
+	msg.Txid = atomic.AddUint32(&r.txid, 1) - 1
+	numBytes, _, rs, err := msg.CallMsg(r.h)
 	if err != nil {
-		return 0, err
+		if err == mx.ErrCallFailed {
+			// Read failure: Real error in rs
+			msg.Hcount = 0
+			return 0, rs
+		} else {
+			// Write failure
+			msg.DiscardHandles()
+			return 0, err
+		}
 	}
-
-	// Package the reply pipe into the message itself
-	msg.SetReplyPipe()
-	msg.Handle[msg.Hcount] = rpipe1.Handle
-	msg.Hcount++
-	rh := rpipe0
-	defer rh.Close() // Our end of the reply pipe -- close it before returning
-
-	// Send the message (containing the reply pipe) over the RIO handle
-	if err := msg.WriteMsg(r.h); err != nil {
-		msg.DiscardHandles() // If we can't transmit these handles, drop them
-		return 0, err
-	}
-
-	// Wait for a response on the reply pipe
-	signals, err := rh.Handle.WaitOne(mx.SignalChannelReadable|mx.SignalChannelPeerClosed, mx.TimensecInfinite)
-	if err != nil {
-		return 0, err
-	}
-	if signals&mx.SignalChannelPeerClosed != 0 && signals&mx.SignalChannelReadable == 0 {
-		return 0, mx.ErrRemoteClosed
-	}
-
-	// Set the Handle count to the maximum possible value. This is just a conservative mechanism; if
-	// the message is poorly transmitted, this encourages 'DiscardHandles' to throw away as many
-	// handles as possible.
-	msg.Hcount = MessageMaxHandles + 1
-
-	// Read the response which is ready on the handle
-	numBytes, _, err := msg.ReadMsg(rh)
-	if err != nil {
-		return 0, err
-	}
-	// The kernel ensures that the reply pipe endpoint is the last handle returned
-	msg.Hcount--
-	msg.Handle[msg.Hcount].Close()
 
 	if !msg.IsValidIncoming(numBytes) || msg.Op() != OpStatus {
 		msg.DiscardHandles() // If these handles were transmitted poorly, drop them
@@ -93,7 +67,6 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 		msg.DiscardHandles() // Throw away any remaining handles; no one else will see them
 		return 0, status
 	}
-
 	return uint32(status), nil
 }
 
@@ -236,42 +209,55 @@ func (r *RemoteIO) Close() error {
 }
 
 // getObject requests an MXIO object remotely
-func (r *RemoteIO) getObject(op uint32, name string, flags int32, mode uint32) ([]mx.Handle, mxio.Protocol, []byte, error) {
+func (r *RemoteIO) getObject(op uint32, name string, flags int32, mode uint32) (*RioObject, error) {
 	if len(name) > MessageChunkSize {
-		return nil, 0, nil, mx.ErrInvalidArgs
+		return nil, mx.ErrInvalidArgs
 	}
 	var msg Msg
 	msg.SetOp(op)
 	msg.Datalen = uint32(len(name))
 	msg.Arg = flags
 	msg.SetMode(mode)
+	msg.Hcount = 1
 	copy(msg.Data[:], name)
 
-	if _, err := r.txn(&msg); err != nil {
-		return nil, mxio.ProtocolUndefined, nil, err
-	}
-	var extra []byte
-	if msg.Datalen != 0 {
-		extra = append(extra, msg.Data[:msg.Datalen]...)
-	}
-	return msg.Handle[:msg.Hcount], msg.Protocol(), extra, nil
-}
-
-func (r *RemoteIO) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
-	handles, protocol, extra, err := r.getObject(OpOpen, path, flags, mode)
+	// Create a new channel to receive the 'callback' on
+	h, rh, err := mx.NewChannel(0)
 	if err != nil {
 		return nil, err
 	}
+	msg.Handle[0] = rh.Handle
+
+	// Write the (one-way) OPEN or CLONE request message
+	if err := msg.WriteMsg(r.h); err != nil {
+		msg.DiscardHandles()
+		h.Close()
+		return nil, err
+	}
+
+	// Wait
+	h.Handle.WaitOne(mx.SignalChannelReadable|mx.SignalChannelPeerClosed, mx.TimensecInfinite)
+
+	// Attempt to read the callback response
+	var ro RioObject
+	if status := ro.Read(h.Handle, 0); status < 0 {
+		return nil, status
+	} else {
+		return &ro, nil
+	}
+}
+
+// Consumes handles, wrapping them in mxio object or closing them on error.
+func createFromHandles(protocol mxio.Protocol, handles []mx.Handle, extra []byte) (mxio.MXIO, error) {
 	switch protocol {
 	case mxio.ProtocolPipe:
-		// TODO(smklein): Call "New" on a PipeIO object here, once that exists in Go
-		panic("Pipe Protocol: Unimplemented")
+		return pipe.New(handles)
 	case mxio.ProtocolRemote:
 		return New(handles)
 	case mxio.ProtocolVMOFile:
 		return NewVMOFile(handles[0], extra)
 	default:
-		println("unknown rio protocol, ", protocol)
+		println("Unknown mxio protocol, ", protocol)
 		// In the error case, the server may have given us handles -- close them
 		for i := range handles {
 			handles[i].Close()
@@ -280,12 +266,20 @@ func (r *RemoteIO) Open(path string, flags int32, mode uint32) (mxio.MXIO, error
 	}
 }
 
-func (r *RemoteIO) Clone() ([]mx.Handle, error) {
-	handles, _, _, err := r.getObject(OpClone, "", 0, 0)
+func (r *RemoteIO) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
+	ro, err := r.getObject(OpOpen, path, flags, mode)
 	if err != nil {
 		return nil, err
 	}
-	return handles, nil
+	return createFromHandles(mxio.Protocol(ro.Type), ro.Handle[:ro.Hcount], ro.Extra[:ro.Esize])
+}
+
+func (r *RemoteIO) Clone() ([]mx.Handle, error) {
+	ro, err := r.getObject(OpClone, "", 0, 0)
+	if err != nil {
+		return nil, err
+	}
+	return ro.Handle[:ro.Hcount], nil
 }
 
 func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error) {

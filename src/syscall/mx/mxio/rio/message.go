@@ -11,12 +11,10 @@ import (
 
 	"syscall/mx"
 	"syscall/mx/mxio"
+	"syscall/mx/mxio/dispatcher"
 )
 
 const (
-	// MessageMagic is the magic number to verify the RIO message
-	MessageMagic = 0x024F4952
-
 	// MessageChunkSize is the largest size of 'data' in an RIO message
 	MessageChunkSize = 8192
 
@@ -30,13 +28,19 @@ const (
 	MessageMaxHandles = 3
 )
 
+const (
+	OpFlagOneHandle = uint32(0x100 + iota)
+	OpFlagTwoHandles
+	OpFlagThreeHandles
+)
+
 // Values for op. Each one will signify a request for a different operation.
 const (
 	OpStatus = uint32(iota)
 	OpClose
-	OpClone
-	OpOpen
-	OpMisc
+	OpClone = uint32(iota) | OpFlagOneHandle
+	OpOpen  = uint32(iota) | OpFlagOneHandle
+	OpMisc  = uint32(iota)
 	OpRead
 	OpWrite
 	OpSeek
@@ -59,13 +63,102 @@ const (
 	OpSetAttr
 	OpSync
 	OpNumOps // The total number of operations
-
-	OpReplyPipe = 0x01000000
 )
 
-// TODO(smklein): Confirm padding compatibility when communicating with C code implementing RIO.
+// Ops which correspond to a previously listed operation, but have a different number of handles
+const (
+	OpIoctlOneHandle = OpIoctl | OpFlagOneHandle
+)
+
+const (
+	RioObjectExtra   = 32
+	RioObjectMinSize = uint32(unsafe.Sizeof(RioObjectHeader{}))
+	RioObjectMaxSize = RioObjectMinSize + RioObjectExtra
+)
+
+type RioObjectHeader struct {
+	Status mx.Status
+	Type   uint32
+}
+
+type RioObject struct {
+	// Required Header
+	RioObjectHeader
+
+	// Optional Extra Data
+	Extra [RioObjectExtra]uint8
+
+	// OOB Data
+	Esize  uint32
+	Hcount uint32
+	Handle [MessageMaxHandles]mx.Handle
+}
+
+// Helper to write back a RIO object. Does not consume h.
+func (ro *RioObject) Write(h mx.Handle, flags uint32) {
+	c := &mx.Channel{h}
+
+	// Prepare the raw data
+	size := RioObjectMinSize + ro.Esize
+	if size > RioObjectMaxSize {
+		panic("Invalid RIO Object (too large): RIO Implementation error")
+	}
+	msgBytes := (*[RioObjectMaxSize]byte)(unsafe.Pointer(ro))
+	data := msgBytes[:size]
+
+	// Prepare the handles
+	var handles []mx.Handle
+	if ro.Hcount > 0 {
+		handles = ro.Handle[:ro.Hcount]
+	}
+	c.Write(data, handles, flags)
+}
+
+// Helper to read a RIO object. Consumes h.
+func (ro *RioObject) Read(h mx.Handle, flags uint32) mx.Status {
+	c := &mx.Channel{h}
+	msgBytes := (*[RioObjectMaxSize]byte)(unsafe.Pointer(ro))
+	numBytes, numHandles, err := c.Read(msgBytes[:], ro.Handle[:], flags)
+	c.Close()
+	if err != nil {
+		return err.(mx.Status)
+	} else if numBytes < RioObjectMinSize {
+		ro.DiscardHandles()
+		return mx.ErrIO
+	}
+	ro.Hcount = numHandles
+	ro.Esize = numBytes - RioObjectMinSize
+	r := ro.Status
+	if r < 0 {
+		ro.DiscardHandles()
+	}
+	return r
+}
+
+// DiscardHandles throws away any handles that might exist within the object
+func (ro *RioObject) DiscardHandles() {
+	for i := uint32(0); i < ro.Hcount; i++ {
+		ro.Handle[i].Close()
+	}
+	ro.Hcount = 0
+}
+
+// Helper wrapping the common case of 'write back only an error message'
+func IndirectError(h mx.Handle, status mx.Status) mx.Status {
+	ro := &RioObject{
+		RioObjectHeader: RioObjectHeader{
+			Status: status,
+		},
+		Esize:  0,
+		Hcount: 0,
+	}
+	ro.Write(h, 0)
+	h.Close()
+	return dispatcher.ErrIndirect
+}
+
 type MsgHeader struct {
-	Magic    uint32
+	Txid     uint32
 	op       uint32
 	Datalen  uint32
 	Arg      int32
@@ -81,41 +174,46 @@ type Msg struct {
 	Data [MessageChunkSize]uint8
 }
 
+func (m *Msg) CallMsg(c *mx.Channel) (numBytes, numHandles uint32, callStatus mx.Status, err error) {
+	wData := (*[MessageSizeMax]byte)(unsafe.Pointer(m))[:MessageHeaderSize+m.Datalen]
+	var wHandles []mx.Handle
+	if m.Hcount > 0 {
+		wHandles = m.Handle[:m.Hcount]
+	}
+	rData := (*[MessageSizeMax]byte)(unsafe.Pointer(m))[:]
+	rHandles := m.Handle[:]
+	numBytes, numHandles, callStatus, err = c.Call(0, mx.TimensecInfinite, wData, wHandles, rData, rHandles)
+	m.Hcount = numHandles
+	return
+}
+
 // ReadMsg reads a message from a handle
-func (m *Msg) ReadMsg(h *mx.Channel) (numBytes, numHandles uint32, err error) {
+func (m *Msg) ReadMsg(c *mx.Channel) (numBytes, numHandles uint32, err error) {
 	msgBytes := (*[MessageSizeMax]byte)(unsafe.Pointer(m))
-	numBytes, numHandles, err = h.Read(msgBytes[:], m.Handle[:], 0)
+	numBytes, numHandles, err = c.Read(msgBytes[:], m.Handle[:], 0)
 	m.Hcount = numHandles
 	return
 }
 
 // WriteMsg writes a message to a handle
-func (m *Msg) WriteMsg(h *mx.Channel) error {
+func (m *Msg) WriteMsg(c *mx.Channel) error {
 	msgBytes := (*[MessageSizeMax]byte)(unsafe.Pointer(m))
-
 	data := msgBytes[:MessageHeaderSize+m.Datalen]
 	var handles []mx.Handle
 	if m.Hcount > 0 {
 		handles = m.Handle[:m.Hcount]
 	}
-	return h.Write(data, handles, 0)
-}
-
-// HasReplyPipe returns if the message contains a reply pipe
-func (m *Msg) HasReplyPipe() bool {
-	return (m.op&OpReplyPipe != 0)
-}
-
-// SetReplyPipe identifies that the message contains a reply pipe
-func (m *Msg) SetReplyPipe() {
-	m.op |= OpReplyPipe
+	return c.Write(data, handles, 0)
 }
 
 func (m *Msg) Op() uint32 {
-	return m.op & 0xFFFF
+	return m.op & 0x3FFF
 }
 func (m *Msg) SetOp(v uint32) {
-	m.op = (v & 0xFFFF)
+	m.op = (v & 0x3FFF)
+}
+func (m *Msg) OpHandleCount() uint32 {
+	return (m.op >> 8) & 3
 }
 func (m *Msg) Off() int64 {
 	return m.arg2
@@ -143,7 +241,7 @@ func (m *Msg) SetIoctlOp(v uint32) {
 }
 
 func (m *Msg) IsValid() bool {
-	if m.Magic != MessageMagic || m.Datalen > MessageChunkSize || m.Hcount > MessageMaxHandles {
+	if m.Datalen > MessageChunkSize || m.Hcount > MessageMaxHandles {
 		return false
 	}
 	return true
@@ -161,4 +259,5 @@ func (m *Msg) DiscardHandles() {
 	for i := uint32(0); i < m.Hcount; i++ {
 		m.Handle[i].Close()
 	}
+	m.Hcount = 0
 }

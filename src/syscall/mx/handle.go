@@ -137,6 +137,41 @@ func (c *Channel) Write(data []byte, handles []Handle, flags uint32) error {
 	return nil
 }
 
+func (c *Channel) Call(flags uint32, timeout Time, wData []byte, wHandles []Handle, rData []byte, rHandles []Handle) (actualBytes, actualHandles uint32, actualStatus Status, err error) {
+	var writeDataPtr uintptr
+	if len(wData) > 0 {
+		writeDataPtr = uintptr(unsafe.Pointer(&wData[0]))
+	}
+	var writeHandlePtr *Handle
+	if len(wHandles) > 0 {
+		writeHandlePtr = &wHandles[0]
+	}
+	var readDataPtr uintptr
+	if len(rData) > 0 {
+		readDataPtr = uintptr(unsafe.Pointer(&rData[0]))
+	}
+	var readHandlePtr *Handle
+	if len(rHandles) > 0 {
+		readHandlePtr = &rHandles[0]
+	}
+	args := &ChannelCallArgs{
+		WriteBytes:      writeDataPtr,
+		WriteHandles:    writeHandlePtr,
+		ReadBytes:       readDataPtr,
+		ReadHandles:     readHandlePtr,
+		WriteNumBytes:   uint32(len(wData)),
+		WriteNumHandles: uint32(len(wHandles)),
+		ReadNumBytes:    uint32(len(rData)),
+		ReadNumHandles:  uint32(len(rHandles)),
+	}
+
+	status := Sys_channel_call(c.Handle, flags, timeout, args, &actualBytes, &actualHandles, &actualStatus)
+	if status != ErrOk {
+		err = status
+	}
+	return
+}
+
 func NewChannel(flags uint32) (c0, c1 *Channel, err error) {
 	c0, c1 = new(Channel), new(Channel)
 	if status := sys_channel_create(flags, &c0.Handle, &c1.Handle); status != ErrOk {

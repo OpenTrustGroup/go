@@ -197,7 +197,7 @@ const (
 	ErrBadPath
 	ErrNotDir
 	ErrNotFile
-	_ // -53
+	ErrCallFailed
 	ErrWrongType
 )
 
