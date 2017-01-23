@@ -21,6 +21,18 @@ TEXT ·Sys_nanosleep(SB),NOSPLIT,$0-12
 	MOVW R0, ret+8(FP)
 	RET
 
+// func Sys_ticks_get() uint64
+TEXT ·Sys_ticks_get(SB),NOSPLIT,$0-8
+	BL vdso_mx_ticks_get(SB)
+	MOVD R0, ret+0(FP)
+	RET
+
+// func Sys_ticks_per_second() uint64
+TEXT ·Sys_ticks_per_second(SB),NOSPLIT,$0-8
+	BL vdso_mx_ticks_per_second(SB)
+	MOVD R0, ret+0(FP)
+	RET
+
 // func Sys_num_cpus() uint32
 TEXT ·Sys_num_cpus(SB),NOSPLIT,$0-4
 	BL vdso_mx_num_cpus(SB)
@@ -188,6 +200,19 @@ TEXT ·sys_channel_write(SB),NOSPLIT,$0-44
 	MOVW R0, ret+40(FP)
 	RET
 
+// func Sys_channel_call(handle Handle, options uint32, timeout Time, args *ChannelCallArgs, actual_bytes *uint32, actual_handles *uint32, read_status *Status) Status
+TEXT ·Sys_channel_call(SB),NOSPLIT,$0-52
+	MOVW handle+0(FP), R0
+	MOVW options+4(FP), R1
+	MOVD timeout+8(FP), R2
+	MOVD args+16(FP), R3
+	MOVD actual_bytes+24(FP), R4
+	MOVD actual_handles+32(FP), R5
+	MOVD read_status+40(FP), R6
+	BL vdso_mx_channel_call(SB)
+	MOVW R0, ret+48(FP)
+	RET
+
 // func sys_socket_create(options uint32, out0 *Handle, out1 *Handle) Status
 TEXT ·sys_socket_create(SB),NOSPLIT,$0-28
 	MOVW options+0(FP), R0
@@ -197,23 +222,23 @@ TEXT ·sys_socket_create(SB),NOSPLIT,$0-28
 	MOVW R0, ret+24(FP)
 	RET
 
-// func sys_socket_write(handle Handle, options uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
+// func sys_socket_write(handle Handle, options uint32, buffer unsafe.Pointer, size uint, actual *uint) Status
 TEXT ·sys_socket_write(SB),NOSPLIT,$0-36
 	MOVW handle+0(FP), R0
 	MOVW options+4(FP), R1
 	MOVD buffer+8(FP), R2
-	MOVD len+16(FP), R3
+	MOVD size+16(FP), R3
 	MOVD actual+24(FP), R4
 	BL vdso_mx_socket_write(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
-// func sys_socket_read(handle Handle, options uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
+// func sys_socket_read(handle Handle, options uint32, buffer unsafe.Pointer, size uint, actual *uint) Status
 TEXT ·sys_socket_read(SB),NOSPLIT,$0-36
 	MOVW handle+0(FP), R0
 	MOVW options+4(FP), R1
 	MOVD buffer+8(FP), R2
-	MOVD len+16(FP), R3
+	MOVD size+16(FP), R3
 	MOVD actual+24(FP), R4
 	BL vdso_mx_socket_read(SB)
 	MOVW R0, ret+32(FP)
@@ -246,23 +271,23 @@ TEXT ·Sys_thread_start(SB),NOSPLIT,$0-44
 	MOVW R0, ret+40(FP)
 	RET
 
-// func Sys_thread_read_state(handle Handle, kind uint32, state unsafe.Pointer, len uint32, actual *uint32) Status
+// func Sys_thread_read_state(handle Handle, kind uint32, buffer unsafe.Pointer, len uint32, actual *uint32) Status
 TEXT ·Sys_thread_read_state(SB),NOSPLIT,$0-36
 	MOVW handle+0(FP), R0
 	MOVW kind+4(FP), R1
-	MOVD state+8(FP), R2
+	MOVD buffer+8(FP), R2
 	MOVW len+16(FP), R3
 	MOVD actual+24(FP), R4
 	BL vdso_mx_thread_read_state(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
-// func Sys_thread_write_state(handle Handle, kind uint32, state unsafe.Pointer, len uint32) Status
+// func Sys_thread_write_state(handle Handle, kind uint32, buffer unsafe.Pointer, buffer_len uint32) Status
 TEXT ·Sys_thread_write_state(SB),NOSPLIT,$0-28
 	MOVW handle+0(FP), R0
 	MOVW kind+4(FP), R1
-	MOVD state+8(FP), R2
-	MOVW len+16(FP), R3
+	MOVD buffer+8(FP), R2
+	MOVW buffer_len+16(FP), R3
 	BL vdso_mx_thread_write_state(SB)
 	MOVW R0, ret+24(FP)
 	RET
@@ -273,7 +298,7 @@ TEXT ·Sys_process_exit(SB),NOSPLIT,$0-8
 	BL vdso_mx_process_exit(SB)
 	RET
 
-// func Sys_process_create(job Handle, name *uint8, name_len uint32, options uint32, proc_handle *Handle, vmar_handle *Handle) Handle
+// func Sys_process_create(job Handle, name *uint8, name_len uint32, options uint32, proc_handle *Handle, vmar_handle *Handle) Status
 TEXT ·Sys_process_create(SB),NOSPLIT,$0-44
 	MOVW job+0(FP), R0
 	MOVD name+8(FP), R1
@@ -465,57 +490,6 @@ TEXT ·Sys_port_bind(SB),NOSPLIT,$0-28
 	MOVW R0, ret+24(FP)
 	RET
 
-// func Sys_vmar_allocate(parent_vmar_handle Handle, offset uint, size uint, flags uint32, child_vmar *Handle, child_addr *uintptr) Status
-TEXT ·Sys_vmar_allocate(SB),NOSPLIT,$0-52
-	MOVW parent_vmar_handle+0(FP), R0
-	MOVD offset+8(FP), R1
-	MOVD size+16(FP), R2
-	MOVW flags+24(FP), R3
-	MOVD child_vmar+32(FP), R4
-	MOVD child_addr+40(FP), R5
-	BL vdso_mx_vmar_allocate(SB)
-	MOVW R0, ret+48(FP)
-	RET
-
-// func Sys_vmar_destroy(vmar_handle Handle) Status
-TEXT ·Sys_vmar_destroy(SB),NOSPLIT,$0-12
-	MOVW vmar_handle+0(FP), R0
-	BL vdso_mx_vmar_destroy(SB)
-	MOVW R0, ret+8(FP)
-	RET
-
-// func Sys_vmar_map(vmar_handle Handle, vmar_offset uint, vmo_handle Handle, vmo_offset uint64, len uint, flags uint32, mapped_addr *uintptr) Status
-TEXT ·Sys_vmar_map(SB),NOSPLIT,$0-60
-	MOVW vmar_handle+0(FP), R0
-	MOVD vmar_offset+8(FP), R1
-	MOVW vmo_handle+16(FP), R2
-	MOVD vmo_offset+24(FP), R3
-	MOVD len+32(FP), R4
-	MOVW flags+40(FP), R5
-	MOVD mapped_addr+48(FP), R6
-	BL vdso_mx_vmar_map(SB)
-	MOVW R0, ret+56(FP)
-	RET
-
-// func Sys_vmar_unmap(vmar_handle Handle, addr uintptr, len uint) Status
-TEXT ·Sys_vmar_unmap(SB),NOSPLIT,$0-28
-	MOVW vmar_handle+0(FP), R0
-	MOVD addr+8(FP), R1
-	MOVD len+16(FP), R2
-	BL vdso_mx_vmar_unmap(SB)
-	MOVW R0, ret+24(FP)
-	RET
-
-// func Sys_vmar_protect(vmar_handle Handle, addr uintptr, len uint, prot uint32) Status
-TEXT ·Sys_vmar_protect(SB),NOSPLIT,$0-36
-	MOVW vmar_handle+0(FP), R0
-	MOVD addr+8(FP), R1
-	MOVD len+16(FP), R2
-	MOVW prot+24(FP), R3
-	BL vdso_mx_vmar_protect(SB)
-	MOVW R0, ret+32(FP)
-	RET
-
 // func sys_vmo_create(size uint64, options uint32, out *Handle) Status
 TEXT ·sys_vmo_create(SB),NOSPLIT,$0-28
 	MOVD size+0(FP), R0
@@ -592,6 +566,24 @@ TEXT ·Sys_cprng_add_entropy(SB),NOSPLIT,$0-20
 	MOVW R0, ret+16(FP)
 	RET
 
+// func Sys_fifo_create(count uint64, out *Handle) Status
+TEXT ·Sys_fifo_create(SB),NOSPLIT,$0-20
+	MOVD count+0(FP), R0
+	MOVD out+8(FP), R1
+	BL vdso_mx_fifo_create(SB)
+	MOVW R0, ret+16(FP)
+	RET
+
+// func Sys_fifo_op(handle Handle, op uint32, val uint64, out *FIFOState) Status
+TEXT ·Sys_fifo_op(SB),NOSPLIT,$0-28
+	MOVW handle+0(FP), R0
+	MOVW op+4(FP), R1
+	MOVD val+8(FP), R2
+	MOVD out+16(FP), R3
+	BL vdso_mx_fifo_op(SB)
+	MOVW R0, ret+24(FP)
+	RET
+
 // func Sys_log_create(options uint32) Handle
 TEXT ·Sys_log_create(SB),NOSPLIT,$0-12
 	MOVW options+0(FP), R0
@@ -647,15 +639,6 @@ TEXT ·Sys_ktrace_write(SB),NOSPLIT,$0-20
 	MOVW arg0+8(FP), R2
 	MOVW arg1+12(FP), R3
 	BL vdso_mx_ktrace_write(SB)
-	MOVW R0, ret+16(FP)
-	RET
-
-// func Sys_thread_arch_prctl(handle Handle, op uint32, value_ptr *uintptr) Status
-TEXT ·Sys_thread_arch_prctl(SB),NOSPLIT,$0-20
-	MOVW handle+0(FP), R0
-	MOVW op+4(FP), R1
-	MOVD value_ptr+8(FP), R2
-	BL vdso_mx_thread_arch_prctl(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -725,7 +708,7 @@ TEXT ·Sys_mmap_device_io(SB),NOSPLIT,$0-20
 	MOVW R0, ret+16(FP)
 	RET
 
-// func Sys_mmap_device_memory(handle Handle, paddr Paddr, len uint32, cache_policy int, out_vaddr unsafe.Pointer) Status
+// func Sys_mmap_device_memory(handle Handle, paddr Paddr, len uint32, cache_policy int, out_vaddr *uintptr) Status
 TEXT ·Sys_mmap_device_memory(SB),NOSPLIT,$0-44
 	MOVW handle+0(FP), R0
 	MOVD paddr+8(FP), R1
@@ -752,6 +735,57 @@ TEXT ·Sys_vmo_create_contiguous(SB),NOSPLIT,$0-28
 	MOVD out+16(FP), R2
 	BL vdso_mx_vmo_create_contiguous(SB)
 	MOVW R0, ret+24(FP)
+	RET
+
+// func Sys_vmar_allocate(parent_vmar_handle Handle, offset uint, size uint, flags uint32, child_vmar *Handle, child_addr *uintptr) Status
+TEXT ·Sys_vmar_allocate(SB),NOSPLIT,$0-52
+	MOVW parent_vmar_handle+0(FP), R0
+	MOVD offset+8(FP), R1
+	MOVD size+16(FP), R2
+	MOVW flags+24(FP), R3
+	MOVD child_vmar+32(FP), R4
+	MOVD child_addr+40(FP), R5
+	BL vdso_mx_vmar_allocate(SB)
+	MOVW R0, ret+48(FP)
+	RET
+
+// func Sys_vmar_destroy(vmar_handle Handle) Status
+TEXT ·Sys_vmar_destroy(SB),NOSPLIT,$0-12
+	MOVW vmar_handle+0(FP), R0
+	BL vdso_mx_vmar_destroy(SB)
+	MOVW R0, ret+8(FP)
+	RET
+
+// func Sys_vmar_map(vmar_handle Handle, vmar_offset uint, vmo_handle Handle, vmo_offset uint64, len uint, flags uint32, mapped_addr *uintptr) Status
+TEXT ·Sys_vmar_map(SB),NOSPLIT,$0-60
+	MOVW vmar_handle+0(FP), R0
+	MOVD vmar_offset+8(FP), R1
+	MOVW vmo_handle+16(FP), R2
+	MOVD vmo_offset+24(FP), R3
+	MOVD len+32(FP), R4
+	MOVW flags+40(FP), R5
+	MOVD mapped_addr+48(FP), R6
+	BL vdso_mx_vmar_map(SB)
+	MOVW R0, ret+56(FP)
+	RET
+
+// func Sys_vmar_unmap(vmar_handle Handle, addr uintptr, len uint) Status
+TEXT ·Sys_vmar_unmap(SB),NOSPLIT,$0-28
+	MOVW vmar_handle+0(FP), R0
+	MOVD addr+8(FP), R1
+	MOVD len+16(FP), R2
+	BL vdso_mx_vmar_unmap(SB)
+	MOVW R0, ret+24(FP)
+	RET
+
+// func Sys_vmar_protect(vmar_handle Handle, addr uintptr, len uint, prot uint32) Status
+TEXT ·Sys_vmar_protect(SB),NOSPLIT,$0-36
+	MOVW vmar_handle+0(FP), R0
+	MOVD addr+8(FP), R1
+	MOVD len+16(FP), R2
+	MOVW prot+24(FP), R3
+	BL vdso_mx_vmar_protect(SB)
+	MOVW R0, ret+32(FP)
 	RET
 
 // func Sys_bootloader_fb_get_info(format *uint32, width *uint32, height *uint32, stride *uint32) Status
@@ -807,6 +841,14 @@ TEXT ·Sys_pci_enable_bus_master(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVD enable+8(FP), R1
 	BL vdso_mx_pci_enable_bus_master(SB)
+	MOVW R0, ret+16(FP)
+	RET
+
+// func Sys_pci_enable_pio(handle Handle, enable bool) Status
+TEXT ·Sys_pci_enable_pio(SB),NOSPLIT,$0-20
+	MOVW handle+0(FP), R0
+	MOVD enable+8(FP), R1
+	BL vdso_mx_pci_enable_pio(SB)
 	MOVW R0, ret+16(FP)
 	RET
 

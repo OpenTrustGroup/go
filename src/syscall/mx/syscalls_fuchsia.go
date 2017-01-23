@@ -9,111 +9,118 @@ package mx
 
 import "unsafe"
 
-//go:cgo_import_dynamic vdso_mx_time_get mx_time_get "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_nanosleep mx_nanosleep "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_num_cpus mx_num_cpus "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_version_get mx_version_get "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_handle_close mx_handle_close "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_handle_duplicate mx_handle_duplicate "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_handle_replace mx_handle_replace "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_handle_wait_one mx_handle_wait_one "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_handle_wait_many mx_handle_wait_many "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_object_signal mx_object_signal "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_object_signal_peer mx_object_signal_peer "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_object_get_property mx_object_get_property "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_object_set_property mx_object_set_property "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_object_get_info mx_object_get_info "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_object_get_child mx_object_get_child "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_object_bind_exception_port mx_object_bind_exception_port "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_channel_create mx_channel_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_channel_read mx_channel_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_channel_write mx_channel_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_socket_create mx_socket_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_socket_write mx_socket_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_socket_read mx_socket_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_thread_exit mx_thread_exit "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_thread_create mx_thread_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_thread_start mx_thread_start "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_thread_read_state mx_thread_read_state "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_thread_write_state mx_thread_write_state "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_process_exit mx_process_exit "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_process_create mx_process_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_process_start mx_process_start "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_process_read_memory mx_process_read_memory "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_process_write_memory mx_process_write_memory "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_job_create mx_job_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_task_resume mx_task_resume "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_task_kill mx_task_kill "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_event_create mx_event_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_eventpair_create mx_eventpair_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_futex_wait mx_futex_wait "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_futex_wake mx_futex_wake "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_futex_requeue mx_futex_requeue "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_waitset_create mx_waitset_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_waitset_add mx_waitset_add "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_waitset_remove mx_waitset_remove "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_waitset_wait mx_waitset_wait "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_port_create mx_port_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_port_queue mx_port_queue "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_port_wait mx_port_wait "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_port_bind mx_port_bind "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_vmar_allocate mx_vmar_allocate "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_vmar_destroy mx_vmar_destroy "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_vmar_map mx_vmar_map "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_vmar_unmap mx_vmar_unmap "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_vmar_protect mx_vmar_protect "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_vmo_create mx_vmo_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_vmo_read mx_vmo_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_vmo_write mx_vmo_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_vmo_get_size mx_vmo_get_size "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_vmo_set_size mx_vmo_set_size "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_vmo_op_range mx_vmo_op_range "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_cprng_draw mx_cprng_draw "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_cprng_add_entropy mx_cprng_add_entropy "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_log_create mx_log_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_log_write mx_log_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_log_read mx_log_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_ktrace_read mx_ktrace_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_ktrace_control mx_ktrace_control "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_ktrace_write mx_ktrace_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_thread_arch_prctl mx_thread_arch_prctl "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_debug_transfer_handle mx_debug_transfer_handle "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_debug_read mx_debug_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_debug_write mx_debug_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_debug_send_command mx_debug_send_command "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_interrupt_create mx_interrupt_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_interrupt_complete mx_interrupt_complete "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_interrupt_wait mx_interrupt_wait "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_mmap_device_io mx_mmap_device_io "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_mmap_device_memory mx_mmap_device_memory "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_io_mapping_get_info mx_io_mapping_get_info "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_vmo_create_contiguous mx_vmo_create_contiguous "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_bootloader_fb_get_info mx_bootloader_fb_get_info "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_set_framebuffer mx_set_framebuffer "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_clock_adjust mx_clock_adjust "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_pci_get_nth_device mx_pci_get_nth_device "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_pci_claim_device mx_pci_claim_device "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_pci_enable_bus_master mx_pci_enable_bus_master "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_pci_reset_device mx_pci_reset_device "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_pci_map_mmio mx_pci_map_mmio "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_pci_io_write mx_pci_io_write "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_pci_io_read mx_pci_io_read "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_pci_map_interrupt mx_pci_map_interrupt "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_pci_map_config mx_pci_map_config "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_pci_query_irq_mode_caps mx_pci_query_irq_mode_caps "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_pci_set_irq_mode mx_pci_set_irq_mode "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_pci_init mx_pci_init "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_pci_add_subtract_io_range mx_pci_add_subtract_io_range "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_acpi_uefi_rsdp mx_acpi_uefi_rsdp "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_acpi_cache_flush mx_acpi_cache_flush "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_resource_create mx_resource_create "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_resource_get_handle mx_resource_get_handle "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_resource_do_action mx_resource_do_action "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_resource_connect mx_resource_connect "libmagenta.so.abi"
-//go:cgo_import_dynamic vdso_mx_resource_accept mx_resource_accept "libmagenta.so.abi"
+//go:cgo_import_dynamic vdso_mx_time_get mx_time_get "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_nanosleep mx_nanosleep "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_ticks_get mx_ticks_get "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_ticks_per_second mx_ticks_per_second "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_num_cpus mx_num_cpus "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_version_get mx_version_get "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_handle_close mx_handle_close "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_handle_duplicate mx_handle_duplicate "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_handle_replace mx_handle_replace "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_handle_wait_one mx_handle_wait_one "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_handle_wait_many mx_handle_wait_many "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_object_signal mx_object_signal "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_object_signal_peer mx_object_signal_peer "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_object_get_property mx_object_get_property "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_object_set_property mx_object_set_property "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_object_get_info mx_object_get_info "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_object_get_child mx_object_get_child "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_object_bind_exception_port mx_object_bind_exception_port "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_channel_create mx_channel_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_channel_read mx_channel_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_channel_write mx_channel_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_channel_call mx_channel_call "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_socket_create mx_socket_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_socket_write mx_socket_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_socket_read mx_socket_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_thread_exit mx_thread_exit "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_thread_create mx_thread_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_thread_start mx_thread_start "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_thread_read_state mx_thread_read_state "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_thread_write_state mx_thread_write_state "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_process_exit mx_process_exit "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_process_create mx_process_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_process_start mx_process_start "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_process_read_memory mx_process_read_memory "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_process_write_memory mx_process_write_memory "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_job_create mx_job_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_task_resume mx_task_resume "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_task_kill mx_task_kill "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_event_create mx_event_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_eventpair_create mx_eventpair_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_futex_wait mx_futex_wait "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_futex_wake mx_futex_wake "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_futex_requeue mx_futex_requeue "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_waitset_create mx_waitset_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_waitset_add mx_waitset_add "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_waitset_remove mx_waitset_remove "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_waitset_wait mx_waitset_wait "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_port_create mx_port_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_port_queue mx_port_queue "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_port_wait mx_port_wait "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_port_bind mx_port_bind "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmo_create mx_vmo_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmo_read mx_vmo_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmo_write mx_vmo_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmo_get_size mx_vmo_get_size "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmo_set_size mx_vmo_set_size "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmo_op_range mx_vmo_op_range "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_cprng_draw mx_cprng_draw "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_cprng_add_entropy mx_cprng_add_entropy "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_fifo_create mx_fifo_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_fifo_op mx_fifo_op "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_log_create mx_log_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_log_write mx_log_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_log_read mx_log_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_ktrace_read mx_ktrace_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_ktrace_control mx_ktrace_control "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_ktrace_write mx_ktrace_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_debug_transfer_handle mx_debug_transfer_handle "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_debug_read mx_debug_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_debug_write mx_debug_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_debug_send_command mx_debug_send_command "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_interrupt_create mx_interrupt_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_interrupt_complete mx_interrupt_complete "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_interrupt_wait mx_interrupt_wait "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_mmap_device_io mx_mmap_device_io "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_mmap_device_memory mx_mmap_device_memory "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_io_mapping_get_info mx_io_mapping_get_info "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmo_create_contiguous mx_vmo_create_contiguous "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmar_allocate mx_vmar_allocate "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmar_destroy mx_vmar_destroy "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmar_map mx_vmar_map "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmar_unmap mx_vmar_unmap "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmar_protect mx_vmar_protect "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_bootloader_fb_get_info mx_bootloader_fb_get_info "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_set_framebuffer mx_set_framebuffer "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_clock_adjust mx_clock_adjust "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_get_nth_device mx_pci_get_nth_device "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_claim_device mx_pci_claim_device "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_enable_bus_master mx_pci_enable_bus_master "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_enable_pio mx_pci_enable_pio "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_reset_device mx_pci_reset_device "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_map_mmio mx_pci_map_mmio "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_io_write mx_pci_io_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_io_read mx_pci_io_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_map_interrupt mx_pci_map_interrupt "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_map_config mx_pci_map_config "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_query_irq_mode_caps mx_pci_query_irq_mode_caps "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_set_irq_mode mx_pci_set_irq_mode "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_init mx_pci_init "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_pci_add_subtract_io_range mx_pci_add_subtract_io_range "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_acpi_uefi_rsdp mx_acpi_uefi_rsdp "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_acpi_cache_flush mx_acpi_cache_flush "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_resource_create mx_resource_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_resource_get_handle mx_resource_get_handle "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_resource_do_action mx_resource_do_action "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_resource_connect mx_resource_connect "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_resource_accept mx_resource_accept "libmagenta.so"
 
 //go:linkname vdso_mx_time_get vdso_mx_time_get
 //go:linkname vdso_mx_nanosleep vdso_mx_nanosleep
+//go:linkname vdso_mx_ticks_get vdso_mx_ticks_get
+//go:linkname vdso_mx_ticks_per_second vdso_mx_ticks_per_second
 //go:linkname vdso_mx_num_cpus vdso_mx_num_cpus
 //go:linkname vdso_mx_version_get vdso_mx_version_get
 //go:linkname vdso_mx_handle_close vdso_mx_handle_close
@@ -131,6 +138,7 @@ import "unsafe"
 //go:linkname vdso_mx_channel_create vdso_mx_channel_create
 //go:linkname vdso_mx_channel_read vdso_mx_channel_read
 //go:linkname vdso_mx_channel_write vdso_mx_channel_write
+//go:linkname vdso_mx_channel_call vdso_mx_channel_call
 //go:linkname vdso_mx_socket_create vdso_mx_socket_create
 //go:linkname vdso_mx_socket_write vdso_mx_socket_write
 //go:linkname vdso_mx_socket_read vdso_mx_socket_read
@@ -160,11 +168,6 @@ import "unsafe"
 //go:linkname vdso_mx_port_queue vdso_mx_port_queue
 //go:linkname vdso_mx_port_wait vdso_mx_port_wait
 //go:linkname vdso_mx_port_bind vdso_mx_port_bind
-//go:linkname vdso_mx_vmar_allocate vdso_mx_vmar_allocate
-//go:linkname vdso_mx_vmar_destroy vdso_mx_vmar_destroy
-//go:linkname vdso_mx_vmar_map vdso_mx_vmar_map
-//go:linkname vdso_mx_vmar_unmap vdso_mx_vmar_unmap
-//go:linkname vdso_mx_vmar_protect vdso_mx_vmar_protect
 //go:linkname vdso_mx_vmo_create vdso_mx_vmo_create
 //go:linkname vdso_mx_vmo_read vdso_mx_vmo_read
 //go:linkname vdso_mx_vmo_write vdso_mx_vmo_write
@@ -173,13 +176,14 @@ import "unsafe"
 //go:linkname vdso_mx_vmo_op_range vdso_mx_vmo_op_range
 //go:linkname vdso_mx_cprng_draw vdso_mx_cprng_draw
 //go:linkname vdso_mx_cprng_add_entropy vdso_mx_cprng_add_entropy
+//go:linkname vdso_mx_fifo_create vdso_mx_fifo_create
+//go:linkname vdso_mx_fifo_op vdso_mx_fifo_op
 //go:linkname vdso_mx_log_create vdso_mx_log_create
 //go:linkname vdso_mx_log_write vdso_mx_log_write
 //go:linkname vdso_mx_log_read vdso_mx_log_read
 //go:linkname vdso_mx_ktrace_read vdso_mx_ktrace_read
 //go:linkname vdso_mx_ktrace_control vdso_mx_ktrace_control
 //go:linkname vdso_mx_ktrace_write vdso_mx_ktrace_write
-//go:linkname vdso_mx_thread_arch_prctl vdso_mx_thread_arch_prctl
 //go:linkname vdso_mx_debug_transfer_handle vdso_mx_debug_transfer_handle
 //go:linkname vdso_mx_debug_read vdso_mx_debug_read
 //go:linkname vdso_mx_debug_write vdso_mx_debug_write
@@ -191,12 +195,18 @@ import "unsafe"
 //go:linkname vdso_mx_mmap_device_memory vdso_mx_mmap_device_memory
 //go:linkname vdso_mx_io_mapping_get_info vdso_mx_io_mapping_get_info
 //go:linkname vdso_mx_vmo_create_contiguous vdso_mx_vmo_create_contiguous
+//go:linkname vdso_mx_vmar_allocate vdso_mx_vmar_allocate
+//go:linkname vdso_mx_vmar_destroy vdso_mx_vmar_destroy
+//go:linkname vdso_mx_vmar_map vdso_mx_vmar_map
+//go:linkname vdso_mx_vmar_unmap vdso_mx_vmar_unmap
+//go:linkname vdso_mx_vmar_protect vdso_mx_vmar_protect
 //go:linkname vdso_mx_bootloader_fb_get_info vdso_mx_bootloader_fb_get_info
 //go:linkname vdso_mx_set_framebuffer vdso_mx_set_framebuffer
 //go:linkname vdso_mx_clock_adjust vdso_mx_clock_adjust
 //go:linkname vdso_mx_pci_get_nth_device vdso_mx_pci_get_nth_device
 //go:linkname vdso_mx_pci_claim_device vdso_mx_pci_claim_device
 //go:linkname vdso_mx_pci_enable_bus_master vdso_mx_pci_enable_bus_master
+//go:linkname vdso_mx_pci_enable_pio vdso_mx_pci_enable_pio
 //go:linkname vdso_mx_pci_reset_device vdso_mx_pci_reset_device
 //go:linkname vdso_mx_pci_map_mmio vdso_mx_pci_map_mmio
 //go:linkname vdso_mx_pci_io_write vdso_mx_pci_io_write
@@ -218,6 +228,8 @@ import "unsafe"
 var (
 	vdso_mx_time_get                   uintptr
 	vdso_mx_nanosleep                  uintptr
+	vdso_mx_ticks_get                  uintptr
+	vdso_mx_ticks_per_second           uintptr
 	vdso_mx_num_cpus                   uintptr
 	vdso_mx_version_get                uintptr
 	vdso_mx_handle_close               uintptr
@@ -235,6 +247,7 @@ var (
 	vdso_mx_channel_create             uintptr
 	vdso_mx_channel_read               uintptr
 	vdso_mx_channel_write              uintptr
+	vdso_mx_channel_call               uintptr
 	vdso_mx_socket_create              uintptr
 	vdso_mx_socket_write               uintptr
 	vdso_mx_socket_read                uintptr
@@ -264,11 +277,6 @@ var (
 	vdso_mx_port_queue                 uintptr
 	vdso_mx_port_wait                  uintptr
 	vdso_mx_port_bind                  uintptr
-	vdso_mx_vmar_allocate              uintptr
-	vdso_mx_vmar_destroy               uintptr
-	vdso_mx_vmar_map                   uintptr
-	vdso_mx_vmar_unmap                 uintptr
-	vdso_mx_vmar_protect               uintptr
 	vdso_mx_vmo_create                 uintptr
 	vdso_mx_vmo_read                   uintptr
 	vdso_mx_vmo_write                  uintptr
@@ -277,13 +285,14 @@ var (
 	vdso_mx_vmo_op_range               uintptr
 	vdso_mx_cprng_draw                 uintptr
 	vdso_mx_cprng_add_entropy          uintptr
+	vdso_mx_fifo_create                uintptr
+	vdso_mx_fifo_op                    uintptr
 	vdso_mx_log_create                 uintptr
 	vdso_mx_log_write                  uintptr
 	vdso_mx_log_read                   uintptr
 	vdso_mx_ktrace_read                uintptr
 	vdso_mx_ktrace_control             uintptr
 	vdso_mx_ktrace_write               uintptr
-	vdso_mx_thread_arch_prctl          uintptr
 	vdso_mx_debug_transfer_handle      uintptr
 	vdso_mx_debug_read                 uintptr
 	vdso_mx_debug_write                uintptr
@@ -295,12 +304,18 @@ var (
 	vdso_mx_mmap_device_memory         uintptr
 	vdso_mx_io_mapping_get_info        uintptr
 	vdso_mx_vmo_create_contiguous      uintptr
+	vdso_mx_vmar_allocate              uintptr
+	vdso_mx_vmar_destroy               uintptr
+	vdso_mx_vmar_map                   uintptr
+	vdso_mx_vmar_unmap                 uintptr
+	vdso_mx_vmar_protect               uintptr
 	vdso_mx_bootloader_fb_get_info     uintptr
 	vdso_mx_set_framebuffer            uintptr
 	vdso_mx_clock_adjust               uintptr
 	vdso_mx_pci_get_nth_device         uintptr
 	vdso_mx_pci_claim_device           uintptr
 	vdso_mx_pci_enable_bus_master      uintptr
+	vdso_mx_pci_enable_pio             uintptr
 	vdso_mx_pci_reset_device           uintptr
 	vdso_mx_pci_map_mmio               uintptr
 	vdso_mx_pci_io_write               uintptr
@@ -327,6 +342,14 @@ func Sys_time_get(clock_id uint32) Time
 //go:noescape
 //go:nosplit
 func Sys_nanosleep(nanoseconds Time) Status
+
+//go:noescape
+//go:nosplit
+func Sys_ticks_get() uint64
+
+//go:noescape
+//go:nosplit
+func Sys_ticks_per_second() uint64
 
 //go:noescape
 //go:nosplit
@@ -398,15 +421,19 @@ func sys_channel_write(handle Handle, options uint32, bytes unsafe.Pointer, num_
 
 //go:noescape
 //go:nosplit
+func Sys_channel_call(handle Handle, options uint32, timeout Time, args *ChannelCallArgs, actual_bytes *uint32, actual_handles *uint32, read_status *Status) Status
+
+//go:noescape
+//go:nosplit
 func sys_socket_create(options uint32, out0 *Handle, out1 *Handle) Status
 
 //go:noescape
 //go:nosplit
-func sys_socket_write(handle Handle, options uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
+func sys_socket_write(handle Handle, options uint32, buffer unsafe.Pointer, size uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
-func sys_socket_read(handle Handle, options uint32, buffer unsafe.Pointer, len uint, actual *uint) Status
+func sys_socket_read(handle Handle, options uint32, buffer unsafe.Pointer, size uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit
@@ -422,11 +449,11 @@ func Sys_thread_start(handle Handle, thread_entry uintptr, stack uintptr, arg1 u
 
 //go:noescape
 //go:nosplit
-func Sys_thread_read_state(handle Handle, kind uint32, state unsafe.Pointer, len uint32, actual *uint32) Status
+func Sys_thread_read_state(handle Handle, kind uint32, buffer unsafe.Pointer, len uint32, actual *uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_thread_write_state(handle Handle, kind uint32, state unsafe.Pointer, len uint32) Status
+func Sys_thread_write_state(handle Handle, kind uint32, buffer unsafe.Pointer, buffer_len uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -434,7 +461,7 @@ func Sys_process_exit(retcode int)
 
 //go:noescape
 //go:nosplit
-func Sys_process_create(job Handle, name *uint8, name_len uint32, options uint32, proc_handle *Handle, vmar_handle *Handle) Handle
+func Sys_process_create(job Handle, name *uint8, name_len uint32, options uint32, proc_handle *Handle, vmar_handle *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -514,26 +541,6 @@ func Sys_port_bind(handle Handle, key uint64, source Handle, signals Signals) St
 
 //go:noescape
 //go:nosplit
-func Sys_vmar_allocate(parent_vmar_handle Handle, offset uint, size uint, flags uint32, child_vmar *Handle, child_addr *uintptr) Status
-
-//go:noescape
-//go:nosplit
-func Sys_vmar_destroy(vmar_handle Handle) Status
-
-//go:noescape
-//go:nosplit
-func Sys_vmar_map(vmar_handle Handle, vmar_offset uint, vmo_handle Handle, vmo_offset uint64, len uint, flags uint32, mapped_addr *uintptr) Status
-
-//go:noescape
-//go:nosplit
-func Sys_vmar_unmap(vmar_handle Handle, addr uintptr, len uint) Status
-
-//go:noescape
-//go:nosplit
-func Sys_vmar_protect(vmar_handle Handle, addr uintptr, len uint, prot uint32) Status
-
-//go:noescape
-//go:nosplit
 func sys_vmo_create(size uint64, options uint32, out *Handle) Status
 
 //go:noescape
@@ -566,6 +573,14 @@ func Sys_cprng_add_entropy(buffer unsafe.Pointer, len uint) Status
 
 //go:noescape
 //go:nosplit
+func Sys_fifo_create(count uint64, out *Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_fifo_op(handle Handle, op uint32, val uint64, out *FIFOState) Status
+
+//go:noescape
+//go:nosplit
 func Sys_log_create(options uint32) Handle
 
 //go:noescape
@@ -587,10 +602,6 @@ func Sys_ktrace_control(handle Handle, action uint32, options uint32, ptr unsafe
 //go:noescape
 //go:nosplit
 func Sys_ktrace_write(handle Handle, id uint32, arg0 uint32, arg1 uint32) Status
-
-//go:noescape
-//go:nosplit
-func Sys_thread_arch_prctl(handle Handle, op uint32, value_ptr *uintptr) Status
 
 //go:noescape
 //go:nosplit
@@ -626,7 +637,7 @@ func Sys_mmap_device_io(handle Handle, io_addr uint32, len uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_mmap_device_memory(handle Handle, paddr Paddr, len uint32, cache_policy int, out_vaddr unsafe.Pointer) Status
+func Sys_mmap_device_memory(handle Handle, paddr Paddr, len uint32, cache_policy int, out_vaddr *uintptr) Status
 
 //go:noescape
 //go:nosplit
@@ -635,6 +646,26 @@ func Sys_io_mapping_get_info(handle Handle, out_vaddr *uintptr, out_size *uint64
 //go:noescape
 //go:nosplit
 func Sys_vmo_create_contiguous(rsrc_handle Handle, size uint, out *Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_allocate(parent_vmar_handle Handle, offset uint, size uint, flags uint32, child_vmar *Handle, child_addr *uintptr) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_destroy(vmar_handle Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_map(vmar_handle Handle, vmar_offset uint, vmo_handle Handle, vmo_offset uint64, len uint, flags uint32, mapped_addr *uintptr) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_unmap(vmar_handle Handle, addr uintptr, len uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_protect(vmar_handle Handle, addr uintptr, len uint, prot uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -659,6 +690,10 @@ func Sys_pci_claim_device(handle Handle) Status
 //go:noescape
 //go:nosplit
 func Sys_pci_enable_bus_master(handle Handle, enable bool) Status
+
+//go:noescape
+//go:nosplit
+func Sys_pci_enable_pio(handle Handle, enable bool) Status
 
 //go:noescape
 //go:nosplit

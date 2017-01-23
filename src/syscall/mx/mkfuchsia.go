@@ -19,11 +19,10 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -47,20 +46,14 @@ func main() {
 	}
 	_ = sdkArch
 
-	syscallsFile := filepath.Join(*fuchsiaRoot, "/magenta/system/public/magenta/syscalls.inc")
+	syscallsFile := filepath.Join(*fuchsiaRoot, "/magenta/system/public/magenta/syscalls.sysgen")
 	if args := flag.Args(); len(args) != 0 {
 		syscallsFile = args[0]
 	}
 
-	cpp := exec.Command(
-		"cpp",
-		"-DMAGENTA_SYSCALL_DEF=MAGENTA_SYSCALL_DEF",
-		"-DMAGENTA_VDSOCALL_DEF=MAGENTA_VDSOCALL_DEF",
-		syscallsFile,
-	)
-	b, err := cpp.CombinedOutput()
+	b, err := ioutil.ReadFile(syscallsFile)
 	if err != nil {
-		log.Fatal("%v: %s", cpp.Args, err)
+		log.Fatal(err)
 	}
 
 	p := &parser{
@@ -77,7 +70,7 @@ func main() {
 	if *stubs {
 		fmt.Fprint(buf, stubsHeader[1:])
 		for _, call := range syscalls {
-			fmt.Fprintf(buf, "//go:cgo_import_dynamic vdso_mx_%s mx_%s \"libmagenta.so.abi\"\n", call.name, call.name)
+			fmt.Fprintf(buf, "//go:cgo_import_dynamic vdso_mx_%s mx_%s \"libmagenta.so\"\n", call.name, call.name)
 		}
 		fmt.Fprint(buf, "\n")
 		for _, call := range syscalls {
@@ -134,15 +127,15 @@ const asmHeader = `
 
 func printStub(buf *bytes.Buffer, call magentaSyscallDef) {
 	fmt.Fprintf(buf, "func %s(", call.sysname())
-	for i, name := range call.argNames {
-		if call.argTypes[i] == (magentaType{}) {
+	for i, arg := range call.args {
+		if arg.atype == (magentaType{}) {
 			continue
 		}
 		if i > 0 {
 			fmt.Fprint(buf, ", ")
 		}
-		fmt.Fprintf(buf, "%s ", name)
-		printGoType(buf, call.argTypes[i])
+		fmt.Fprintf(buf, "%s ", arg.aname)
+		printGoType(buf, arg.atype)
 	}
 	fmt.Fprint(buf, ")")
 	if call.ret != (magentaType{}) {
@@ -171,8 +164,8 @@ const MAGENTA_SYSCALL_MAGIC = 0x00ff00ff00000000
 func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 	// The summed size of all arguments
 	argSize := 0
-	for _, t := range call.argTypes {
-		sz := typeSize(t)
+	for _, arg := range call.args {
+		sz := typeSize(arg.atype)
 		if *goarch == "arm64" && sz == 1 {
 			sz = 8
 		}
@@ -198,7 +191,7 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 		retReg = "AX"
 		suffix8 = "Q"
 		suffix4 = "L"
-		switch len(call.argTypes) {
+		switch len(call.args) {
 		case 7:
 			frameSize = 16 + 8
 		case 8:
@@ -220,9 +213,10 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 		fmt.Fprintf(buf, "\tCALL runtime·entersyscall(SB)\n")
 	}
 	off := 0
-	for i, t := range call.argTypes {
-		name := call.argNames[i]
+	for i, arg := range call.args {
+		name := arg.aname
 		suffix := suffix8
+		t := arg.atype
 		if typeSize(t) == 4 {
 			suffix = suffix4
 		}
@@ -240,19 +234,19 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 	}
 	switch *goarch {
 	case "amd64":
-		if len(call.argTypes) >= 7 {
+		if len(call.args) >= 7 {
 			fmt.Fprintf(buf, "\tMOVQ SP, BP   // BP is preserved across vsdo call by the x86-64 ABI\n")
 			fmt.Fprintf(buf, "\tANDQ $~15, SP // stack alignment for x86-64 ABI\n")
-			if len(call.argTypes) == 8 {
+			if len(call.args) == 8 {
 				fmt.Fprintf(buf, "\tPUSHQ R13\n")
 			}
 			fmt.Fprintf(buf, "\tPUSHQ R12\n")
 		}
 		fmt.Fprintf(buf, "\tMOVQ vdso_mx_%s(SB), AX\n", call.name)
 		fmt.Fprintf(buf, "\tCALL AX\n")
-		if len(call.argTypes) >= 7 {
+		if len(call.args) >= 7 {
 			fmt.Fprintf(buf, "\tPOPQ R12\n")
-			if len(call.argTypes) == 8 {
+			if len(call.args) == 8 {
 				fmt.Fprintf(buf, "\tPOPQ R13\n")
 			}
 			fmt.Fprintf(buf, "\tMOVQ BP, SP\n")
@@ -278,13 +272,15 @@ func typeSize(t magentaType) int {
 	if *goarch == "arm" {
 		regSize = 4
 	}
-	if t.ptrDepth > 0 {
+	if t.isArray {
 		return regSize
 	}
 	switch t.named {
 	case mx_function_pointer:
 		return regSize
 	case mx_void:
+		return 0
+	case mx_any:
 		return 0
 	case mx_bool:
 		return 1
@@ -322,16 +318,18 @@ func typeSize(t magentaType) int {
 }
 
 func printGoType(buf *bytes.Buffer, t magentaType) {
-	if t.named == mx_function_pointer || (t.named == mx_void && t.ptrDepth > 0) {
-		fmt.Fprint(buf, "unsafe.Pointer")
-		return
-	}
-	for i := 0; i < t.ptrDepth; i++ {
+	if t.isArray {
+		if t.named == mx_any {
+			fmt.Fprint(buf, "unsafe.Pointer")
+			return
+		}
 		fmt.Fprint(buf, "*")
 	}
 	switch t.named {
 	case mx_void:
 		fmt.Fprint(buf, "BAD(void)")
+	case mx_any:
+		fmt.Fprint(buf, "BAD(any)")
 	case mx_bool:
 		fmt.Fprint(buf, "bool")
 	case mx_uint:
@@ -384,6 +382,10 @@ func printGoType(buf *bytes.Buffer, t magentaType) {
 		fmt.Fprint(buf, "ExceptionBehaviour")
 	case mx_rrec_t:
 		fmt.Fprint(buf, "Rrec")
+	case mx_channel_call_args_t:
+		fmt.Fprint(buf, "ChannelCallArgs")
+	case mx_fifo_state_t:
+		fmt.Fprint(buf, "FIFOState")
 	default:
 		panic(fmt.Sprintf("UNKNOWN type: %s", t.named))
 	}
@@ -397,13 +399,8 @@ func (p *parser) parse() (syscalls []magentaSyscallDef, err error) {
 	p.nextRune()
 	for {
 		t, lit := p.nextToken()
-		if t == tokenIdent {
-			syscall := (lit == "MAGENTA_SYSCALL_DEF")
-			vdsocall := (lit == "MAGENTA_VDSOCALL_DEF")
-			if !syscall && !vdsocall {
-				return nil, p.errorf("Unexpected token: %s", lit)
-			}
-			call, err := p.parseSyscall(vdsocall)
+		if lit == "syscall" {
+			call, err := p.parseSyscall()
 			if err != nil {
 				return nil, err
 			}
@@ -430,104 +427,102 @@ func (p *parser) expect(want token) {
 	}
 }
 
-func (p *parser) parseSyscall(vdsocall bool) (call magentaSyscallDef, err error) {
-	p.expect('(')
-	if !vdsocall {
-		p.nextNumber() // skip first slot count
-		p.expect(',')
-		p.nextNumber() // skip second slot count
-		p.expect(',')
-		n := p.nextNumber()
-		call.number, err = strconv.Atoi(n)
-		if err != nil {
-			return magentaSyscallDef{}, err
+func (p *parser) parseAttributes() (attr []string, err error) {
+	for {
+		p.skipWhitespace()
+		if p.r == '(' {
+			return
 		}
-		p.expect(',')
+		attr = append(attr, p.nextIdent())
+		p.skipWhitespace()
+		if p.r == ',' {
+			p.nextRune()
+		}
 	}
-	typ, err := p.parseType()
+}
+
+func (p *parser) parseArg() (arg magentaArg, err error) {
+	if p.r == ')' {
+		return
+	}
+	arg.aname = p.nextIdent()
+	p.expect(':')
+	atype, err := p.parseType()
+	if err != nil {
+		return
+	}
+	arg.atype = atype
+	p.skipWhitespace()
+	if isLetter(p.r) {
+		arg.constraint = p.nextIdent()
+		p.skipWhitespace()
+	}
+	return
+}
+
+func (p *parser) parseSyscall() (call magentaSyscallDef, err error) {
+	call.name = p.nextIdent()
+	attr, err := p.parseAttributes()
 	if err != nil {
 		return magentaSyscallDef{}, err
 	}
-	call.ret = typ
-	p.expect(',')
-	call.name = p.nextIdent()
-	for {
-		t, lit := p.nextToken()
-		if t == '[' && len(call.argTypes) > 0 {
-			// previous argument is an array
-			call.argTypes[len(call.argTypes)-1].ptrDepth++
-			p.nextToken()
-			p.expect(']')
-			continue
+	for _, a := range attr {
+		if a == "vdsocall" {
+			call.vdsocall = true
 		}
-		if t == ')' {
+	}
+	call.attr = attr
+	p.expect('(')
+	for {
+		p.skipWhitespace()
+		if p.r == ')' {
+			p.nextRune()
 			break
 		}
-		if t != ',' {
-			return magentaSyscallDef{}, p.errorf("expected ',' or ')', got: %s", lit)
-		}
-		typ, err := p.parseType()
+		arg, err := p.parseArg()
 		if err != nil {
 			return magentaSyscallDef{}, err
 		}
-		if typ == (magentaType{}) {
-			// fn(void), no arguments
-			p.expect(')')
+		if arg.aname == "" {
 			break
 		}
-		call.argTypes = append(call.argTypes, typ)
-		p.skipWhitespace()
-		name := "_"
-		if p.r != ')' && p.r != ',' {
-			name = p.nextIdent()
+		call.args = append(call.args, arg)
+		if p.r == ',' {
+			p.nextRune()
 		}
-		call.argNames = append(call.argNames, name)
 	}
 	p.skipWhitespace()
-	if p.r == ';' {
-		p.nextRune()
+	if p.r != ';' {
+		kw := p.nextIdent()
+		if kw != "returns" {
+			p.panicf("expected \"returns\" but got \"%s\"", kw)
+		}
+		p.expect('(')
+		rtype, err := p.parseType()
+		if err != nil {
+			return magentaSyscallDef{}, err
+		}
+		call.ret = rtype
+		p.expect(')')
 	}
+	p.skipWhitespace()
+	p.expect(';')
 	return call, nil
 }
 
 func (p *parser) parseType() (t magentaType, err error) {
 	ident := p.nextIdent()
-	if ident == "const" {
-		t.isConst = true
-		ident = p.nextIdent()
-	}
-	if ident == "unsigned" {
-		ident = "unsigned " + p.nextIdent()
-	}
-	if ident == "volatile" {
-		ident = p.nextIdent()
-	}
-	p.skipWhitespace()
-	if p.r == '(' {
-		// Function pointer type. Consume the whole thing and write it off.
-		t.named = mx_function_pointer
-		off := p.off - 1
-		parens := 1
-		for p.r != ',' && (parens > 0 || p.r != ')') {
-			if p.r == ')' {
-				parens--
-			}
-			if p.r == '(' {
-				parens++
-			}
-			p.nextRune()
-		}
-		t.lit = ident + " (" + string(p.buf[off:p.off-1])
-		return t, nil
-	}
 	n, ok := magentaTypeNamedStr[ident]
 	if !ok {
 		return t, p.errorf("unknown type name: %s", ident)
 	}
 	t.named = n
-	for p.r == '*' {
-		t.ptrDepth++
+	p.skipWhitespace()
+	if p.r == '[' {
 		p.nextRune()
+		t.isArray = true
+		t.arraySize = p.nextIdent()
+		p.expect(']')
 	}
 	return t, nil
 }
@@ -582,16 +577,11 @@ func (p *parser) nextToken() (t token, lit string) {
 	switch r {
 	case -1:
 		return tokenEOF, ""
-	case '(', ')', '*', ',', ';', '[', ']':
+	case '(', ')', '*', ',', ';', ':', '[', ']':
 		return token(r), ""
 	case '#':
 		p.skipComment()
 		return p.nextToken()
-	case '/':
-		if p.r == '/' || p.r == '*' {
-			p.skipComment()
-			return p.nextToken()
-		}
 	}
 	return tokenBad, fmt.Sprintf("%q", r)
 }
@@ -627,26 +617,11 @@ func (p *parser) skipWhitespace() {
 }
 
 func (p *parser) skipComment() {
-	if p.r != '*' {
-		// skip until end of line
-		p.nextRune()
-		for p.r != '\n' && p.r >= 0 {
-			p.nextRune()
-		}
-		return
-	}
-
+	// skip until end of line
 	p.nextRune()
-	for p.r >= 0 {
-		r := p.r
+	for p.r != '\n' && p.r >= 0 {
 		p.nextRune()
-		if r == '*' && p.r == '/' {
-			p.nextRune()
-			return
-		}
 	}
-
-	p.panicf("unterminated comment")
 }
 
 func (p *parser) nextRune() {
@@ -688,12 +663,18 @@ type parsePanic struct {
 
 func (pp parsePanic) String() string { return pp.err.Error() }
 
+type magentaArg struct {
+	aname      string
+	atype      magentaType
+	constraint string
+}
+
 type magentaSyscallDef struct {
-	number   int
 	name     string
 	ret      magentaType
-	argNames []string
-	argTypes []magentaType
+	attr     []string
+	args     []magentaArg
+	vdsocall bool
 }
 
 func (call magentaSyscallDef) sysname() string {
@@ -729,16 +710,16 @@ func (call magentaSyscallDef) exported() bool {
 }
 
 type magentaType struct {
-	named    magentaTypeNamed
-	ptrDepth int // 0 noptr, 1 *, 2 **, etc
-	isConst  bool
-	lit      string // for function pointers
+	named     magentaTypeNamed
+	isArray   bool
+	arraySize string
 }
 
 type magentaTypeNamed int
 
 const (
 	mx_void magentaTypeNamed = iota
+	mx_any
 	mx_bool
 	mx_uint
 	mx_int
@@ -767,9 +748,12 @@ const (
 	mx_exception_behaviour_t
 	mx_function_pointer
 	mx_rrec_t
+	mx_channel_call_args_t
+	mx_fifo_state_t
 )
 
 var magentaTypeNamedStr = map[string]magentaTypeNamed{
+	"any":                      mx_any,
 	"void":                     mx_void,
 	"bool":                     mx_bool,
 	"unsigned int":             mx_uint,
@@ -800,6 +784,8 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"mx_exception_behaviour_t": mx_exception_behaviour_t,
 	"mx_function_pointer":      mx_function_pointer,
 	"mx_rrec_t":                mx_rrec_t,
+	"mx_channel_call_args_t":   mx_channel_call_args_t,
+	"mx_fifo_state_t":          mx_fifo_state_t,
 	// TODO(smklein): Remove the following temporary types. They could be blacklisted, but this is
 	// easier.
 	"mx_pcie_get_nth_info_t": mx_int,

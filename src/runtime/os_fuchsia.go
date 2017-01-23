@@ -281,12 +281,8 @@ func magenta_mktls() {
 
 //go:nosplit
 func magenta_settls(val uintptr) {
-	const ARCH_SET_FS = 0
-	status := mx.Sys_thread_arch_prctl(0, ARCH_SET_FS, &val)
-	if status < 0 {
-		println("runtime: thread_arch_prctl failed err=", status)
-		exit(2)
-	}
+	// TODO: should call mx_set_object_property with property MX_PROP_REGISTER_FS in amd64 or
+	// MX_PROP_REGISTER_CP15 on arm.
 }
 
 //go:linkname os_sigpipe os.sigpipe
