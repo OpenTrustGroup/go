@@ -128,20 +128,14 @@ func (*RrecMMIO) rrec()   {}
 func (*RrecIOPort) rrec() {}
 
 type ChannelCallArgs struct {
-	/*
-	   TODO: Fill this in. C definition is:
-
-	   typedef struct {
-	       void* wr_bytes;
-	       mx_handle_t* wr_handles;
-	       void *rd_bytes;
-	       mx_handle_t* rd_handles;
-	       uint32_t wr_num_bytes;
-	       uint32_t wr_num_handles;
-	       uint32_t rd_num_bytes;
-	       uint32_t rd_num_handles;
-	   } mx_channel_call_args_t;
-	*/
+	WriteBytes      uintptr
+	WriteHandles    *Handle
+	ReadBytes       uintptr
+	ReadHandles     *Handle
+	WriteNumBytes   uint32
+	WriteNumHandles uint32
+	ReadNumBytes    uint32
+	ReadNumHandles  uint32
 }
 
 type FIFOState struct {
