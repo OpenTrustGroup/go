@@ -238,7 +238,7 @@ func write(fd uintptr, buf unsafe.Pointer, n int32) int32 {
 		// these file descriptors come from print, they will already be serialized by a lock in
 		// print's implementation.
 		if logger <= 0 {
-			logger = mx.Sys_log_create(0)
+			mx.Sys_log_create(0, &logger)
 			logBufferN = 0
 		}
 		if logger > 0 {

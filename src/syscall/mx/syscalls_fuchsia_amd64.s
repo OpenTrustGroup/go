@@ -657,12 +657,13 @@ TEXT ·Sys_fifo_op(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_log_create(options uint32) Handle
-TEXT ·Sys_log_create(SB),NOSPLIT,$0-12
+// func Sys_log_create(options uint32, out *Handle) Status
+TEXT ·Sys_log_create(SB),NOSPLIT,$0-20
 	MOVL options+0(FP), DI
+	MOVQ out+8(FP), SI
 	MOVQ vdso_mx_log_create(SB), AX
 	CALL AX
-	MOVL AX, ret+8(FP)
+	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_log_write(handle Handle, len uint32, buffer unsafe.Pointer, options uint32) Status

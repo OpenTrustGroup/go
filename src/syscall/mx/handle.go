@@ -276,7 +276,12 @@ type Log struct {
 }
 
 func NewLog(options uint32) *Log {
-	return &Log{Sys_log_create(options)}
+	log := &Log{}
+	status := Sys_log_create(options, &log.Handle)
+	if status != ErrOk {
+		return nil
+	}
+	return log
 }
 
 func (l *Log) Write(b []byte) (n int, err error) {

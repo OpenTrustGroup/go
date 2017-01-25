@@ -581,7 +581,7 @@ func Sys_fifo_op(handle Handle, op uint32, val uint64, out *FIFOState) Status
 
 //go:noescape
 //go:nosplit
-func Sys_log_create(options uint32) Handle
+func Sys_log_create(options uint32, out *Handle) Status
 
 //go:noescape
 //go:nosplit
