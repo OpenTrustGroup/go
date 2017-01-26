@@ -87,6 +87,13 @@ func (h Handle) WaitOne(waitFor Signals, timeout Time) (observed Signals, err er
 	return observed, nil
 }
 
+func (h Handle) SignalPeer(clearMask, setMask Signals) error {
+	if status := Sys_object_signal_peer(h, uint32(clearMask), uint32(setMask)); status != ErrOk {
+		return status
+	}
+	return nil
+}
+
 func WaitMany(items []WaitItem, timeout Time) error {
 	if status := sys_handle_wait_many(&items[0], uint32(len(items)), timeout); status != ErrOk {
 		return status
