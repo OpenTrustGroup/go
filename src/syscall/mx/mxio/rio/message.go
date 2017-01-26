@@ -51,8 +51,8 @@ const (
 	OpReadAt
 	OpWriteAt
 	OpTruncate
-	OpRename
-	OpConnect
+	OpRename  = uint32(iota) | OpFlagOneHandle
+	OpConnect = uint32(iota)
 	OpBind
 	OpListen
 	OpGetSockname
@@ -143,7 +143,7 @@ func (ro *RioObject) DiscardHandles() {
 	ro.Hcount = 0
 }
 
-// Helper wrapping the common case of 'write back only an error message'
+// Helper wrapping the common case of 'write back only a status'
 func IndirectError(h mx.Handle, status mx.Status) mx.Status {
 	ro := &RioObject{
 		RioObjectHeader: RioObjectHeader{

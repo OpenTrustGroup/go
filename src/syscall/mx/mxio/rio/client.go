@@ -218,15 +218,19 @@ func (r *RemoteIO) getObject(op uint32, name string, flags int32, mode uint32) (
 	msg.Datalen = uint32(len(name))
 	msg.Arg = flags
 	msg.SetMode(mode)
-	msg.Hcount = 1
 	copy(msg.Data[:], name)
 
+	return r.replyChannelCall(&msg)
+}
+
+func (r *RemoteIO) replyChannelCall(msg *Msg) (*RioObject, error) {
 	// Create a new channel to receive the 'callback' on
 	h, rh, err := mx.NewChannel(0)
 	if err != nil {
 		return nil, err
 	}
 	msg.Handle[0] = rh.Handle
+	msg.Hcount = 1
 
 	// Write the (one-way) OPEN or CLONE request message
 	if err := msg.WriteMsg(r.h); err != nil {
@@ -331,6 +335,16 @@ func (r *RemoteIO) Misc(op uint32, off int64, in, out []byte) (n int, err error)
 	msg.SetOff(off)
 	copy(msg.Data[:], in)
 
+	if op == OpRename {
+		// Rename is a special snowflake that sends a reply channel, like open and clone.
+		// Unlike open and close, it only cares about the 'status' response.
+		if _, err := r.replyChannelCall(&msg); err != nil {
+			return 0, err
+		} else {
+			msg.DiscardHandles()
+			return 0, nil
+		}
+	}
 	if _, err = r.txn(&msg); err != nil {
 		return 0, err
 	}
