@@ -119,7 +119,7 @@ func sigignore(sig uint32) {
 }
 
 func crash() {
-	// TODO
+	*(*int32)(nil) = 0
 }
 
 func threadinit(mp *m)
@@ -211,7 +211,7 @@ const _NSIG = 65 // TODO
 
 //go:nosplit
 func nanotime() int64 {
-	const MX_CLOCK_MONOTONIC = 1
+	const MX_CLOCK_MONOTONIC = 0
 	return int64(mx.Sys_time_get(MX_CLOCK_MONOTONIC))
 }
 
@@ -220,7 +220,7 @@ func nanotime() int64 {
 func time_now() (sec int64, nsec int32) {
 	const MX_CLOCK_UTC = 1
 	x := int64(mx.Sys_time_get(MX_CLOCK_UTC))
-	return int64(x / 1e6), int32(x % 1e6)
+	return int64(x / 1e9), int32(x % 1e9)
 }
 
 func unixnanotime() int64 {
