@@ -57,8 +57,8 @@ const (
 	OpListen
 	OpGetSockname
 	OpGetPeerName
-	OpSetSockOpt
 	OpGetSockOpt
+	OpSetSockOpt
 	OpGetAddrInfo
 	OpSetAttr
 	OpSync
