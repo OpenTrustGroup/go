@@ -44,8 +44,12 @@ func (s Socket) Read(data []byte, flags uint32) (n int, err error) {
 }
 
 func (s Socket) Write(data []byte, flags uint32) (n int, err error) {
+	var p unsafe.Pointer
+	if len(data) > 0 {
+		p = unsafe.Pointer(&data[0])
+	}
 	var actual uint
-	status := sys_socket_write(Handle(s), 0, unsafe.Pointer(&data[0]), uint(len(data)), &actual)
+	status := sys_socket_write(Handle(s), flags, p, uint(len(data)), &actual)
 	if status != ErrOk {
 		return int(actual), status
 	}

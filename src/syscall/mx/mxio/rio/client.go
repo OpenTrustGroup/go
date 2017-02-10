@@ -286,6 +286,22 @@ func (r *RemoteIO) Clone() ([]mx.Handle, error) {
 	return ro.Handle[:ro.Hcount], nil
 }
 
+func (r *RemoteIO) IoctlSetHandle(op uint32, in mx.Handle) error {
+	if mxio.IoctlKind(op) != mxio.IoctlKindSetHandle {
+		return mx.ErrInvalidArgs
+	}
+	var msg Msg
+	msg.SetOp(OpIoctlOneHandle)
+	msg.Handle[0] = in
+	msg.Hcount = 1
+	msg.SetIoctlOp(op)
+
+	if _, err := r.txn(&msg); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error) {
 	var msg Msg
 	if len(in) > mxio.IoctlMaxInput {

@@ -24,6 +24,7 @@ type MXIO interface {
 	Open(path string, flags int32, mode uint32) (MXIO, error)
 	Clone() ([]mx.Handle, error) // TODO(smklein): Pass type back from Clone
 	Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error)
+	IoctlSetHandle(op uint32, in mx.Handle) error
 	Misc(op uint32, off int64, in, out []byte) (n int, err error)
 	// TODO(smklein): Add missing ops, like "Wait"
 }
@@ -92,8 +93,11 @@ func IoctlNumber(ioctl uint32) uint32 {
 }
 
 const (
-	IoctlKindDefault = iota
-	IoctlKindGetHandle
+	IoctlKindDefault         = 0x0 // IOCTL_KIND_DEFAULT
+	IoctlKindGetHandle       = 0x1 // IOCTL_KIND_GET_HANDLE
+	IoctlKindGetTwoHandles   = 0x2 // IOCTL_KIND_GET_TWO_HANDLES
+	IoctlKindSetHandle       = 0x3 // IOCTL_KIND_SET_HANDLE
+	IoctlKindGetThreeHandles = 0x4 // IOCTL_KIND_GET_THREE_HANDLES
 )
 
 const (
@@ -111,7 +115,7 @@ var IoctlDeviceDebugSuspend = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 5)
 var IoctlDeviceDebugResume = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 6)
 var IoctlDeviceSync = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 7)
 
-var IoctlDevmgrMountFS = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevmgr, 0)
+var IoctlDevmgrMountFS = IoctlNum(IoctlKindSetHandle, IoctlFamilyDevmgr, 0)
 var IoctlDevmgrUnmountFS = IoctlNum(IoctlKindDefault, IoctlFamilyDevmgr, 1)
 
 // IoPortCreate wraps the corresponding syscall

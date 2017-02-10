@@ -93,6 +93,9 @@ func (f *VMOFile) Clone() ([]mx.Handle, error) {
 func (f *VMOFile) Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error) {
 	return nil, nil, mx.ErrNotSupported
 }
+func (f *VMOFile) IoctlSetHandle(op uint32, in mx.Handle) error {
+	return mx.ErrNotSupported
+}
 
 func (f *VMOFile) Misc(op uint32, off int64, in, out []byte) (n int, err error) {
 	switch op {

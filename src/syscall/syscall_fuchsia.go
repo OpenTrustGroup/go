@@ -420,6 +420,13 @@ func Ioctl(fd int, op uint32, in []byte) ([]byte, []mx.Handle, error) {
 	return f.Ioctl(op, in)
 }
 
+func IoctlSetHandle(fd int, op uint32, in mx.Handle) error {
+	fdsMu.Lock()
+	f := fds[fd-fdsOff]
+	fdsMu.Unlock()
+	return f.IoctlSetHandle(op, in)
+}
+
 func Fstat(fd int, stat *Stat_t) (err error) {
 	fdsMu.Lock()
 	f := fds[fd-fdsOff]
