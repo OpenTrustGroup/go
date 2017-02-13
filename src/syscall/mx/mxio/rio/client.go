@@ -309,11 +309,7 @@ func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error) {
 	}
 	msg.SetOp(OpIoctl)
 	msg.Datalen = uint32(len(in))
-	if mxio.IoctlKind(op) == mxio.IoctlKindGetHandle {
-		msg.Arg = int32(unsafe.Sizeof(mx.Handle(0)))
-	} else {
-		msg.Arg = MessageChunkSize
-	}
+	msg.Arg = MessageChunkSize
 	msg.SetIoctlOp(op)
 	copy(msg.Data[:], in)
 
@@ -322,17 +318,47 @@ func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error) {
 		return nil, nil, err
 	}
 
+	const handleSize = uint32(unsafe.Sizeof(mx.Handle(0)))
 	switch mxio.IoctlKind(op) {
 	case mxio.IoctlKindGetHandle:
-		var outHandles []mx.Handle
-		if msg.Hcount > 0 {
-			outHandles = append(outHandles, msg.Handle[0]) // Give the first handle back to the Ioctl caller
-			msg.Handle[0] = 0                              // Avoid closing this handle; we've put it in out
-			msg.DiscardHandles()
-		} else {
-			outHandles = nil
+		if msg.Hcount < 1 {
+			return nil, nil, nil
 		}
-		return nil, outHandles, nil
+		out := []mx.Handle{msg.Handle[0]}
+		msg.Handle[0] = 0
+		msg.DiscardHandles()
+		var data []byte
+		if msg.Datalen > handleSize {
+			data = msg.Data[handleSize:msg.Datalen]
+		}
+		return data, out, nil
+	case mxio.IoctlKindGetTwoHandles:
+		if msg.Hcount < 2 {
+			return nil, nil, nil
+		}
+		out := []mx.Handle{msg.Handle[0], msg.Handle[1]}
+		msg.Handle[0] = 0
+		msg.Handle[1] = 0
+		msg.DiscardHandles()
+		var data []byte
+		if msg.Datalen > 2*handleSize {
+			data = msg.Data[2*handleSize : msg.Datalen]
+		}
+		return data, out, nil
+	case mxio.IoctlKindGetThreeHandles:
+		if msg.Hcount < 3 {
+			return nil, nil, nil
+		}
+		out := []mx.Handle{msg.Handle[0], msg.Handle[1], msg.Handle[2]}
+		msg.Handle[0] = 0
+		msg.Handle[1] = 0
+		msg.Handle[2] = 0
+		msg.DiscardHandles()
+		var data []byte
+		if msg.Datalen > 3*handleSize {
+			data = msg.Data[3*handleSize : msg.Datalen]
+		}
+		return data, out, nil
 	default:
 		msg.DiscardHandles()
 		return msg.Data[:msg.Datalen], nil, nil
