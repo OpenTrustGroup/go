@@ -15,11 +15,13 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_ticks_per_second mx_ticks_per_second "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_num_cpus mx_num_cpus "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_version_get mx_version_get "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_cache_flush mx_cache_flush "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_handle_close mx_handle_close "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_handle_duplicate mx_handle_duplicate "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_handle_replace mx_handle_replace "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_handle_wait_one mx_handle_wait_one "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_handle_wait_many mx_handle_wait_many "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_object_wait_one mx_object_wait_one "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_object_wait_many mx_object_wait_many "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_object_wait_async mx_object_wait_async "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_object_signal mx_object_signal "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_object_signal_peer mx_object_signal_peer "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_object_get_property mx_object_get_property "libmagenta.so"
@@ -69,13 +71,15 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_cprng_draw mx_cprng_draw "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_cprng_add_entropy mx_cprng_add_entropy "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_fifo_create mx_fifo_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_fifo_op mx_fifo_op "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_fifo_read mx_fifo_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_fifo_write mx_fifo_write "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_log_create mx_log_create "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_log_write mx_log_write "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_log_read mx_log_read "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_ktrace_read mx_ktrace_read "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_ktrace_control mx_ktrace_control "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_ktrace_write mx_ktrace_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_mtrace_control mx_mtrace_control "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_debug_transfer_handle mx_debug_transfer_handle "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_debug_read mx_debug_read "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_debug_write mx_debug_write "libmagenta.so"
@@ -123,11 +127,13 @@ import "unsafe"
 //go:linkname vdso_mx_ticks_per_second vdso_mx_ticks_per_second
 //go:linkname vdso_mx_num_cpus vdso_mx_num_cpus
 //go:linkname vdso_mx_version_get vdso_mx_version_get
+//go:linkname vdso_mx_cache_flush vdso_mx_cache_flush
 //go:linkname vdso_mx_handle_close vdso_mx_handle_close
 //go:linkname vdso_mx_handle_duplicate vdso_mx_handle_duplicate
 //go:linkname vdso_mx_handle_replace vdso_mx_handle_replace
-//go:linkname vdso_mx_handle_wait_one vdso_mx_handle_wait_one
-//go:linkname vdso_mx_handle_wait_many vdso_mx_handle_wait_many
+//go:linkname vdso_mx_object_wait_one vdso_mx_object_wait_one
+//go:linkname vdso_mx_object_wait_many vdso_mx_object_wait_many
+//go:linkname vdso_mx_object_wait_async vdso_mx_object_wait_async
 //go:linkname vdso_mx_object_signal vdso_mx_object_signal
 //go:linkname vdso_mx_object_signal_peer vdso_mx_object_signal_peer
 //go:linkname vdso_mx_object_get_property vdso_mx_object_get_property
@@ -177,13 +183,15 @@ import "unsafe"
 //go:linkname vdso_mx_cprng_draw vdso_mx_cprng_draw
 //go:linkname vdso_mx_cprng_add_entropy vdso_mx_cprng_add_entropy
 //go:linkname vdso_mx_fifo_create vdso_mx_fifo_create
-//go:linkname vdso_mx_fifo_op vdso_mx_fifo_op
+//go:linkname vdso_mx_fifo_read vdso_mx_fifo_read
+//go:linkname vdso_mx_fifo_write vdso_mx_fifo_write
 //go:linkname vdso_mx_log_create vdso_mx_log_create
 //go:linkname vdso_mx_log_write vdso_mx_log_write
 //go:linkname vdso_mx_log_read vdso_mx_log_read
 //go:linkname vdso_mx_ktrace_read vdso_mx_ktrace_read
 //go:linkname vdso_mx_ktrace_control vdso_mx_ktrace_control
 //go:linkname vdso_mx_ktrace_write vdso_mx_ktrace_write
+//go:linkname vdso_mx_mtrace_control vdso_mx_mtrace_control
 //go:linkname vdso_mx_debug_transfer_handle vdso_mx_debug_transfer_handle
 //go:linkname vdso_mx_debug_read vdso_mx_debug_read
 //go:linkname vdso_mx_debug_write vdso_mx_debug_write
@@ -232,11 +240,13 @@ var (
 	vdso_mx_ticks_per_second           uintptr
 	vdso_mx_num_cpus                   uintptr
 	vdso_mx_version_get                uintptr
+	vdso_mx_cache_flush                uintptr
 	vdso_mx_handle_close               uintptr
 	vdso_mx_handle_duplicate           uintptr
 	vdso_mx_handle_replace             uintptr
-	vdso_mx_handle_wait_one            uintptr
-	vdso_mx_handle_wait_many           uintptr
+	vdso_mx_object_wait_one            uintptr
+	vdso_mx_object_wait_many           uintptr
+	vdso_mx_object_wait_async          uintptr
 	vdso_mx_object_signal              uintptr
 	vdso_mx_object_signal_peer         uintptr
 	vdso_mx_object_get_property        uintptr
@@ -286,13 +296,15 @@ var (
 	vdso_mx_cprng_draw                 uintptr
 	vdso_mx_cprng_add_entropy          uintptr
 	vdso_mx_fifo_create                uintptr
-	vdso_mx_fifo_op                    uintptr
+	vdso_mx_fifo_read                  uintptr
+	vdso_mx_fifo_write                 uintptr
 	vdso_mx_log_create                 uintptr
 	vdso_mx_log_write                  uintptr
 	vdso_mx_log_read                   uintptr
 	vdso_mx_ktrace_read                uintptr
 	vdso_mx_ktrace_control             uintptr
 	vdso_mx_ktrace_write               uintptr
+	vdso_mx_mtrace_control             uintptr
 	vdso_mx_debug_transfer_handle      uintptr
 	vdso_mx_debug_read                 uintptr
 	vdso_mx_debug_write                uintptr
@@ -361,6 +373,10 @@ func Sys_version_get(version *uint8, version_len uint32) Status
 
 //go:noescape
 //go:nosplit
+func Sys_cache_flush(addr unsafe.Pointer, len uint, flags uint32) Status
+
+//go:noescape
+//go:nosplit
 func sys_handle_close(handle Handle) Status
 
 //go:noescape
@@ -373,11 +389,15 @@ func Sys_handle_replace(handle Handle, rights Rights, out *Handle) Status
 
 //go:noescape
 //go:nosplit
-func sys_handle_wait_one(handle Handle, waitfor Signals, timeout Time, observed *Signals) Status
+func sys_object_wait_one(handle Handle, waitfor Signals, timeout Time, observed *Signals) Status
 
 //go:noescape
 //go:nosplit
-func sys_handle_wait_many(items *WaitItem, count uint32, timeout Time) Status
+func sys_object_wait_many(items *WaitItem, count uint32, timeout Time) Status
+
+//go:noescape
+//go:nosplit
+func Sys_object_wait_async(handle Handle, port_handle Handle, key uint64, signals Signals, options uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -573,11 +593,15 @@ func Sys_cprng_add_entropy(buffer unsafe.Pointer, len uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_fifo_create(count uint64, out *Handle) Status
+func Sys_fifo_create(elem_count uint32, elem_size uint32, options uint32, out0 *Handle, out1 *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_fifo_op(handle Handle, op uint32, val uint64, out *FIFOState) Status
+func Sys_fifo_read(handle Handle, data unsafe.Pointer, len uint, num_written *uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_fifo_write(handle Handle, data unsafe.Pointer, len uint, num_written *uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -602,6 +626,10 @@ func Sys_ktrace_control(handle Handle, action uint32, options uint32, ptr unsafe
 //go:noescape
 //go:nosplit
 func Sys_ktrace_write(handle Handle, id uint32, arg0 uint32, arg1 uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_mtrace_control(handle Handle, kind uint32, action uint32, options uint32, ptr unsafe.Pointer, size uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -645,7 +673,7 @@ func Sys_io_mapping_get_info(handle Handle, out_vaddr *uintptr, out_size *uint64
 
 //go:noescape
 //go:nosplit
-func Sys_vmo_create_contiguous(rsrc_handle Handle, size uint, out *Handle) Status
+func Sys_vmo_create_contiguous(rsrc_handle Handle, size uint, alignment_log2 uint32, out *Handle) Status
 
 //go:noescape
 //go:nosplit

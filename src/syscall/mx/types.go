@@ -268,13 +268,10 @@ const (
 	SignalResourceChildAdded = SignalObject2
 
 	// Fifo
-	SignalFIFOEmpty             = SignalObject0
-	SignalFIFOFull              = SignalObject1
-	SignalFIFONotEmpty          = SignalObject2
-	SignalFIFONotFull           = SignalObject3
-	SignalFIFOProducerException = SignalObject4
-	SignalFIFOConsumerException = SignalObject5
-	SignalFIFOSignalMask        = SignalFIFOEmpty | SignalFIFOFull | SignalFIFONotEmpty | SignalFIFONotFull | SignalFIFOProducerException | SignalFIFOConsumerException
+	SignalFIFOReadable   = SignalObject0
+	SignalFIFOWritable   = SignalObject1
+	SignalFIFOPeerClosed = SignalObject2
+	SignalFIFOSignalMask = SignalFIFOReadable | SignalFIFOWritable | SignalFIFOPeerClosed
 
 	// Waitset
 	SignalWaitSetReadable   = SignalObject0

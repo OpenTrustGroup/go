@@ -53,6 +53,16 @@ TEXT ·Sys_version_get(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
+// func Sys_cache_flush(addr unsafe.Pointer, len uint, flags uint32) Status
+TEXT ·Sys_cache_flush(SB),NOSPLIT,$0-28
+	MOVQ addr+0(FP), DI
+	MOVQ len+8(FP), SI
+	MOVL flags+16(FP), DX
+	MOVQ vdso_mx_cache_flush(SB), AX
+	CALL AX
+	MOVL AX, ret+24(FP)
+	RET
+
 // func sys_handle_close(handle Handle) Status
 TEXT ·sys_handle_close(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
@@ -81,29 +91,41 @@ TEXT ·Sys_handle_replace(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func sys_handle_wait_one(handle Handle, waitfor Signals, timeout Time, observed *Signals) Status
-TEXT ·sys_handle_wait_one(SB),NOSPLIT,$0-28
+// func sys_object_wait_one(handle Handle, waitfor Signals, timeout Time, observed *Signals) Status
+TEXT ·sys_object_wait_one(SB),NOSPLIT,$0-28
 	CALL runtime·entersyscall(SB)
 	MOVL handle+0(FP), DI
 	MOVL waitfor+4(FP), SI
 	MOVQ timeout+8(FP), DX
 	MOVQ observed+16(FP), CX
-	MOVQ vdso_mx_handle_wait_one(SB), AX
+	MOVQ vdso_mx_object_wait_one(SB), AX
 	CALL AX
 	MOVL AX, ret+24(FP)
 	CALL runtime·exitsyscall(SB)
 	RET
 
-// func sys_handle_wait_many(items *WaitItem, count uint32, timeout Time) Status
-TEXT ·sys_handle_wait_many(SB),NOSPLIT,$0-28
+// func sys_object_wait_many(items *WaitItem, count uint32, timeout Time) Status
+TEXT ·sys_object_wait_many(SB),NOSPLIT,$0-28
 	CALL runtime·entersyscall(SB)
 	MOVQ items+0(FP), DI
 	MOVL count+8(FP), SI
 	MOVQ timeout+16(FP), DX
-	MOVQ vdso_mx_handle_wait_many(SB), AX
+	MOVQ vdso_mx_object_wait_many(SB), AX
 	CALL AX
 	MOVL AX, ret+24(FP)
 	CALL runtime·exitsyscall(SB)
+	RET
+
+// func Sys_object_wait_async(handle Handle, port_handle Handle, key uint64, signals Signals, options uint32) Status
+TEXT ·Sys_object_wait_async(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVL port_handle+4(FP), SI
+	MOVQ key+8(FP), DX
+	MOVL signals+16(FP), CX
+	MOVL options+20(FP), R8
+	MOVQ vdso_mx_object_wait_async(SB), AX
+	CALL AX
+	MOVL AX, ret+24(FP)
 	RET
 
 // func Sys_object_signal(handle Handle, clear_mask uint32, set_mask uint32) Status
@@ -637,24 +659,38 @@ TEXT ·Sys_cprng_add_entropy(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_fifo_create(count uint64, out *Handle) Status
-TEXT ·Sys_fifo_create(SB),NOSPLIT,$0-20
-	MOVQ count+0(FP), DI
-	MOVQ out+8(FP), SI
+// func Sys_fifo_create(elem_count uint32, elem_size uint32, options uint32, out0 *Handle, out1 *Handle) Status
+TEXT ·Sys_fifo_create(SB),NOSPLIT,$0-36
+	MOVL elem_count+0(FP), DI
+	MOVL elem_size+4(FP), SI
+	MOVL options+8(FP), DX
+	MOVQ out0+16(FP), CX
+	MOVQ out1+24(FP), R8
 	MOVQ vdso_mx_fifo_create(SB), AX
 	CALL AX
-	MOVL AX, ret+16(FP)
+	MOVL AX, ret+32(FP)
 	RET
 
-// func Sys_fifo_op(handle Handle, op uint32, val uint64, out *FIFOState) Status
-TEXT ·Sys_fifo_op(SB),NOSPLIT,$0-28
+// func Sys_fifo_read(handle Handle, data unsafe.Pointer, len uint, num_written *uint32) Status
+TEXT ·Sys_fifo_read(SB),NOSPLIT,$0-36
 	MOVL handle+0(FP), DI
-	MOVL op+4(FP), SI
-	MOVQ val+8(FP), DX
-	MOVQ out+16(FP), CX
-	MOVQ vdso_mx_fifo_op(SB), AX
+	MOVQ data+8(FP), SI
+	MOVQ len+16(FP), DX
+	MOVQ num_written+24(FP), CX
+	MOVQ vdso_mx_fifo_read(SB), AX
 	CALL AX
-	MOVL AX, ret+24(FP)
+	MOVL AX, ret+32(FP)
+	RET
+
+// func Sys_fifo_write(handle Handle, data unsafe.Pointer, len uint, num_written *uint32) Status
+TEXT ·Sys_fifo_write(SB),NOSPLIT,$0-36
+	MOVL handle+0(FP), DI
+	MOVQ data+8(FP), SI
+	MOVQ len+16(FP), DX
+	MOVQ num_written+24(FP), CX
+	MOVQ vdso_mx_fifo_write(SB), AX
+	CALL AX
+	MOVL AX, ret+32(FP)
 	RET
 
 // func Sys_log_create(options uint32, out *Handle) Status
@@ -720,6 +756,19 @@ TEXT ·Sys_ktrace_write(SB),NOSPLIT,$0-20
 	MOVQ vdso_mx_ktrace_write(SB), AX
 	CALL AX
 	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_mtrace_control(handle Handle, kind uint32, action uint32, options uint32, ptr unsafe.Pointer, size uint32) Status
+TEXT ·Sys_mtrace_control(SB),NOSPLIT,$0-36
+	MOVL handle+0(FP), DI
+	MOVL kind+4(FP), SI
+	MOVL action+8(FP), DX
+	MOVL options+12(FP), CX
+	MOVQ ptr+16(FP), R8
+	MOVL size+24(FP), R9
+	MOVQ vdso_mx_mtrace_control(SB), AX
+	CALL AX
+	MOVL AX, ret+32(FP)
 	RET
 
 // func Sys_debug_transfer_handle(proc Handle, handle Handle) Handle
@@ -818,14 +867,15 @@ TEXT ·Sys_io_mapping_get_info(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_vmo_create_contiguous(rsrc_handle Handle, size uint, out *Handle) Status
-TEXT ·Sys_vmo_create_contiguous(SB),NOSPLIT,$0-28
+// func Sys_vmo_create_contiguous(rsrc_handle Handle, size uint, alignment_log2 uint32, out *Handle) Status
+TEXT ·Sys_vmo_create_contiguous(SB),NOSPLIT,$0-36
 	MOVL rsrc_handle+0(FP), DI
 	MOVQ size+8(FP), SI
-	MOVQ out+16(FP), DX
+	MOVL alignment_log2+16(FP), DX
+	MOVQ out+24(FP), CX
 	MOVQ vdso_mx_vmo_create_contiguous(SB), AX
 	CALL AX
-	MOVL AX, ret+24(FP)
+	MOVL AX, ret+32(FP)
 	RET
 
 // func Sys_vmar_allocate(parent_vmar_handle Handle, offset uint, size uint, flags uint32, child_vmar *Handle, child_addr *uintptr) Status

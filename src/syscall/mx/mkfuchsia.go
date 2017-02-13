@@ -154,8 +154,8 @@ var arm64RegArgs = []string{"R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7"}
 // blockingSyscalls is a map of known syscalls which may block.
 var blockingSyscalls = map[string]bool{
 	"port_wait":        true,
-	"handle_wait_one":  true,
-	"handle_wait_many": true,
+	"object_wait_one":  true,
+	"object_wait_many": true,
 	"waitset_wait":     true,
 }
 
@@ -688,8 +688,8 @@ func (call magentaSyscallDef) exported() bool {
 	switch call.name {
 	case "handle_close",
 		"handle_duplicate",
-		"handle_wait_one",
-		"handle_wait_many",
+		"object_wait_one",
+		"object_wait_many",
 		"channel_create",
 		"channel_read",
 		"channel_write",

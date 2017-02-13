@@ -85,7 +85,7 @@ func (h Handle) Duplicate(rights Rights) (Handle, error) {
 }
 
 func (h Handle) WaitOne(waitFor Signals, timeout Time) (observed Signals, err error) {
-	if status := sys_handle_wait_one(h, waitFor, timeout, &observed); status != ErrOk {
+	if status := sys_object_wait_one(h, waitFor, timeout, &observed); status != ErrOk {
 		return observed, status
 	}
 	return observed, nil
@@ -99,7 +99,7 @@ func (h Handle) SignalPeer(clearMask, setMask Signals) error {
 }
 
 func WaitMany(items []WaitItem, timeout Time) error {
-	if status := sys_handle_wait_many(&items[0], uint32(len(items)), timeout); status != ErrOk {
+	if status := sys_object_wait_many(&items[0], uint32(len(items)), timeout); status != ErrOk {
 		return status
 	}
 	return nil
