@@ -18,7 +18,7 @@ import (
 // RemoteIO is an object which manages file-like operations on a remote object, accessible through a
 // handle.
 type RemoteIO struct {
-	h    *mx.Channel // Message pipe handle for the RPC
+	h    *mx.Channel // Channel handle for the RPC
 	e    mx.Handle   // Event handle for device state signals
 	txid uint32      // Transaction ID used for synchronous remoteio calls
 }
