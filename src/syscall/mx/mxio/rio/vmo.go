@@ -90,8 +90,8 @@ func (f *VMOFile) Open(path string, flags int32, mode uint32) (mxio.MXIO, error)
 func (f *VMOFile) Clone() ([]mx.Handle, error) {
 	return nil, mx.ErrNotSupported
 }
-func (f *VMOFile) Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error) {
-	return nil, nil, mx.ErrNotSupported
+func (f *VMOFile) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
+	return nil, mx.ErrNotSupported
 }
 func (f *VMOFile) IoctlSetHandle(op uint32, in mx.Handle) error {
 	return mx.ErrNotSupported

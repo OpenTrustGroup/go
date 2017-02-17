@@ -113,8 +113,8 @@ func (f *Pipe) Clone() ([]mx.Handle, error) {
 	return []mx.Handle{h}, nil
 }
 
-func (f *Pipe) Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error) {
-	return nil, nil, mx.ErrNotSupported
+func (f *Pipe) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
+	return nil, mx.ErrNotSupported
 }
 func (f *Pipe) IoctlSetHandle(op uint32, in mx.Handle) error {
 	return mx.ErrNotSupported

@@ -23,7 +23,7 @@ type MXIO interface {
 	Close() error
 	Open(path string, flags int32, mode uint32) (MXIO, error)
 	Clone() ([]mx.Handle, error) // TODO(smklein): Pass type back from Clone
-	Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error)
+	Ioctl(op uint32, in, out []byte) ([]mx.Handle, error)
 	IoctlSetHandle(op uint32, in mx.Handle) error
 	Misc(op uint32, off int64, in, out []byte) (n int, err error)
 	// TODO(smklein): Add missing ops, like "Wait"

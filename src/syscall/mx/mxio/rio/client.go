@@ -302,66 +302,72 @@ func (r *RemoteIO) IoctlSetHandle(op uint32, in mx.Handle) error {
 	return nil
 }
 
-func (r *RemoteIO) Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error) {
+func (r *RemoteIO) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
 	var msg Msg
 	if len(in) > mxio.IoctlMaxInput {
-		return nil, nil, mx.ErrInvalidArgs
+		return nil, mx.ErrInvalidArgs
 	}
 	msg.SetOp(OpIoctl)
 	msg.Datalen = uint32(len(in))
-	msg.Arg = MessageChunkSize
+	const handleSize = uint32(unsafe.Sizeof(mx.Handle(0)))
+	switch mxio.IoctlKind(op) {
+	case mxio.IoctlKindGetHandle:
+		msg.Arg = int32(handleSize)
+	case mxio.IoctlKindGetTwoHandles:
+		msg.Arg = int32(2 * handleSize)
+	case mxio.IoctlKindGetThreeHandles:
+		msg.Arg = int32(3 * handleSize)
+	}
+	msg.Arg += int32(len(out))
 	msg.SetIoctlOp(op)
 	copy(msg.Data[:], in)
 
 	_, err := r.txn(&msg)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	const handleSize = uint32(unsafe.Sizeof(mx.Handle(0)))
 	switch mxio.IoctlKind(op) {
 	case mxio.IoctlKindGetHandle:
 		if msg.Hcount < 1 {
-			return nil, nil, nil
+			return nil, nil
 		}
-		out := []mx.Handle{msg.Handle[0]}
+		outh := []mx.Handle{msg.Handle[0]}
 		msg.Handle[0] = 0
 		msg.DiscardHandles()
-		var data []byte
 		if msg.Datalen > handleSize {
-			data = msg.Data[handleSize:msg.Datalen]
+			copy(out, msg.Data[handleSize:msg.Datalen])
 		}
-		return data, out, nil
+		return outh, nil
 	case mxio.IoctlKindGetTwoHandles:
 		if msg.Hcount < 2 {
-			return nil, nil, nil
+			return nil, nil
 		}
-		out := []mx.Handle{msg.Handle[0], msg.Handle[1]}
+		outh := []mx.Handle{msg.Handle[0], msg.Handle[1]}
 		msg.Handle[0] = 0
 		msg.Handle[1] = 0
 		msg.DiscardHandles()
-		var data []byte
 		if msg.Datalen > 2*handleSize {
-			data = msg.Data[2*handleSize : msg.Datalen]
+			copy(out, msg.Data[2*handleSize:msg.Datalen])
 		}
-		return data, out, nil
+		return outh, nil
 	case mxio.IoctlKindGetThreeHandles:
 		if msg.Hcount < 3 {
-			return nil, nil, nil
+			return nil, nil
 		}
-		out := []mx.Handle{msg.Handle[0], msg.Handle[1], msg.Handle[2]}
+		outh := []mx.Handle{msg.Handle[0], msg.Handle[1], msg.Handle[2]}
 		msg.Handle[0] = 0
 		msg.Handle[1] = 0
 		msg.Handle[2] = 0
 		msg.DiscardHandles()
-		var data []byte
 		if msg.Datalen > 3*handleSize {
-			data = msg.Data[3*handleSize : msg.Datalen]
+			copy(out, msg.Data[3*handleSize:msg.Datalen])
 		}
-		return data, out, nil
+		return outh, nil
 	default:
 		msg.DiscardHandles()
-		return msg.Data[:msg.Datalen], nil, nil
+		copy(out, msg.Data[:msg.Datalen])
+		return nil, nil
 	}
 }
 

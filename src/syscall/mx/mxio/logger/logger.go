@@ -74,8 +74,8 @@ func (f *Logger) Clone() ([]mx.Handle, error) {
 	return []mx.Handle{h}, nil
 }
 
-func (f *Logger) Ioctl(op uint32, in []byte) ([]byte, []mx.Handle, error) {
-	return nil, nil, mx.ErrNotSupported
+func (f *Logger) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
+	return nil, mx.ErrNotSupported
 }
 func (f *Logger) IoctlSetHandle(op uint32, in mx.Handle) error {
 	return mx.ErrNotSupported

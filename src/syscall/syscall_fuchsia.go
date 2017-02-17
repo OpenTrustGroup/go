@@ -413,11 +413,11 @@ func OpenMXIO(f mxio.MXIO) (fd int) {
 	return i + fdsOff
 }
 
-func Ioctl(fd int, op uint32, in []byte) ([]byte, []mx.Handle, error) {
+func Ioctl(fd int, op uint32, in, out []byte) ([]mx.Handle, error) {
 	fdsMu.Lock()
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
-	return f.Ioctl(op, in)
+	return f.Ioctl(op, in, out)
 }
 
 func IoctlSetHandle(fd int, op uint32, in mx.Handle) error {
@@ -547,7 +547,10 @@ func Readdirnames(fd int, max int) (names []string, err error) {
 	fdsMu.Lock()
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
+	return readdirnames(f, max)
+}
 
+func readdirnames(f mxio.MXIO, max int) (names []string, err error) {
 	const dirBufsize = rio.MessageChunkSize
 	var bufback [dirBufsize]byte
 
