@@ -24,6 +24,16 @@ import (
 	"unsafe"
 )
 
+const (
+	LaunchpadCloneMxioRoot   = 1
+	LaunchpadCloneMxioCwd    = 2
+	LaunchpadCloneMxioStdio  = 4
+	LaunchpadCloneMxioAll    = 0xff
+	LaunchpadCloneEnviron    = 0x100
+	LaunchpadCloneDefaultJob = 0x200
+	LaunchpadCloneAll        = 0xffff
+)
+
 func makeCStringArray(s []string) []*C.char {
 	ret := make([]*C.char, len(s)+1)
 	for i, s := range s {
@@ -158,15 +168,15 @@ func launchpadLaunchMxio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 	if status != mx.ErrOk {
 		return 0, errors.New("loading vdso")
 	}
-	status = mx.Status(C.launchpad_arguments(lp, C.int(len(argvC)-1), &(argvC[0])))
+	status = mx.Status(C.launchpad_set_args(lp, C.int(len(argvC)-1), &(argvC[0])))
 	if status != mx.ErrOk {
 		return 0, errors.New("arguments")
 	}
-	status = mx.Status(C.launchpad_environ(lp, &(envC[0])))
+	status = mx.Status(C.launchpad_set_environ(lp, &(envC[0])))
 	if status != mx.ErrOk {
 		return 0, errors.New("environ")
 	}
-	status = mx.Status(C.launchpad_clone_mxio_root(lp))
+	status = mx.Status(C.launchpad_clone(lp, C.uint32_t(LaunchpadCloneMxioRoot)))
 	if status != mx.ErrOk {
 		return 0, errors.New("clone_mxio_root")
 	}
@@ -176,7 +186,7 @@ func launchpadLaunchMxio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 			return 0, err
 		}
 	} else {
-		status = mx.Status(C.launchpad_clone_mxio_cwd(lp)) // TODO: Go to Attr.Dir
+		status = mx.Status(C.launchpad_clone(lp, C.uint32_t(LaunchpadCloneMxioCwd))) // TODO: Go to Attr.Dir
 		if status != mx.ErrOk {
 			return 0, errors.New("clone_mxio_cwd")
 		}
