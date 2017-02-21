@@ -322,3 +322,18 @@ func RandRead(b []byte) (n int, err error) {
 	}
 	return int(actual), nil
 }
+
+// Error is a Status with associated error text.
+// It is used as a Go error.
+type Error struct {
+	Status Status
+	Text   string
+}
+
+func (e Error) Error() string {
+	if e.Text == "" {
+		// TODO: make mx.Status no longer an error
+		return "mx.Status: " + e.Status.Error()
+	}
+	return e.Status.Error() + ": " + e.Text
+}
