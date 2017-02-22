@@ -121,7 +121,7 @@ func (ro *RioObject) Read(h mx.Handle, flags uint32) mx.Status {
 	numBytes, numHandles, err := c.Read(msgBytes[:], ro.Handle[:], flags)
 	c.Close()
 	if err != nil {
-		return err.(mx.Status)
+		return err.(mx.Error).Status
 	} else if numBytes < RioObjectMinSize {
 		ro.DiscardHandles()
 		return mx.ErrIO
@@ -154,7 +154,7 @@ func IndirectError(h mx.Handle, status mx.Status) mx.Status {
 	}
 	ro.Write(h, 0)
 	h.Close()
-	return dispatcher.ErrIndirect
+	return dispatcher.ErrIndirect.Status
 }
 
 type MsgHeader struct {

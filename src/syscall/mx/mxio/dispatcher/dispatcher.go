@@ -47,15 +47,15 @@ type Dispatcher struct {
 }
 
 // Custom dispatcher errors
-const (
+var (
 	// If returned from dispatcher callback, indicates that the dispatcher should immediately
 	// disconnect with no additional callbacks.
-	ErrDisconnectNoCallback = mx.Status(1)
+	ErrDisconnectNoCallback = mx.Error{Status: 1, Text: "mxio.Dispatcher"}
 	// If returned from dispatcher callback, indicates that there are no more messages to read.
-	ErrNoWork = mx.Status(-9999)
+	ErrNoWork = mx.Error{Status: -9999, Text: "mxio.Dispatcher.NoWork"}
 	// If returned from dispatcher callback, indicates that the message was handed to another
 	// server.
-	ErrIndirect = mx.Status(-9998)
+	ErrIndirect = mx.Error{Status: -9998, Text: "mxio.Dispatcher.Indirect"}
 )
 
 // New creates a new dispatcher.

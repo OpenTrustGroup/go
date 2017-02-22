@@ -158,7 +158,7 @@ const (
 	ErrBadSyscall
 	ErrBadHandle
 	ErrOutOfRange
-	ErrNotEnoughBuffer
+	ErrBufferTooSmall
 	ErrAlreadyExists
 	ErrAlreadyBound
 	_ // -17

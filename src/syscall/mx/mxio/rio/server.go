@@ -35,20 +35,20 @@ func Handler(h mx.Handle, cb interface{}, cookie int64) error {
 	msg.Hcount = MessageMaxHandles
 	numBytes, _, err := msg.ReadMsg(&mx.Channel{h}) // TODO: take *mx.Channel as arugment
 	if err != nil {
-		if err == mx.ErrBadState {
+		if mxerr, hasStatus := err.(mx.Error); hasStatus && mxerr.Status == mx.ErrBadState {
 			return dispatcher.ErrNoWork
 		}
 		return err
 	}
 	if !msg.IsValidIncoming(numBytes) {
 		msg.DiscardHandles()
-		return mx.ErrInvalidArgs
+		return mx.Error{Status: mx.ErrInvalidArgs, Text: "rio.Handler"}
 	}
 
 	isClose := (msg.Op() == OpClose)
 	status := serverCb(&msg, h, cookie)
 	msg.Arg = int32(status)
-	if mx.Status(msg.Arg) == dispatcher.ErrIndirect {
+	if mx.Status(msg.Arg) == dispatcher.ErrIndirect.Status {
 		// The callback is handling the reply itself
 		return nil
 	} else if status < 0 || !msg.IsValid() {
@@ -84,6 +84,6 @@ func TxnHandoff(srv *mx.Channel, reply mx.Handle, msg *Msg) {
 	if !msg.IsValid() {
 		IndirectError(reply, mx.ErrInvalidArgs)
 	} else if err := msg.WriteMsg(srv); err != nil {
-		IndirectError(reply, err.(mx.Status))
+		IndirectError(reply, err.(mx.Error).Status)
 	}
 }

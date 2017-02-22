@@ -51,11 +51,11 @@ func (f *VMOFile) ReadAt(data []byte, off int64) (int, error) {
 }
 
 func (f *VMOFile) Write(data []byte) (int, error) {
-	return 0, mx.ErrNotSupported
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "rio.VMOFile"}
 }
 
 func (f *VMOFile) WriteAt(data []byte, off int64) (int, error) {
-	return 0, mx.ErrNotSupported
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "rio.VMOFile"}
 }
 
 func (f *VMOFile) Seek(offset int64, whence int) (int64, error) {
@@ -70,7 +70,7 @@ func (f *VMOFile) Seek(offset int64, whence int) (int64, error) {
 	}
 
 	if at > f.end-f.off {
-		return 0, mx.ErrOutOfRange
+		return 0, mx.Error{Status: mx.ErrOutOfRange, Text: "rio.VMOFile"}
 	}
 	f.at = f.off + at
 	return at, nil
@@ -85,16 +85,16 @@ func (f *VMOFile) Close() error {
 }
 
 func (f *VMOFile) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
-	return nil, mx.ErrNotSupported
+	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "rio.VMOFile"}
 }
 func (f *VMOFile) Clone() ([]mx.Handle, error) {
-	return nil, mx.ErrNotSupported
+	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "rio.VMOFile"}
 }
 func (f *VMOFile) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
-	return nil, mx.ErrNotSupported
+	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "rio.VMOFile"}
 }
 func (f *VMOFile) IoctlSetHandle(op uint32, in mx.Handle) error {
-	return mx.ErrNotSupported
+	return mx.Error{Status: mx.ErrNotSupported, Text: "rio.VMOFile"}
 }
 
 func (f *VMOFile) Misc(op uint32, off int64, in, out []byte) (n int, err error) {
@@ -105,11 +105,11 @@ func (f *VMOFile) Misc(op uint32, off int64, in, out []byte) (n int, err error) 
 			Mode: mxio.VtypeFile | mxio.VtypeIRUSR,
 		}
 		if unsafe.Sizeof(attr) > uintptr(len(out)) {
-			return 0, mx.ErrInvalidArgs
+			return 0, mx.Error{Status: mx.ErrInvalidArgs, Text: "rio.VMOFile"}
 		}
 		*(*mxio.Vnattr)(unsafe.Pointer(&out[0])) = attr
 		return int(unsafe.Sizeof(attr)), nil
 	default:
-		return 0, mx.ErrInvalidArgs
+		return 0, mx.Error{Status: mx.ErrInvalidArgs, Text: "rio.VMOFile"}
 	}
 }

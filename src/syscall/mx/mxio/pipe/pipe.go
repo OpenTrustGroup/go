@@ -33,10 +33,14 @@ func (f *Pipe) Read(data []byte) (n int, err error) {
 		if err == nil {
 			return n, nil
 		}
-		if err == mx.ErrRemoteClosed {
-			return 0, mx.EOF
+		mxerr, ok := err.(mx.Error)
+		if !ok {
+			return n, err
 		}
-		if err == mx.ErrShouldWait {
+		switch mxerr.Status {
+		case mx.ErrRemoteClosed:
+			return 0, mx.EOF
+		case mx.ErrShouldWait:
 			pending, err := f.s.WaitOne(mx.SignalSocketReadable|mx.SignalSocketPeerClosed, mx.TimensecInfinite)
 			if err != nil {
 				return 0, err
@@ -48,7 +52,7 @@ func (f *Pipe) Read(data []byte) (n int, err error) {
 				return 0, mx.EOF
 			}
 			// impossible
-			return 0, mx.ErrInternal
+			return 0, mx.Error{Status: mx.ErrInternal, Text: "mxio.Pipe"}
 		}
 		return 0, err
 	}
@@ -60,10 +64,15 @@ func (f *Pipe) Write(data []byte) (n int, err error) {
 		if err == nil {
 			return n, nil
 		}
-		if err == mx.ErrRemoteClosed {
-			return 0, mx.EPIPE
+		mxerr, ok := err.(mx.Error)
+		if !ok {
+			return n, err
 		}
-		if err == mx.ErrShouldWait {
+		switch mxerr.Status {
+		case mx.ErrRemoteClosed:
+			return 0, mx.EOF
+			return 0, mx.EPIPE
+		case mx.ErrShouldWait:
 			pending, err := f.s.WaitOne(mx.SignalSocketWritable|mx.SignalSocketPeerClosed, mx.TimensecInfinite)
 			if err != nil {
 				return 0, err
@@ -75,22 +84,22 @@ func (f *Pipe) Write(data []byte) (n int, err error) {
 				return 0, mx.EPIPE
 			}
 			// impossible
-			return 0, mx.ErrInternal
+			return 0, mx.Error{Status: mx.ErrInternal, Text: "mxio.Pipe"}
 		}
 		return 0, err
 	}
 }
 
 func (f *Pipe) ReadAt(data []byte, off int64) (int, error) {
-	return 0, mx.ErrNotSupported
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
 }
 
 func (f *Pipe) WriteAt(data []byte, off int64) (int, error) {
-	return 0, mx.ErrNotSupported
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
 }
 
 func (f *Pipe) Seek(offset int64, whence int) (int64, error) {
-	return 0, mx.ErrNotSupported
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
 }
 
 func (f *Pipe) Close() error {
@@ -102,7 +111,7 @@ func (f *Pipe) Close() error {
 }
 
 func (f *Pipe) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
-	return nil, mx.ErrNotSupported
+	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
 }
 
 func (f *Pipe) Clone() ([]mx.Handle, error) {
@@ -114,12 +123,12 @@ func (f *Pipe) Clone() ([]mx.Handle, error) {
 }
 
 func (f *Pipe) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
-	return nil, mx.ErrNotSupported
+	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
 }
 func (f *Pipe) IoctlSetHandle(op uint32, in mx.Handle) error {
-	return mx.ErrNotSupported
+	return mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
 }
 
 func (f *Pipe) Misc(op uint32, off int64, in, out []byte) (n int, err error) {
-	return 0, mx.ErrNotSupported
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
 }

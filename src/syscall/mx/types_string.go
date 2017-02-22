@@ -5,51 +5,46 @@
 package mx
 
 const (
-	_Status_name_0 = "ErrWrongType"
-	_Status_name_1 = "ErrNotFileErrNotDirErrBadPath"
-	_Status_name_2 = "ErrIODataLossErrIODataIntegrityErrIORefusedErrIO"
-	_Status_name_3 = "ErrAccessDenied"
-	_Status_name_4 = "ErrShouldWaitErrUnavailableErrRemoteClosedErrHandleClosedErrTimedOut"
-	_Status_name_5 = "ErrBadState"
-	_Status_name_6 = "ErrAlreadyBoundErrAlreadyExistsErrNotEnoughBufferErrOutOfRangeErrBadHandleErrBadSyscallErrInvalidArgs"
-	_Status_name_7 = "ErrNoResourcesErrNoMemoryErrNotFoundErrNotSupportedErrInternalErrOk"
+	_Status_name_0 = "ErrWrongTypeErrCallFailedErrNotFileErrNotDirErrBadPath"
+	_Status_name_1 = "ErrIODataLossErrIODataIntegrityErrIORefusedErrIO"
+	_Status_name_2 = "ErrAccessDenied"
+	_Status_name_3 = "ErrShouldWaitErrUnavailableErrRemoteClosedErrHandleClosedErrTimedOut"
+	_Status_name_4 = "ErrBadState"
+	_Status_name_5 = "ErrAlreadyBoundErrAlreadyExistsErrBufferTooSmallErrOutOfRangeErrBadHandleErrBadSyscallErrInvalidArgs"
+	_Status_name_6 = "ErrNoResourcesErrNoMemoryErrNotFoundErrNotSupportedErrInternalErrOk"
 )
 
 var (
-	_Status_index_0 = [...]uint8{0, 12}
-	_Status_index_1 = [...]uint8{0, 10, 19, 29}
-	_Status_index_2 = [...]uint8{0, 13, 31, 43, 48}
-	_Status_index_3 = [...]uint8{0, 15}
-	_Status_index_4 = [...]uint8{0, 13, 27, 42, 57, 68}
-	_Status_index_5 = [...]uint8{0, 11}
-	_Status_index_6 = [...]uint8{0, 15, 31, 49, 62, 74, 87, 101}
-	_Status_index_7 = [...]uint8{0, 14, 25, 36, 51, 62, 67}
+	_Status_index_0 = [...]uint8{0, 12, 25, 35, 44, 54}
+	_Status_index_1 = [...]uint8{0, 13, 31, 43, 48}
+	_Status_index_2 = [...]uint8{0, 15}
+	_Status_index_3 = [...]uint8{0, 13, 27, 42, 57, 68}
+	_Status_index_4 = [...]uint8{0, 11}
+	_Status_index_5 = [...]uint8{0, 15, 31, 48, 61, 73, 86, 100}
+	_Status_index_6 = [...]uint8{0, 14, 25, 36, 51, 62, 67}
 )
 
-// Allow conversion from status to error
-func (i Status) Error() string {
+func (i Status) String() string {
 	switch {
-	case i == -54:
-		return _Status_name_0
-	case -52 <= i && i <= -50:
-		i -= -52
-		return _Status_name_1[_Status_index_1[i]:_Status_index_1[i+1]]
+	case -54 <= i && i <= -50:
+		i -= -54
+		return _Status_name_0[_Status_index_0[i]:_Status_index_0[i+1]]
 	case -43 <= i && i <= -40:
 		i -= -43
-		return _Status_name_2[_Status_index_2[i]:_Status_index_2[i+1]]
+		return _Status_name_1[_Status_index_1[i]:_Status_index_1[i+1]]
 	case i == -30:
-		return _Status_name_3
+		return _Status_name_2
 	case -27 <= i && i <= -23:
 		i -= -27
-		return _Status_name_4[_Status_index_4[i]:_Status_index_4[i+1]]
+		return _Status_name_3[_Status_index_3[i]:_Status_index_3[i+1]]
 	case i == -20:
-		return _Status_name_5
+		return _Status_name_4
 	case -16 <= i && i <= -10:
 		i -= -16
-		return _Status_name_6[_Status_index_6[i]:_Status_index_6[i+1]]
+		return _Status_name_5[_Status_index_5[i]:_Status_index_5[i+1]]
 	case -5 <= i && i <= 0:
 		i -= -5
-		return _Status_name_7[_Status_index_7[i]:_Status_index_7[i+1]]
+		return _Status_name_6[_Status_index_6[i]:_Status_index_6[i+1]]
 	default:
 		var buf [20]byte
 		return "mx.Status(" + string(itoa(buf[:], int(i))) + ")"

@@ -38,7 +38,7 @@ func (s Socket) Read(data []byte, flags uint32) (n int, err error) {
 	var actual uint
 	status := sys_socket_read(Handle(s), 0, unsafe.Pointer(&data[0]), uint(len(data)), &actual)
 	if status != ErrOk {
-		return int(actual), status
+		return int(actual), Error{Status: status, Text: "mx.Socket.Read"}
 	}
 	return int(actual), nil
 }
@@ -51,7 +51,7 @@ func (s Socket) Write(data []byte, flags uint32) (n int, err error) {
 	var actual uint
 	status := sys_socket_write(Handle(s), flags, p, uint(len(data)), &actual)
 	if status != ErrOk {
-		return int(actual), status
+		return int(actual), Error{Status: status, Text: "mx.Socket.Write"}
 	}
 	return int(actual), nil
 }
@@ -64,14 +64,14 @@ func (s Socket) WaitOne(waitFor Signals, timeout Time) (Signals, error) {
 func NewSocket(flags uint32) (s0, s1 Socket, err error) {
 	var h0, h1 Handle
 	if status := sys_socket_create(flags, &h0, &h1); status != ErrOk {
-		return 0, 0, status
+		return 0, 0, Error{Status: status, Text: "mx.Socket"}
 	}
 	return Socket(h0), Socket(h1), nil
 }
 
 func (h Handle) Close() error {
 	if status := sys_handle_close(h); status != ErrOk {
-		return status
+		return Error{Status: status, Text: "mx.Handle.Close"}
 	}
 	return nil
 }
@@ -79,28 +79,28 @@ func (h Handle) Close() error {
 func (h Handle) Duplicate(rights Rights) (Handle, error) {
 	var dup Handle
 	if status := sys_handle_duplicate(h, rights, &dup); status != ErrOk {
-		return 0, status
+		return 0, Error{Status: status, Text: "mx.Handle.Duplicate"}
 	}
 	return dup, nil
 }
 
 func (h Handle) WaitOne(waitFor Signals, timeout Time) (observed Signals, err error) {
 	if status := sys_object_wait_one(h, waitFor, timeout, &observed); status != ErrOk {
-		return observed, status
+		return observed, Error{Status: status, Text: "mx.Handle.WaitOne"}
 	}
 	return observed, nil
 }
 
 func (h Handle) SignalPeer(clearMask, setMask Signals) error {
 	if status := Sys_object_signal_peer(h, uint32(clearMask), uint32(setMask)); status != ErrOk {
-		return status
+		return Error{Status: status, Text: "mx.Handle.SignalPeer"}
 	}
 	return nil
 }
 
 func WaitMany(items []WaitItem, timeout Time) error {
 	if status := sys_object_wait_many(&items[0], uint32(len(items)), timeout); status != ErrOk {
-		return status
+		return Error{Status: status, Text: "mx.Handle.WaitMany"}
 	}
 	return nil
 }
@@ -127,9 +127,9 @@ func (c *Channel) Read(data []byte, handles []Handle, flags uint32) (numBytes, n
 		handlePtr = &handles[0]
 	}
 	if status := sys_channel_read(c.Handle, flags, dataPtr, numBytes, &numBytes, handlePtr, numHandles, &numHandles); status != ErrOk {
-		err = status
+		err = Error{Status: status, Text: "mx.Channel.Read"}
 	}
-	return
+	return numBytes, numHandles, err
 }
 
 func (c *Channel) Write(data []byte, handles []Handle, flags uint32) error {
@@ -143,7 +143,7 @@ func (c *Channel) Write(data []byte, handles []Handle, flags uint32) error {
 	}
 	status := sys_channel_write(c.Handle, flags, dataPtr, uint32(len(data)), handlePtr, uint32(len(handles)))
 	if status != ErrOk {
-		return status
+		return Error{Status: status, Text: "mx.Channel.Write"}
 	}
 	return nil
 }
@@ -178,15 +178,15 @@ func (c *Channel) Call(flags uint32, timeout Time, wData []byte, wHandles []Hand
 
 	status := Sys_channel_call(c.Handle, flags, timeout, args, &actualBytes, &actualHandles, &actualStatus)
 	if status != ErrOk {
-		err = status
+		err = Error{Status: status, Text: "mx.Channel.Call"}
 	}
-	return
+	return actualBytes, actualHandles, actualStatus, err
 }
 
 func NewChannel(flags uint32) (c0, c1 *Channel, err error) {
 	c0, c1 = new(Channel), new(Channel)
 	if status := sys_channel_create(flags, &c0.Handle, &c1.Handle); status != ErrOk {
-		return nil, nil, status
+		return nil, nil, Error{Status: status, Text: "mx.Channel"}
 	}
 	return c0, c1, nil
 }
@@ -203,21 +203,21 @@ func (p *Port) Close() error {
 
 func (p *Port) Queue(packet []byte) error {
 	if status := Sys_port_queue(p.Handle, unsafe.Pointer(&packet[0]), uint(len(packet))); status != ErrOk {
-		return status
+		return Error{Status: status, Text: "mx.Port.Queue"}
 	}
 	return nil
 }
 
 func (p *Port) Wait(packet []byte, timeout Time) error {
 	if status := Sys_port_wait(p.Handle, timeout, unsafe.Pointer(&packet[0]), uint(len(packet))); status != ErrOk {
-		return status
+		return Error{Status: status, Text: "mx.Port.Wait"}
 	}
 	return nil
 }
 
 func (p *Port) Bind(key uint64, source Handle, signals Signals) error {
 	if status := Sys_port_bind(p.Handle, key, source, signals); status != ErrOk {
-		return status
+		return Error{Status: status, Text: "mx.Port.Bind"}
 	}
 	return nil
 }
@@ -225,7 +225,7 @@ func (p *Port) Bind(key uint64, source Handle, signals Signals) error {
 func NewPort(options uint32) (*Port, error) {
 	p := new(Port)
 	if status := Sys_port_create(options, &p.Handle); status != ErrOk {
-		return nil, status
+		return nil, Error{Status: status, Text: "mx.Port"}
 	}
 	return p, nil
 }
@@ -235,7 +235,7 @@ type VMO Handle
 func (vmo VMO) Read(b []byte, offset uint64) (n int, err error) {
 	var actual uint
 	if status := sys_vmo_read(Handle(vmo), unsafe.Pointer(&b[0]), offset, uint(len(b)), &actual); status != ErrOk {
-		return int(actual), status
+		return int(actual), Error{Status: status, Text: "mx.VMO.Read"}
 	}
 	return int(actual), nil
 }
@@ -243,7 +243,7 @@ func (vmo VMO) Read(b []byte, offset uint64) (n int, err error) {
 func (vmo VMO) Write(b []byte, offset uint64) (n int, err error) {
 	var actual uint
 	if status := sys_vmo_write(Handle(vmo), unsafe.Pointer(&b[0]), offset, uint(len(b)), &actual); status != ErrOk {
-		return int(actual), status
+		return int(actual), Error{Status: status, Text: "mx.VMO.Write"}
 	}
 	return int(actual), nil
 }
@@ -251,21 +251,21 @@ func (vmo VMO) Write(b []byte, offset uint64) (n int, err error) {
 func (vmo VMO) Size() (uint64, error) {
 	var size uint64
 	if status := sys_vmo_get_size(Handle(vmo), &size); status != ErrOk {
-		return size, status
+		return size, Error{Status: status, Text: "mx.VMO.Size"}
 	}
 	return size, nil
 }
 
 func (vmo VMO) SetSize(size uint64) error {
 	if status := sys_vmo_set_size(Handle(vmo), size); status != ErrOk {
-		return status
+		return Error{Status: status, Text: "mx.VMO.SetSize"}
 	}
 	return nil
 }
 
 func (vmo VMO) OpRange(op uint32, offset, size uint64, b []byte) error {
 	if status := sys_vmo_op_range(Handle(vmo), op, offset, size, unsafe.Pointer(&b[0]), uint(len(b))); status != ErrOk {
-		return status
+		return Error{Status: status, Text: "mx.VMO.OpRange"}
 	}
 	return nil
 }
@@ -277,7 +277,7 @@ func (vmo VMO) Close() error {
 func NewVMO(size uint64, options uint32) (VMO, error) {
 	var h Handle
 	if status := sys_vmo_create(size, options, &h); status != ErrOk {
-		return 0, status
+		return 0, Error{Status: status, Text: "mx.VMO"}
 	}
 	return VMO(h), nil
 }
@@ -298,7 +298,7 @@ func NewLog(options uint32) *Log {
 func (l *Log) Write(b []byte) (n int, err error) {
 	status := Sys_log_write(l.Handle, uint32(len(b)), unsafe.Pointer(&b[0]), 0)
 	if status != ErrOk {
-		return 0, status
+		return 0, Error{Status: status, Text: "mx.Log.Write"}
 	}
 	return len(b), nil
 }
@@ -306,7 +306,7 @@ func (l *Log) Write(b []byte) (n int, err error) {
 func (l *Log) Read(b []byte) (n int, err error) {
 	status := Sys_log_read(l.Handle, uint32(len(b)), unsafe.Pointer(&b[0]), 0)
 	if status != ErrOk {
-		return 0, status
+		return 0, Error{Status: status, Text: "mx.Log.Read"}
 	}
 	return len(b), nil
 }
@@ -318,7 +318,7 @@ func (l *Log) Close() (err error) {
 func RandRead(b []byte) (n int, err error) {
 	var actual uint
 	if status := sys_cprng_draw(unsafe.Pointer(&b[0]), uint(len(b)), &actual); status != ErrOk {
-		return int(actual), status
+		return int(actual), Error{Status: status, Text: "mx.RandRead"}
 	}
 	return int(actual), nil
 }
@@ -332,8 +332,7 @@ type Error struct {
 
 func (e Error) Error() string {
 	if e.Text == "" {
-		// TODO: make mx.Status no longer an error
-		return "mx.Status: " + e.Status.Error()
+		return "mx.Status: " + e.Status.String()
 	}
-	return e.Status.Error() + ": " + e.Text
+	return e.Status.String() + ": " + e.Text
 }

@@ -24,7 +24,7 @@ func New(h mx.Handle) (*Logger, error) {
 }
 
 func (f *Logger) Read(data []byte) (n int, err error) {
-	return 0, mx.ErrNotSupported
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mx.Logger"}
 }
 
 func (f *Logger) Write(data []byte) (n int, err error) {
@@ -44,15 +44,15 @@ func (f *Logger) Write(data []byte) (n int, err error) {
 }
 
 func (f *Logger) ReadAt(data []byte, off int64) (int, error) {
-	return 0, mx.ErrNotSupported
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mx.Logger"}
 }
 
 func (f *Logger) WriteAt(data []byte, off int64) (int, error) {
-	return 0, mx.ErrNotSupported
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mx.Logger"}
 }
 
 func (f *Logger) Seek(offset int64, whence int) (int64, error) {
-	return 0, mx.ErrNotSupported
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mx.Logger"}
 }
 
 func (f *Logger) Close() error {
@@ -63,7 +63,7 @@ func (f *Logger) Close() error {
 }
 
 func (f *Logger) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
-	return nil, mx.ErrNotSupported
+	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "mx.Logger"}
 }
 
 func (f *Logger) Clone() ([]mx.Handle, error) {
@@ -75,12 +75,12 @@ func (f *Logger) Clone() ([]mx.Handle, error) {
 }
 
 func (f *Logger) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
-	return nil, mx.ErrNotSupported
+	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "mx.Logger"}
 }
 func (f *Logger) IoctlSetHandle(op uint32, in mx.Handle) error {
-	return mx.ErrNotSupported
+	return mx.Error{Status: mx.ErrNotSupported, Text: "mx.Logger"}
 }
 
 func (f *Logger) Misc(op uint32, off int64, in, out []byte) (n int, err error) {
-	return 0, mx.ErrNotSupported
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mx.Logger"}
 }

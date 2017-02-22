@@ -39,16 +39,16 @@ func New(handle []mx.Handle) (*RemoteIO, error) {
 // It wraps the raw 'Call Message' syscall with some error checking.
 func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 	if !msg.IsValid() {
-		return 0, mx.ErrInvalidArgs
+		return 0, mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO"}
 	}
 
 	msg.Txid = atomic.AddUint32(&r.txid, 1) - 1
 	numBytes, _, rs, err := msg.CallMsg(r.h)
 	if err != nil {
-		if err == mx.ErrCallFailed {
+		if mxerr, hasStatus := err.(mx.Error); hasStatus && mxerr.Status == mx.ErrCallFailed {
 			// Read failure: Real error in rs
 			msg.Hcount = 0
-			return 0, rs
+			return 0, mx.Error{Status: rs, Text: "RemoteIO"}
 		} else {
 			// Write failure
 			msg.DiscardHandles()
@@ -58,14 +58,14 @@ func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
 
 	if !msg.IsValidIncoming(numBytes) || msg.Op() != OpStatus {
 		msg.DiscardHandles() // If these handles were transmitted poorly, drop them
-		return 0, mx.ErrIO
+		return 0, mx.Error{Status: mx.ErrIO, Text: "RemoteIO"}
 	}
 
 	// Check for remote error
 	status := mx.Status(msg.Arg)
 	if status < 0 {
 		msg.DiscardHandles() // Throw away any remaining handles; no one else will see them
-		return 0, status
+		return 0, mx.Error{Status: status, Text: "RemoteIO"}
 	}
 	return uint32(status), nil
 }
@@ -119,7 +119,7 @@ func (r *RemoteIO) read(op uint32, out []byte, off int64) (int, error) {
 	}
 
 	if status != 0 {
-		return xferTotal, status
+		return xferTotal, mx.Error{Status: status, Text: "RemoteIO.read"}
 	}
 	return xferTotal, nil
 }
@@ -168,7 +168,7 @@ func (r *RemoteIO) write(op uint32, p []byte, off int64) (int, error) {
 	}
 
 	if len(p) != 0 {
-		return xferTotal, status
+		return xferTotal, mx.Error{Status: status, Text: "RemoteIO.write"}
 	}
 	return xferTotal, nil
 }
@@ -211,7 +211,7 @@ func (r *RemoteIO) Close() error {
 // getObject requests an MXIO object remotely
 func (r *RemoteIO) getObject(op uint32, name string, flags int32, mode uint32) (*RioObject, error) {
 	if len(name) > MessageChunkSize {
-		return nil, mx.ErrInvalidArgs
+		return nil, mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO"}
 	}
 	var msg Msg
 	msg.SetOp(op)
@@ -245,7 +245,7 @@ func (r *RemoteIO) replyChannelCall(msg *Msg) (*RioObject, error) {
 	// Attempt to read the callback response
 	var ro RioObject
 	if status := ro.Read(h.Handle, 0); status < 0 {
-		return nil, status
+		return nil, mx.Error{Status: status, Text: "RemoteIO.replyChannelCall"}
 	} else {
 		return &ro, nil
 	}
@@ -266,7 +266,7 @@ func createFromHandles(protocol mxio.Protocol, handles []mx.Handle, extra []byte
 		for i := range handles {
 			handles[i].Close()
 		}
-		return nil, mx.ErrNotSupported
+		return nil, mx.Error{Status: mx.ErrNotSupported, Text: "RemoteIO"}
 	}
 }
 
@@ -288,7 +288,7 @@ func (r *RemoteIO) Clone() ([]mx.Handle, error) {
 
 func (r *RemoteIO) IoctlSetHandle(op uint32, in mx.Handle) error {
 	if mxio.IoctlKind(op) != mxio.IoctlKindSetHandle {
-		return mx.ErrInvalidArgs
+		return mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO"}
 	}
 	var msg Msg
 	msg.SetOp(OpIoctlOneHandle)
@@ -305,7 +305,7 @@ func (r *RemoteIO) IoctlSetHandle(op uint32, in mx.Handle) error {
 func (r *RemoteIO) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
 	var msg Msg
 	if len(in) > mxio.IoctlMaxInput {
-		return nil, mx.ErrInvalidArgs
+		return nil, mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO"}
 	}
 	msg.SetOp(OpIoctl)
 	msg.Datalen = uint32(len(in))
@@ -373,7 +373,7 @@ func (r *RemoteIO) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
 
 func (r *RemoteIO) Misc(op uint32, off int64, in, out []byte) (n int, err error) {
 	if len(in) > MessageChunkSize || len(out) > MessageChunkSize {
-		return 0, mx.ErrInvalidArgs
+		return 0, mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO"}
 	}
 
 	var msg Msg
@@ -399,7 +399,7 @@ func (r *RemoteIO) Misc(op uint32, off int64, in, out []byte) (n int, err error)
 	msg.DiscardHandles()
 
 	if int(msg.Datalen) > len(out) {
-		return 0, mx.ErrIO
+		return 0, mx.Error{Status: mx.ErrIO, Text: "RemoteIO"}
 	}
 	n = copy(out, msg.Data[:msg.Datalen])
 	return n, nil

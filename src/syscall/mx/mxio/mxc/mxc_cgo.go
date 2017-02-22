@@ -26,7 +26,7 @@ func transferMXIOFromCFD(fd int) (mxio.MXIO, error) {
 	typesC := make([]C.uint32_t, mxio.MaxHandles)
 	status := C.mxio_transfer_fd(C.int(fd), 0, (*C.mx_handle_t)(&handlesC[0]), (*C.uint32_t)(&typesC[0]))
 	if status < 0 {
-		return nil, mx.Status(status)
+		return nil, mx.Error{Status: mx.Status(status), Text: "mxc"}
 	} else if status == 0 || mxio.MaxHandles < status {
 		return nil, errors.New("Invalid handle from mxio_transfer_fd")
 	}

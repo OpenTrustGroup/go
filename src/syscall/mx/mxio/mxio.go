@@ -118,11 +118,13 @@ var IoctlDeviceSync = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 7)
 var IoctlDevmgrMountFS = IoctlNum(IoctlKindSetHandle, IoctlFamilyDevmgr, 0)
 var IoctlDevmgrUnmountFS = IoctlNum(IoctlKindDefault, IoctlFamilyDevmgr, 1)
 
+// TODO: these IoPort* functions have been superceeded by mx.Port. Remove them.
+
 // IoPortCreate wraps the corresponding syscall
 func IoPortCreate(options uint32) (mx.Handle, error) {
 	var h mx.Handle
 	if status := mx.Sys_port_create(options, &h); status != mx.ErrOk {
-		return 0, status
+		return 0, mx.Error{Status: status, Text: "mxio.IoPort"}
 	}
 	return h, nil
 }
@@ -130,7 +132,7 @@ func IoPortCreate(options uint32) (mx.Handle, error) {
 // IoPortQueue wraps the corresponding syscall
 func IoPortQueue(handle mx.Handle, packet *Packet, size uint) error {
 	if status := mx.Sys_port_queue(handle, unsafe.Pointer(packet), size); status != mx.ErrOk {
-		return status
+		return mx.Error{Status: status, Text: "mxio.IoPort"}
 	}
 	return nil
 }
@@ -140,7 +142,7 @@ func IoPortWait(handle mx.Handle, timeout mx.Time, size uint) (*Packet, error) {
 	var packet Packet
 	status := mx.Sys_port_wait(handle, timeout, unsafe.Pointer(&packet), size)
 	if status != mx.ErrOk {
-		return nil, status
+		return nil, mx.Error{Status: status, Text: "mxio.IoPort"}
 	}
 	return &packet, nil
 }
@@ -148,7 +150,7 @@ func IoPortWait(handle mx.Handle, timeout mx.Time, size uint) (*Packet, error) {
 // IoPortBind wraps the corresponding syscall
 func IoPortBind(handle mx.Handle, key uint64, source mx.Handle, signals mx.Signals) error {
 	if status := mx.Sys_port_bind(handle, key, source, signals); status != mx.ErrOk {
-		return status
+		return mx.Error{Status: status, Text: "mxio.IoPort"}
 	}
 	return nil
 }
