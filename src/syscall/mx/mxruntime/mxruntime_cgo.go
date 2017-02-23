@@ -8,12 +8,11 @@ package mxruntime
 
 import "syscall/mx"
 
-// #cgo fuchsia LDFLAGS: -lmxio
-// #include "mxio/util.h"
+// #include "magenta/process.h"
 import "C"
 
 func getStartupHandle(info HandleInfo) mx.Handle {
 	id := uint32(info.Arg)<<16 | uint32(info.Type)
-	h := C.mxio_get_startup_handle(C.uint32_t(id))
+	h := C.mx_get_startup_handle(C.uint32_t(id))
 	return mx.Handle(h)
 }
