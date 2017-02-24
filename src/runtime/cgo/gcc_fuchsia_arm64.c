@@ -11,10 +11,6 @@
 
 #include <stdio.h>
 
-// TODO(teisenbe): Remove this when the VMAR compat syscalls go away
-#define WITHOUT_COMPAT_SYSCALLS 1
-#include <magenta/syscalls.h>
-
 static void* threadentry(void*);
 static void (*setg_gcc)(void*);
 
