@@ -9,9 +9,10 @@ package os
 // #cgo fuchsia LDFLAGS: -llaunchpad
 // #include <launchpad/launchpad.h>
 // #include <launchpad/vmo.h>
-// #include <magenta/types.h>
+// #include <magenta/process.h>
 // #include <magenta/syscalls.h>
 // #include <magenta/syscalls/object.h>
+// #include <magenta/types.h>
 // #include <stdlib.h>
 import "C"
 import (

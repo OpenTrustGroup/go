@@ -8,10 +8,8 @@
 #include "libcgo.h"
 
 #include <stdlib.h>
+#include <magenta/process.h>
 #include <magenta/processargs.h>
-// TODO(teisenbe): Remove this #define once vmar compat syscalls
-#define WITHOUT_COMPAT_SYSCALLS 1
-#include <magenta/syscalls.h>
 #include <mxio/io.h>
 #include <mxio/util.h>
 
