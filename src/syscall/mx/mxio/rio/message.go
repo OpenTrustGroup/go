@@ -62,7 +62,8 @@ const (
 	OpGetAddrInfo
 	OpSetAttr
 	OpSync
-	OpNumOps // The total number of operations
+	OpLink   = uint32(iota) | OpFlagOneHandle
+	OpNumOps = uint32(iota) // The total number of operations
 )
 
 // Ops which correspond to a previously listed operation, but have a different number of handles

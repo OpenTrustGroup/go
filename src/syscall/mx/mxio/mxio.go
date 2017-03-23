@@ -160,6 +160,7 @@ type Vnattr struct {
 	Mode       Vtype
 	Inode      uint64
 	Size       uint64
+	Nlink      uint64
 	CreateTime uint64
 	ModifyTime uint64
 }
