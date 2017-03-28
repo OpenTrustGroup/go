@@ -58,6 +58,7 @@ const (
 	ENOTDIR      = Errno(0x14)
 	EISDIR       = Errno(0x15)
 	EINVAL       = Errno(0x16)
+	EMFILE       = Errno(0x18)
 	ESPIPE       = Errno(0x1d)
 	ENAMETOOLONG = Errno(0x24)
 	ENOTEMPTY    = Errno(0x27)
