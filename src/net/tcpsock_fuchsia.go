@@ -8,14 +8,40 @@ import (
 	"context"
 	"io"
 	"os"
+	"syscall/mx/mxnet"
 )
+
+func (a *TCPAddr) encode() ([]byte, error) { // TODO remove
+	b := make([]byte, mxnet.SockaddrLen)
+	_, err := mxnet.EncodeSockaddr(b, mxnet.Addr(a.IP), uint16(a.Port))
+	return b, err
+}
+
+func (a *TCPAddr) sockaddr() (addr string, port uint16) {
+	if a == nil {
+		return "", 0
+	}
+	return string(a.IP), uint16(a.Port)
+}
 
 func (c *TCPConn) readFrom(r io.Reader) (int64, error) {
 	return genericReadFrom(c, r)
 }
 
 func dialTCP(ctx context.Context, net string, laddr, raddr *TCPAddr) (*TCPConn, error) {
-	panic("TODO")
+	switch net {
+	case "tcp", "tcp4", "tcp6":
+	default:
+		return nil, UnknownNetworkError(net)
+	}
+	if raddr == nil {
+		return nil, errMissingAddress
+	}
+	fd, err := dialFuchsia(ctx, net, laddr, raddr)
+	if err != nil {
+		return nil, err
+	}
+	return newTCPConn(fd), nil
 }
 
 func (ln *TCPListener) ok() bool {

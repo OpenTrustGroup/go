@@ -7,32 +7,74 @@ package net
 import (
 	"context"
 	"syscall"
+	"syscall/mx/mxnet"
 )
 
+func (a *UDPAddr) encode() ([]byte, error) {
+	b := make([]byte, mxnet.SockaddrLen)
+	_, err := mxnet.EncodeSockaddr(b, mxnet.Addr(a.IP), uint16(a.Port))
+	return b, err
+}
+
+func (a *UDPAddr) sockaddr() (addr string, port uint16) {
+	if a == nil {
+		return "", 0
+	}
+	return string(a.IP), uint16(a.Port)
+}
+
 func (c *UDPConn) readFrom(b []byte) (n int, addr *UDPAddr, err error) {
-	panic("TODO")
+	panic("TODO readFrom")
 }
 
 func (c *UDPConn) readMsg(b, oob []byte) (n, oobn, flags int, addr *UDPAddr, err error) {
-	return 0, 0, 0, nil, syscall.EFUCHSIA
+	n, flags, addrstr, port, err := c.fd.recvMsg(b)
+	if err != nil {
+		return 0, 0, 0, nil, err
+	}
+	addr = &UDPAddr{
+		IP:   IP(addrstr),
+		Port: int(port),
+	}
+	return n, 0, flags, addr, nil
 }
 
 func (c *UDPConn) writeTo(b []byte, addr *UDPAddr) (int, error) {
-	panic("TODO")
+	panic("TODO writeTo")
 }
 
 func (c *UDPConn) writeMsg(b, oob []byte, addr *UDPAddr) (n, oobn int, err error) {
-	return 0, 0, syscall.EFUCHSIA
+	if len(oob) > 0 {
+		return 0, 0, syscall.EFUCHSIA
+	}
+	n, err = c.fd.sendMsg(b, string(addr.IP), uint16(addr.Port))
+	return n, 0, err
 }
 
 func dialUDP(ctx context.Context, net string, laddr, raddr *UDPAddr) (*UDPConn, error) {
-	panic("TODO")
+	switch net {
+	case "udp", "udp4", "udp6":
+	default:
+		return nil, UnknownNetworkError(net)
+	}
+	if raddr == nil {
+		return nil, errMissingAddress
+	}
+	var laddrif sockaddr
+	if laddr != nil {
+		laddrif = laddr
+	}
+	fd, err := dialFuchsia(ctx, net, laddrif, raddr)
+	if err != nil {
+		return nil, err
+	}
+	return newUDPConn(fd), nil
 }
 
 const udpHeaderSize = 16*3 + 2*2
 
 func listenUDP(ctx context.Context, network string, laddr *UDPAddr) (*UDPConn, error) {
-	panic("TODO")
+	panic("TODO listenUDP")
 }
 
 func listenMulticastUDP(ctx context.Context, network string, ifi *Interface, gaddr *UDPAddr) (*UDPConn, error) {
