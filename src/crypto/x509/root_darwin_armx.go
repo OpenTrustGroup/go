@@ -4,9 +4,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build cgo
-// +build darwin
-// +build arm arm64 ios
+// +build cgo,darwin,arm cgo,darwin,arm64 ios fuchsia
 
 package x509
 
