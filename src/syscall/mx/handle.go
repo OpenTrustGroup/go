@@ -69,6 +69,25 @@ func NewSocket(flags uint32) (s0, s1 Socket, err error) {
 	return Socket(h0), Socket(h1), nil
 }
 
+type Event Handle
+
+func NewEvent(options uint32) (e Event, err error) {
+	var h Handle
+	if status := Sys_event_create(options, &h); status != ErrOk {
+		return 0, Error{Status: status, Text: "mx.Event"}
+	}
+	return Event(h), nil
+}
+
+func (e Event) Close() error { return Handle(e).Close() }
+func (e Event) Duplicate(rights Rights) (Event, error) {
+	h, err := Handle(e).Duplicate(rights)
+	if err != nil {
+		return 0, err
+	}
+	return Event(h), nil
+}
+
 func (h Handle) Close() error {
 	if status := sys_handle_close(h); status != ErrOk {
 		return Error{Status: status, Text: "mx.Handle.Close"}
