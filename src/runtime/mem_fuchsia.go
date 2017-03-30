@@ -22,6 +22,9 @@ func sysAlloc(n uintptr, sysStat *uint64) unsafe.Pointer {
 }
 
 func sysUnused(v unsafe.Pointer, n uintptr) {
+	// TODO: enable unmapping when sysUsed is implemented.
+	//off := uintptr(v) - sysVMARBaseAddr
+	//sysVMAR.Unmap(sysVmar, off, uint(n))
 }
 
 func sysUsed(v unsafe.Pointer, n uintptr) {
@@ -39,31 +42,36 @@ func sysMmap(ptr unsafe.Pointer, len uintptr, flags uint32) {
 		println("runtime: mx.NewVMO failed, len=", len, " err=", err.Error())
 		exit(2)
 	}
-	const (
-		MX_VM_FLAG_PERM_READ  = 1 << 0
-		MX_VM_FLAG_PERM_WRITE = 1 << 1
-	)
-	mxFlags := uint32(MX_VM_FLAG_PERM_READ | MX_VM_FLAG_PERM_WRITE)
-	status := mx.Sys_vmar_map(mx.VmarRootHandle, 0, mx.Handle(vmo), 0, uint(len), mxFlags, (*uintptr)(ptr))
+	vmflags := mx.VMFlagPermRead | mx.VMFlagPermWrite
+	res, err := mx.VMARRoot.Map(0, vmo, 0, uint64(len), vmflags)
+	*(*uintptr)(ptr) = res
 	vmo.Close()
-	if status != mx.ErrOk {
-		println("runtime: mx.Sys_vmar_map failed, err=", status)
+	if err != nil {
+		println("runtime: mx.Sys_vmar_map failed, err=", err.Error())
 		exit(2)
 	}
 }
 
+var (
+	sysVMAR         mx.VMAR
+	sysVMARBaseAddr uintptr
+)
+
 func sysReserve(v unsafe.Pointer, n uintptr, reserved *bool) unsafe.Pointer {
-	if int(n) > 407<<20 {
-		// Magenta does not like extreme overcommit, it consumes a
-		// lot of kernel resources. So reject the larger reservations.
-		return nil
+	if sysVMAR != 0 {
+		println("runtime: system vmar already reserved")
+		exit(2)
 	}
-	var p unsafe.Pointer
-	sysMmap(unsafe.Pointer(&p), n, 0)
-	if p != nil {
-		*reserved = true
+
+	var err error
+	*reserved = true
+	flags := mx.VMFlagCanMapSpecific | mx.VMFlagCanMapRead | mx.VMFlagCanMapWrite
+	sysVMAR, sysVMARBaseAddr, err = mx.NewVMAR(mx.VMARRoot, 0, uint64(n), flags)
+	if err != nil {
+		println("runtime: vmar allocate failed, err=", err.Error())
+		exit(2)
 	}
-	return p
+	return unsafe.Pointer(sysVMARBaseAddr)
 }
 
 func sysFault(v unsafe.Pointer, n uintptr) {
@@ -72,12 +80,23 @@ func sysFault(v unsafe.Pointer, n uintptr) {
 
 func sysMap(v unsafe.Pointer, n uintptr, reserved bool, sysStat *uint64) {
 	mSysStatInc(sysStat, n)
-	if !reserved {
-		var p unsafe.Pointer
-		sysMmap(unsafe.Pointer(&p), n, 0)
-		if p != v {
-			print("runtime: address space conflict: map(", v, ") = ", p, "\n")
-			throw("runtime: address space conflict")
-		}
+
+	vmo, err := mx.NewVMO(uint64(n), 0)
+	if err != nil {
+		println("runtime: mx.NewVMO failed, n=", n, " err=", err.Error())
+		exit(2)
 	}
+
+	off := uint64(uintptr(v) - sysVMARBaseAddr)
+	flags := mx.VMFlagPermRead | mx.VMFlagPermWrite | mx.VMFlagSpecificOverwrite
+	res, err := sysVMAR.Map(off, vmo, 0, uint64(n), flags)
+	if err != nil {
+		println("runtime: vmar map failed, off=", off, " n=", n, " err=", err.Error())
+		exit(2)
+	}
+	if res != uintptr(v) {
+		println("runtime: vmar map resulted in an unexpected address ", res, "v=", uintptr(v))
+		exit(2)
+	}
+	vmo.Close()
 }
