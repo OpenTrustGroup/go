@@ -64,7 +64,7 @@ func osinit() {
 		exit(2)
 	}
 
-	ncpu = int32(mx.Sys_num_cpus())
+	ncpu = int32(mx.Sys_system_get_num_cpus())
 	physPageSize = 4096
 }
 

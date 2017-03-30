@@ -13,9 +13,11 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_nanosleep mx_nanosleep "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_ticks_get mx_ticks_get "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_ticks_per_second mx_ticks_per_second "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_num_cpus mx_num_cpus "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_version_get mx_version_get "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_system_get_num_cpus mx_system_get_num_cpus "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_system_get_version mx_system_get_version "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_system_get_physmem mx_system_get_physmem "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_cache_flush mx_cache_flush "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_handle_cancel mx_handle_cancel "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_handle_close mx_handle_close "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_handle_duplicate mx_handle_duplicate "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_handle_replace mx_handle_replace "libmagenta.so"
@@ -26,9 +28,10 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_object_signal_peer mx_object_signal_peer "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_object_get_property mx_object_get_property "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_object_set_property mx_object_set_property "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_object_set_cookie mx_object_set_cookie "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_object_get_cookie mx_object_get_cookie "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_object_get_info mx_object_get_info "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_object_get_child mx_object_get_child "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_object_bind_exception_port mx_object_bind_exception_port "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_channel_create mx_channel_create "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_channel_read mx_channel_read "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_channel_write mx_channel_write "libmagenta.so"
@@ -47,6 +50,7 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_process_read_memory mx_process_read_memory "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_process_write_memory mx_process_write_memory "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_job_create mx_job_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_task_bind_exception_port mx_task_bind_exception_port "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_task_resume mx_task_resume "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_task_kill mx_task_kill "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_event_create mx_event_create "libmagenta.so"
@@ -68,11 +72,18 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_vmo_get_size mx_vmo_get_size "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_vmo_set_size mx_vmo_set_size "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_vmo_op_range mx_vmo_op_range "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmar_allocate mx_vmar_allocate "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmar_destroy mx_vmar_destroy "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmar_map mx_vmar_map "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmar_unmap mx_vmar_unmap "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmar_protect mx_vmar_protect "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_cprng_draw mx_cprng_draw "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_cprng_add_entropy mx_cprng_add_entropy "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_fifo_create mx_fifo_create "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_fifo_read mx_fifo_read "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_fifo_write mx_fifo_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmar_unmap_handle_close_thread_exit mx_vmar_unmap_handle_close_thread_exit "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_futex_wake_handle_close_thread_exit mx_futex_wake_handle_close_thread_exit "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_log_create mx_log_create "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_log_write mx_log_write "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_log_read mx_log_read "libmagenta.so"
@@ -87,17 +98,14 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_interrupt_create mx_interrupt_create "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_interrupt_complete mx_interrupt_complete "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_interrupt_wait mx_interrupt_wait "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_interrupt_signal mx_interrupt_signal "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_mmap_device_io mx_mmap_device_io "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_mmap_device_memory mx_mmap_device_memory "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_io_mapping_get_info mx_io_mapping_get_info "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_vmo_create_contiguous mx_vmo_create_contiguous "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmar_allocate mx_vmar_allocate "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmar_destroy mx_vmar_destroy "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmar_map mx_vmar_map "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmar_unmap mx_vmar_unmap "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmar_protect mx_vmar_protect "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_bootloader_fb_get_info mx_bootloader_fb_get_info "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_set_framebuffer mx_set_framebuffer "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_set_framebuffer_vmo mx_set_framebuffer_vmo "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_clock_adjust mx_clock_adjust "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_pci_get_nth_device mx_pci_get_nth_device "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_pci_claim_device mx_pci_claim_device "libmagenta.so"
@@ -116,18 +124,23 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_acpi_uefi_rsdp mx_acpi_uefi_rsdp "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_acpi_cache_flush mx_acpi_cache_flush "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_resource_create mx_resource_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_resource_destroy mx_resource_destroy "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_resource_get_handle mx_resource_get_handle "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_resource_do_action mx_resource_do_action "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_resource_connect mx_resource_connect "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_resource_accept mx_resource_accept "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_hypervisor_create mx_hypervisor_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_hypervisor_op mx_hypervisor_op "libmagenta.so"
 
 //go:linkname vdso_mx_time_get vdso_mx_time_get
 //go:linkname vdso_mx_nanosleep vdso_mx_nanosleep
 //go:linkname vdso_mx_ticks_get vdso_mx_ticks_get
 //go:linkname vdso_mx_ticks_per_second vdso_mx_ticks_per_second
-//go:linkname vdso_mx_num_cpus vdso_mx_num_cpus
-//go:linkname vdso_mx_version_get vdso_mx_version_get
+//go:linkname vdso_mx_system_get_num_cpus vdso_mx_system_get_num_cpus
+//go:linkname vdso_mx_system_get_version vdso_mx_system_get_version
+//go:linkname vdso_mx_system_get_physmem vdso_mx_system_get_physmem
 //go:linkname vdso_mx_cache_flush vdso_mx_cache_flush
+//go:linkname vdso_mx_handle_cancel vdso_mx_handle_cancel
 //go:linkname vdso_mx_handle_close vdso_mx_handle_close
 //go:linkname vdso_mx_handle_duplicate vdso_mx_handle_duplicate
 //go:linkname vdso_mx_handle_replace vdso_mx_handle_replace
@@ -138,9 +151,10 @@ import "unsafe"
 //go:linkname vdso_mx_object_signal_peer vdso_mx_object_signal_peer
 //go:linkname vdso_mx_object_get_property vdso_mx_object_get_property
 //go:linkname vdso_mx_object_set_property vdso_mx_object_set_property
+//go:linkname vdso_mx_object_set_cookie vdso_mx_object_set_cookie
+//go:linkname vdso_mx_object_get_cookie vdso_mx_object_get_cookie
 //go:linkname vdso_mx_object_get_info vdso_mx_object_get_info
 //go:linkname vdso_mx_object_get_child vdso_mx_object_get_child
-//go:linkname vdso_mx_object_bind_exception_port vdso_mx_object_bind_exception_port
 //go:linkname vdso_mx_channel_create vdso_mx_channel_create
 //go:linkname vdso_mx_channel_read vdso_mx_channel_read
 //go:linkname vdso_mx_channel_write vdso_mx_channel_write
@@ -159,6 +173,7 @@ import "unsafe"
 //go:linkname vdso_mx_process_read_memory vdso_mx_process_read_memory
 //go:linkname vdso_mx_process_write_memory vdso_mx_process_write_memory
 //go:linkname vdso_mx_job_create vdso_mx_job_create
+//go:linkname vdso_mx_task_bind_exception_port vdso_mx_task_bind_exception_port
 //go:linkname vdso_mx_task_resume vdso_mx_task_resume
 //go:linkname vdso_mx_task_kill vdso_mx_task_kill
 //go:linkname vdso_mx_event_create vdso_mx_event_create
@@ -180,11 +195,18 @@ import "unsafe"
 //go:linkname vdso_mx_vmo_get_size vdso_mx_vmo_get_size
 //go:linkname vdso_mx_vmo_set_size vdso_mx_vmo_set_size
 //go:linkname vdso_mx_vmo_op_range vdso_mx_vmo_op_range
+//go:linkname vdso_mx_vmar_allocate vdso_mx_vmar_allocate
+//go:linkname vdso_mx_vmar_destroy vdso_mx_vmar_destroy
+//go:linkname vdso_mx_vmar_map vdso_mx_vmar_map
+//go:linkname vdso_mx_vmar_unmap vdso_mx_vmar_unmap
+//go:linkname vdso_mx_vmar_protect vdso_mx_vmar_protect
 //go:linkname vdso_mx_cprng_draw vdso_mx_cprng_draw
 //go:linkname vdso_mx_cprng_add_entropy vdso_mx_cprng_add_entropy
 //go:linkname vdso_mx_fifo_create vdso_mx_fifo_create
 //go:linkname vdso_mx_fifo_read vdso_mx_fifo_read
 //go:linkname vdso_mx_fifo_write vdso_mx_fifo_write
+//go:linkname vdso_mx_vmar_unmap_handle_close_thread_exit vdso_mx_vmar_unmap_handle_close_thread_exit
+//go:linkname vdso_mx_futex_wake_handle_close_thread_exit vdso_mx_futex_wake_handle_close_thread_exit
 //go:linkname vdso_mx_log_create vdso_mx_log_create
 //go:linkname vdso_mx_log_write vdso_mx_log_write
 //go:linkname vdso_mx_log_read vdso_mx_log_read
@@ -199,17 +221,14 @@ import "unsafe"
 //go:linkname vdso_mx_interrupt_create vdso_mx_interrupt_create
 //go:linkname vdso_mx_interrupt_complete vdso_mx_interrupt_complete
 //go:linkname vdso_mx_interrupt_wait vdso_mx_interrupt_wait
+//go:linkname vdso_mx_interrupt_signal vdso_mx_interrupt_signal
 //go:linkname vdso_mx_mmap_device_io vdso_mx_mmap_device_io
 //go:linkname vdso_mx_mmap_device_memory vdso_mx_mmap_device_memory
 //go:linkname vdso_mx_io_mapping_get_info vdso_mx_io_mapping_get_info
 //go:linkname vdso_mx_vmo_create_contiguous vdso_mx_vmo_create_contiguous
-//go:linkname vdso_mx_vmar_allocate vdso_mx_vmar_allocate
-//go:linkname vdso_mx_vmar_destroy vdso_mx_vmar_destroy
-//go:linkname vdso_mx_vmar_map vdso_mx_vmar_map
-//go:linkname vdso_mx_vmar_unmap vdso_mx_vmar_unmap
-//go:linkname vdso_mx_vmar_protect vdso_mx_vmar_protect
 //go:linkname vdso_mx_bootloader_fb_get_info vdso_mx_bootloader_fb_get_info
 //go:linkname vdso_mx_set_framebuffer vdso_mx_set_framebuffer
+//go:linkname vdso_mx_set_framebuffer_vmo vdso_mx_set_framebuffer_vmo
 //go:linkname vdso_mx_clock_adjust vdso_mx_clock_adjust
 //go:linkname vdso_mx_pci_get_nth_device vdso_mx_pci_get_nth_device
 //go:linkname vdso_mx_pci_claim_device vdso_mx_pci_claim_device
@@ -228,123 +247,137 @@ import "unsafe"
 //go:linkname vdso_mx_acpi_uefi_rsdp vdso_mx_acpi_uefi_rsdp
 //go:linkname vdso_mx_acpi_cache_flush vdso_mx_acpi_cache_flush
 //go:linkname vdso_mx_resource_create vdso_mx_resource_create
+//go:linkname vdso_mx_resource_destroy vdso_mx_resource_destroy
 //go:linkname vdso_mx_resource_get_handle vdso_mx_resource_get_handle
 //go:linkname vdso_mx_resource_do_action vdso_mx_resource_do_action
 //go:linkname vdso_mx_resource_connect vdso_mx_resource_connect
 //go:linkname vdso_mx_resource_accept vdso_mx_resource_accept
+//go:linkname vdso_mx_hypervisor_create vdso_mx_hypervisor_create
+//go:linkname vdso_mx_hypervisor_op vdso_mx_hypervisor_op
 
 var (
-	vdso_mx_time_get                   uintptr
-	vdso_mx_nanosleep                  uintptr
-	vdso_mx_ticks_get                  uintptr
-	vdso_mx_ticks_per_second           uintptr
-	vdso_mx_num_cpus                   uintptr
-	vdso_mx_version_get                uintptr
-	vdso_mx_cache_flush                uintptr
-	vdso_mx_handle_close               uintptr
-	vdso_mx_handle_duplicate           uintptr
-	vdso_mx_handle_replace             uintptr
-	vdso_mx_object_wait_one            uintptr
-	vdso_mx_object_wait_many           uintptr
-	vdso_mx_object_wait_async          uintptr
-	vdso_mx_object_signal              uintptr
-	vdso_mx_object_signal_peer         uintptr
-	vdso_mx_object_get_property        uintptr
-	vdso_mx_object_set_property        uintptr
-	vdso_mx_object_get_info            uintptr
-	vdso_mx_object_get_child           uintptr
-	vdso_mx_object_bind_exception_port uintptr
-	vdso_mx_channel_create             uintptr
-	vdso_mx_channel_read               uintptr
-	vdso_mx_channel_write              uintptr
-	vdso_mx_channel_call               uintptr
-	vdso_mx_socket_create              uintptr
-	vdso_mx_socket_write               uintptr
-	vdso_mx_socket_read                uintptr
-	vdso_mx_thread_exit                uintptr
-	vdso_mx_thread_create              uintptr
-	vdso_mx_thread_start               uintptr
-	vdso_mx_thread_read_state          uintptr
-	vdso_mx_thread_write_state         uintptr
-	vdso_mx_process_exit               uintptr
-	vdso_mx_process_create             uintptr
-	vdso_mx_process_start              uintptr
-	vdso_mx_process_read_memory        uintptr
-	vdso_mx_process_write_memory       uintptr
-	vdso_mx_job_create                 uintptr
-	vdso_mx_task_resume                uintptr
-	vdso_mx_task_kill                  uintptr
-	vdso_mx_event_create               uintptr
-	vdso_mx_eventpair_create           uintptr
-	vdso_mx_futex_wait                 uintptr
-	vdso_mx_futex_wake                 uintptr
-	vdso_mx_futex_requeue              uintptr
-	vdso_mx_waitset_create             uintptr
-	vdso_mx_waitset_add                uintptr
-	vdso_mx_waitset_remove             uintptr
-	vdso_mx_waitset_wait               uintptr
-	vdso_mx_port_create                uintptr
-	vdso_mx_port_queue                 uintptr
-	vdso_mx_port_wait                  uintptr
-	vdso_mx_port_bind                  uintptr
-	vdso_mx_vmo_create                 uintptr
-	vdso_mx_vmo_read                   uintptr
-	vdso_mx_vmo_write                  uintptr
-	vdso_mx_vmo_get_size               uintptr
-	vdso_mx_vmo_set_size               uintptr
-	vdso_mx_vmo_op_range               uintptr
-	vdso_mx_cprng_draw                 uintptr
-	vdso_mx_cprng_add_entropy          uintptr
-	vdso_mx_fifo_create                uintptr
-	vdso_mx_fifo_read                  uintptr
-	vdso_mx_fifo_write                 uintptr
-	vdso_mx_log_create                 uintptr
-	vdso_mx_log_write                  uintptr
-	vdso_mx_log_read                   uintptr
-	vdso_mx_ktrace_read                uintptr
-	vdso_mx_ktrace_control             uintptr
-	vdso_mx_ktrace_write               uintptr
-	vdso_mx_mtrace_control             uintptr
-	vdso_mx_debug_transfer_handle      uintptr
-	vdso_mx_debug_read                 uintptr
-	vdso_mx_debug_write                uintptr
-	vdso_mx_debug_send_command         uintptr
-	vdso_mx_interrupt_create           uintptr
-	vdso_mx_interrupt_complete         uintptr
-	vdso_mx_interrupt_wait             uintptr
-	vdso_mx_mmap_device_io             uintptr
-	vdso_mx_mmap_device_memory         uintptr
-	vdso_mx_io_mapping_get_info        uintptr
-	vdso_mx_vmo_create_contiguous      uintptr
-	vdso_mx_vmar_allocate              uintptr
-	vdso_mx_vmar_destroy               uintptr
-	vdso_mx_vmar_map                   uintptr
-	vdso_mx_vmar_unmap                 uintptr
-	vdso_mx_vmar_protect               uintptr
-	vdso_mx_bootloader_fb_get_info     uintptr
-	vdso_mx_set_framebuffer            uintptr
-	vdso_mx_clock_adjust               uintptr
-	vdso_mx_pci_get_nth_device         uintptr
-	vdso_mx_pci_claim_device           uintptr
-	vdso_mx_pci_enable_bus_master      uintptr
-	vdso_mx_pci_enable_pio             uintptr
-	vdso_mx_pci_reset_device           uintptr
-	vdso_mx_pci_map_mmio               uintptr
-	vdso_mx_pci_io_write               uintptr
-	vdso_mx_pci_io_read                uintptr
-	vdso_mx_pci_map_interrupt          uintptr
-	vdso_mx_pci_map_config             uintptr
-	vdso_mx_pci_query_irq_mode_caps    uintptr
-	vdso_mx_pci_set_irq_mode           uintptr
-	vdso_mx_pci_init                   uintptr
-	vdso_mx_pci_add_subtract_io_range  uintptr
-	vdso_mx_acpi_uefi_rsdp             uintptr
-	vdso_mx_acpi_cache_flush           uintptr
-	vdso_mx_resource_create            uintptr
-	vdso_mx_resource_get_handle        uintptr
-	vdso_mx_resource_do_action         uintptr
-	vdso_mx_resource_connect           uintptr
-	vdso_mx_resource_accept            uintptr
+	vdso_mx_time_get                            uintptr
+	vdso_mx_nanosleep                           uintptr
+	vdso_mx_ticks_get                           uintptr
+	vdso_mx_ticks_per_second                    uintptr
+	vdso_mx_system_get_num_cpus                 uintptr
+	vdso_mx_system_get_version                  uintptr
+	vdso_mx_system_get_physmem                  uintptr
+	vdso_mx_cache_flush                         uintptr
+	vdso_mx_handle_cancel                       uintptr
+	vdso_mx_handle_close                        uintptr
+	vdso_mx_handle_duplicate                    uintptr
+	vdso_mx_handle_replace                      uintptr
+	vdso_mx_object_wait_one                     uintptr
+	vdso_mx_object_wait_many                    uintptr
+	vdso_mx_object_wait_async                   uintptr
+	vdso_mx_object_signal                       uintptr
+	vdso_mx_object_signal_peer                  uintptr
+	vdso_mx_object_get_property                 uintptr
+	vdso_mx_object_set_property                 uintptr
+	vdso_mx_object_set_cookie                   uintptr
+	vdso_mx_object_get_cookie                   uintptr
+	vdso_mx_object_get_info                     uintptr
+	vdso_mx_object_get_child                    uintptr
+	vdso_mx_channel_create                      uintptr
+	vdso_mx_channel_read                        uintptr
+	vdso_mx_channel_write                       uintptr
+	vdso_mx_channel_call                        uintptr
+	vdso_mx_socket_create                       uintptr
+	vdso_mx_socket_write                        uintptr
+	vdso_mx_socket_read                         uintptr
+	vdso_mx_thread_exit                         uintptr
+	vdso_mx_thread_create                       uintptr
+	vdso_mx_thread_start                        uintptr
+	vdso_mx_thread_read_state                   uintptr
+	vdso_mx_thread_write_state                  uintptr
+	vdso_mx_process_exit                        uintptr
+	vdso_mx_process_create                      uintptr
+	vdso_mx_process_start                       uintptr
+	vdso_mx_process_read_memory                 uintptr
+	vdso_mx_process_write_memory                uintptr
+	vdso_mx_job_create                          uintptr
+	vdso_mx_task_bind_exception_port            uintptr
+	vdso_mx_task_resume                         uintptr
+	vdso_mx_task_kill                           uintptr
+	vdso_mx_event_create                        uintptr
+	vdso_mx_eventpair_create                    uintptr
+	vdso_mx_futex_wait                          uintptr
+	vdso_mx_futex_wake                          uintptr
+	vdso_mx_futex_requeue                       uintptr
+	vdso_mx_waitset_create                      uintptr
+	vdso_mx_waitset_add                         uintptr
+	vdso_mx_waitset_remove                      uintptr
+	vdso_mx_waitset_wait                        uintptr
+	vdso_mx_port_create                         uintptr
+	vdso_mx_port_queue                          uintptr
+	vdso_mx_port_wait                           uintptr
+	vdso_mx_port_bind                           uintptr
+	vdso_mx_vmo_create                          uintptr
+	vdso_mx_vmo_read                            uintptr
+	vdso_mx_vmo_write                           uintptr
+	vdso_mx_vmo_get_size                        uintptr
+	vdso_mx_vmo_set_size                        uintptr
+	vdso_mx_vmo_op_range                        uintptr
+	vdso_mx_vmar_allocate                       uintptr
+	vdso_mx_vmar_destroy                        uintptr
+	vdso_mx_vmar_map                            uintptr
+	vdso_mx_vmar_unmap                          uintptr
+	vdso_mx_vmar_protect                        uintptr
+	vdso_mx_cprng_draw                          uintptr
+	vdso_mx_cprng_add_entropy                   uintptr
+	vdso_mx_fifo_create                         uintptr
+	vdso_mx_fifo_read                           uintptr
+	vdso_mx_fifo_write                          uintptr
+	vdso_mx_vmar_unmap_handle_close_thread_exit uintptr
+	vdso_mx_futex_wake_handle_close_thread_exit uintptr
+	vdso_mx_log_create                          uintptr
+	vdso_mx_log_write                           uintptr
+	vdso_mx_log_read                            uintptr
+	vdso_mx_ktrace_read                         uintptr
+	vdso_mx_ktrace_control                      uintptr
+	vdso_mx_ktrace_write                        uintptr
+	vdso_mx_mtrace_control                      uintptr
+	vdso_mx_debug_transfer_handle               uintptr
+	vdso_mx_debug_read                          uintptr
+	vdso_mx_debug_write                         uintptr
+	vdso_mx_debug_send_command                  uintptr
+	vdso_mx_interrupt_create                    uintptr
+	vdso_mx_interrupt_complete                  uintptr
+	vdso_mx_interrupt_wait                      uintptr
+	vdso_mx_interrupt_signal                    uintptr
+	vdso_mx_mmap_device_io                      uintptr
+	vdso_mx_mmap_device_memory                  uintptr
+	vdso_mx_io_mapping_get_info                 uintptr
+	vdso_mx_vmo_create_contiguous               uintptr
+	vdso_mx_bootloader_fb_get_info              uintptr
+	vdso_mx_set_framebuffer                     uintptr
+	vdso_mx_set_framebuffer_vmo                 uintptr
+	vdso_mx_clock_adjust                        uintptr
+	vdso_mx_pci_get_nth_device                  uintptr
+	vdso_mx_pci_claim_device                    uintptr
+	vdso_mx_pci_enable_bus_master               uintptr
+	vdso_mx_pci_enable_pio                      uintptr
+	vdso_mx_pci_reset_device                    uintptr
+	vdso_mx_pci_map_mmio                        uintptr
+	vdso_mx_pci_io_write                        uintptr
+	vdso_mx_pci_io_read                         uintptr
+	vdso_mx_pci_map_interrupt                   uintptr
+	vdso_mx_pci_map_config                      uintptr
+	vdso_mx_pci_query_irq_mode_caps             uintptr
+	vdso_mx_pci_set_irq_mode                    uintptr
+	vdso_mx_pci_init                            uintptr
+	vdso_mx_pci_add_subtract_io_range           uintptr
+	vdso_mx_acpi_uefi_rsdp                      uintptr
+	vdso_mx_acpi_cache_flush                    uintptr
+	vdso_mx_resource_create                     uintptr
+	vdso_mx_resource_destroy                    uintptr
+	vdso_mx_resource_get_handle                 uintptr
+	vdso_mx_resource_do_action                  uintptr
+	vdso_mx_resource_connect                    uintptr
+	vdso_mx_resource_accept                     uintptr
+	vdso_mx_hypervisor_create                   uintptr
+	vdso_mx_hypervisor_op                       uintptr
 )
 
 //go:noescape
@@ -365,15 +398,23 @@ func Sys_ticks_per_second() uint64
 
 //go:noescape
 //go:nosplit
-func Sys_num_cpus() uint32
+func Sys_system_get_num_cpus() uint32
 
 //go:noescape
 //go:nosplit
-func Sys_version_get(version *uint8, version_len uint32) Status
+func Sys_system_get_version(version *uint8, version_len uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_cache_flush(addr unsafe.Pointer, len uint, flags uint32) Status
+func Sys_system_get_physmem() uint64
+
+//go:noescape
+//go:nosplit
+func Sys_cache_flush(addr unsafe.Pointer, len uint, options uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_handle_cancel(handle Handle, key uint64, options uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -417,15 +458,19 @@ func Sys_object_set_property(handle Handle, property uint32, value unsafe.Pointe
 
 //go:noescape
 //go:nosplit
+func Sys_object_set_cookie(handle Handle, scope Handle, cookie uint64) Status
+
+//go:noescape
+//go:nosplit
+func Sys_object_get_cookie(handle Handle, scope Handle, cookie *uint64) Status
+
+//go:noescape
+//go:nosplit
 func Sys_object_get_info(handle Handle, topic uint32, buffer unsafe.Pointer, buffer_size uint, actual_count *uint, avail_count *uint) Status
 
 //go:noescape
 //go:nosplit
 func Sys_object_get_child(handle Handle, koid uint64, rights Rights, out *Handle) Status
-
-//go:noescape
-//go:nosplit
-func Sys_object_bind_exception_port(object Handle, eport Handle, key uint64, options uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -498,6 +543,10 @@ func Sys_process_write_memory(proc Handle, vaddr uintptr, buffer unsafe.Pointer,
 //go:noescape
 //go:nosplit
 func Sys_job_create(parent_job Handle, options uint32, out *Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_task_bind_exception_port(object Handle, eport Handle, key uint64, options uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -585,6 +634,26 @@ func sys_vmo_op_range(handle Handle, op uint32, offset uint64, size uint64, buff
 
 //go:noescape
 //go:nosplit
+func Sys_vmar_allocate(parent_vmar_handle Handle, offset uint, size uint, map_flags uint32, child_vmar *Handle, child_addr *uintptr) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_destroy(vmar_handle Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_map(vmar_handle Handle, vmar_offset uint, vmo_handle Handle, vmo_offset uint64, len uint, map_flags uint32, mapped_addr *uintptr) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_unmap(vmar_handle Handle, addr uintptr, len uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_protect(vmar_handle Handle, addr uintptr, len uint, prot_flags uint32) Status
+
+//go:noescape
+//go:nosplit
 func sys_cprng_draw(buffer unsafe.Pointer, len uint, actual *uint) Status
 
 //go:noescape
@@ -602,6 +671,14 @@ func Sys_fifo_read(handle Handle, data unsafe.Pointer, len uint, num_written *ui
 //go:noescape
 //go:nosplit
 func Sys_fifo_write(handle Handle, data unsafe.Pointer, len uint, num_written *uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmar_unmap_handle_close_thread_exit(vmar_handle Handle, addr uintptr, len uint, handle Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_futex_wake_handle_close_thread_exit(value_ptr *int, count uint32, handle Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -661,6 +738,10 @@ func Sys_interrupt_wait(handle Handle) Status
 
 //go:noescape
 //go:nosplit
+func Sys_interrupt_signal(handle Handle) Status
+
+//go:noescape
+//go:nosplit
 func Sys_mmap_device_io(handle Handle, io_addr uint32, len uint32) Status
 
 //go:noescape
@@ -677,31 +758,15 @@ func Sys_vmo_create_contiguous(rsrc_handle Handle, size uint, alignment_log2 uin
 
 //go:noescape
 //go:nosplit
-func Sys_vmar_allocate(parent_vmar_handle Handle, offset uint, size uint, flags uint32, child_vmar *Handle, child_addr *uintptr) Status
-
-//go:noescape
-//go:nosplit
-func Sys_vmar_destroy(vmar_handle Handle) Status
-
-//go:noescape
-//go:nosplit
-func Sys_vmar_map(vmar_handle Handle, vmar_offset uint, vmo_handle Handle, vmo_offset uint64, len uint, flags uint32, mapped_addr *uintptr) Status
-
-//go:noescape
-//go:nosplit
-func Sys_vmar_unmap(vmar_handle Handle, addr uintptr, len uint) Status
-
-//go:noescape
-//go:nosplit
-func Sys_vmar_protect(vmar_handle Handle, addr uintptr, len uint, prot uint32) Status
-
-//go:noescape
-//go:nosplit
 func Sys_bootloader_fb_get_info(format *uint32, width *uint32, height *uint32, stride *uint32) Status
 
 //go:noescape
 //go:nosplit
 func Sys_set_framebuffer(handle Handle, vaddr unsafe.Pointer, len uint32, format uint32, width uint32, height uint32, stride uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_set_framebuffer_vmo(handle Handle, vmo Handle, len uint32, format uint32, width uint32, height uint32, stride uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -729,7 +794,7 @@ func Sys_pci_reset_device(handle Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_pci_map_mmio(handle Handle, bar_num uint32, cache_policy int) Handle
+func Sys_pci_map_mmio(handle Handle, bar_num uint32, cache_policy int, out_handle *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -741,11 +806,11 @@ func Sys_pci_io_read(handle Handle, bar_num uint32, offset uint32, len uint32, o
 
 //go:noescape
 //go:nosplit
-func Sys_pci_map_interrupt(handle Handle, which_irq int32) Handle
+func Sys_pci_map_interrupt(handle Handle, which_irq int32, out_handle *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_pci_map_config(handle Handle) Handle
+func Sys_pci_map_config(handle Handle, out_handle *Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -765,7 +830,7 @@ func Sys_pci_add_subtract_io_range(handle Handle, mmio bool, base uint64, len ui
 
 //go:noescape
 //go:nosplit
-func Sys_acpi_uefi_rsdp(handle Handle) uint32
+func Sys_acpi_uefi_rsdp(handle Handle) uint64
 
 //go:noescape
 //go:nosplit
@@ -774,6 +839,10 @@ func Sys_acpi_cache_flush(handle Handle) Status
 //go:noescape
 //go:nosplit
 func Sys_resource_create(parent_handle Handle, records *Rrec, count uint32, resource_out *Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_resource_destroy(handle Handle) Status
 
 //go:noescape
 //go:nosplit
@@ -790,3 +859,11 @@ func Sys_resource_connect(handle Handle, channel Handle) Status
 //go:noescape
 //go:nosplit
 func Sys_resource_accept(handle Handle, channel *Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_hypervisor_create(handle Handle, options uint32, out *Handle) Status
+
+//go:noescape
+//go:nosplit
+func Sys_hypervisor_op(handle Handle, opcode uint32, args unsafe.Pointer, args_len uint32, result unsafe.Pointer, result_len uint32) Status

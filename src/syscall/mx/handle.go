@@ -98,6 +98,21 @@ func (h Handle) SignalPeer(clearMask, setMask Signals) error {
 	return nil
 }
 
+func (h Handle) SetCookie(scope Handle, cookie uint64) error {
+	if status := Sys_object_set_cookie(h, scope, cookie); status != ErrOk {
+		return Error{Status: status, Text: "mx.Handle.SetCookie"}
+	}
+	return nil
+}
+
+func (h Handle) GetCookie(scope Handle) (uint64, error) {
+	var cookie uint64
+	if status := Sys_object_get_cookie(h, scope, &cookie); status != ErrOk {
+		return 0, Error{Status: status, Text: "mx.Handle.GetCookie"}
+	}
+	return cookie, nil
+}
+
 func WaitMany(items []WaitItem, timeout Time) error {
 	if status := sys_object_wait_many(&items[0], uint32(len(items)), timeout); status != ErrOk {
 		return Error{Status: status, Text: "mx.Handle.WaitMany"}
