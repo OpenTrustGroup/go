@@ -373,7 +373,7 @@ func (r *RemoteIO) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
 	}
 }
 
-func (r *RemoteIO) Misc(op uint32, off int64, in, out []byte) (n int, err error) {
+func (r *RemoteIO) Misc(op uint32, off int64, in, out []byte, handles []mx.Handle) (n int, err error) {
 	if len(in) > MessageChunkSize || len(out) > MessageChunkSize {
 		return 0, mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO"}
 	}
@@ -385,15 +385,9 @@ func (r *RemoteIO) Misc(op uint32, off int64, in, out []byte) (n int, err error)
 	msg.SetOff(off)
 	copy(msg.Data[:], in)
 
-	if op == OpRename {
-		// Rename is a special snowflake that sends a reply channel, like open and clone.
-		// Unlike open and close, it only cares about the 'status' response.
-		if _, err := r.replyChannelCall(&msg); err != nil {
-			return 0, err
-		} else {
-			msg.DiscardHandles()
-			return 0, nil
-		}
+	if len(handles) > 0 {
+		copy(msg.Handle[:], handles)
+		msg.Hcount = uint32(len(handles))
 	}
 	if _, err = r.txn(&msg); err != nil {
 		return 0, err
@@ -409,14 +403,14 @@ func (r *RemoteIO) Misc(op uint32, off int64, in, out []byte) (n int, err error)
 
 func Stat(f mxio.MXIO) (attr mxio.Vnattr, err error) {
 	b := (*[unsafe.Sizeof(attr)]byte)(unsafe.Pointer(&attr))
-	if _, err := f.Misc(OpStat, 0, nil, (*b)[:]); err != nil {
+	if _, err := f.Misc(OpStat, 0, nil, (*b)[:], nil); err != nil {
 		return mxio.Vnattr{}, err
 	}
 	return attr, nil
 }
 
 func UnlinkAt(dir mxio.MXIO, name string) error {
-	_, err := dir.Misc(OpUnlink, 0, []byte(name), nil)
+	_, err := dir.Misc(OpUnlink, 0, []byte(name), nil, nil)
 	if err != nil {
 		return err
 	}

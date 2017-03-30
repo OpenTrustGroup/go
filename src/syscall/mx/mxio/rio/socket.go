@@ -187,8 +187,8 @@ func (s *Socket) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
 func (s *Socket) IoctlSetHandle(op uint32, in mx.Handle) error {
 	return s.r.IoctlSetHandle(op, in)
 }
-func (s *Socket) Misc(op uint32, off int64, in, out []byte) (n int, err error) {
-	return s.r.Misc(op, off, in, out)
+func (s *Socket) Misc(op uint32, off int64, in, out []byte, handles []mx.Handle) (n int, err error) {
+	return s.r.Misc(op, off, in, out, handles)
 }
 
 // SetDgram marks a *Socket as a datagram (UDP) socket.
@@ -220,7 +220,7 @@ func Bind(m mxio.MXIO, addr mxnet.Addr, port uint16) error {
 	if !ok {
 		return errors.New("rio.Connect: argument is not a *Socket")
 	}
-	_, err = s.Misc(OpBind, 0, b, nil)
+	_, err = s.Misc(OpBind, 0, b, nil, nil)
 	return err
 }
 
@@ -239,7 +239,7 @@ func Connect(m mxio.MXIO, addr mxnet.Addr, port uint16) error {
 	if !ok {
 		return errors.New("rio.Connect: argument is not a *Socket")
 	}
-	_, err = s.Misc(OpConnect, 0, b, nil)
+	_, err = s.Misc(OpConnect, 0, b, nil, nil)
 	if err != nil && mxStatus(err) != mx.ErrShouldWait {
 		return err
 	}

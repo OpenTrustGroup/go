@@ -39,6 +39,7 @@ const (
 	O_DIRECTORY = 00200000
 	O_NOFOLLOW  = 00400000
 	O_CLOEXEC   = 02000000
+	O_NOREMOTE  = 0100000000
 )
 
 const (
@@ -173,26 +174,28 @@ func Rename(oldpath, newpath string) (err error) {
 		return EINVAL
 	}
 
-	var f mxio.MXIO
-	if oldpath[0] == '/' && newpath[0] == '/' {
-		// both paths are absolute: rename relative to root
-		rootMu.Lock()
-		defer rootMu.Unlock()
-		f = root
-	} else if oldpath[0] != '/' && newpath[0] != '/' {
-		// both paths are relative: rename relative to cwd
-		cwdMu.Lock()
-		defer cwdMu.Unlock()
-		f = cwd
-	} else {
-		// mixed absolute & relative paths: unsupported
-		return EOPNOTSUPP
-	}
+	olddir, oldfile := splitpath(oldpath)
+	newdir, newfile := splitpath(newpath)
 
-	buf := make([]byte, len(oldpath)+len(newpath)+2)
-	copy(buf, oldpath)
-	copy(buf[len(oldpath)+1:], newpath)
-	_, err = f.Misc(rio.OpRename, 0, buf, nil)
+	old, err := openPath(olddir, O_DIRECTORY, 0)
+	if err != nil {
+		return err
+	}
+	defer old.Close()
+	new, err := openPath(newdir, O_DIRECTORY, 0)
+	if err != nil {
+		return err
+	}
+	defer new.Close()
+
+	token, err := new.Ioctl(mxio.IoctlDevmgrGetTokenFS, nil, nil)
+	if err != nil {
+		return err
+	}
+	buf := make([]byte, len(oldfile)+len(newfile)+2)
+	copy(buf, oldfile)
+	copy(buf[len(oldfile)+1:], newfile)
+	_, err = old.Misc(rio.OpRename, 0, buf, nil, token)
 	return err
 }
 
@@ -201,7 +204,7 @@ func Fsync(fd int) (err error) {
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
 
-	_, err = f.Misc(rio.OpSync, 0, nil, nil)
+	_, err = f.Misc(rio.OpSync, 0, nil, nil, nil)
 	return err
 }
 
@@ -497,7 +500,7 @@ func Ftruncate(fd int, length int64) (err error) {
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
 
-	_, err = f.Misc(rio.OpTruncate, length, nil, nil)
+	_, err = f.Misc(rio.OpTruncate, length, nil, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -561,7 +564,7 @@ func readdirnames(f mxio.MXIO, max int) (names []string, err error) {
 
 	for max != 0 {
 		buf := bufback[:]
-		n, err := f.Misc(rio.OpReaddir, 0, nil, buf)
+		n, err := f.Misc(rio.OpReaddir, 0, nil, buf, nil)
 		if err != nil {
 			return names, err
 		}

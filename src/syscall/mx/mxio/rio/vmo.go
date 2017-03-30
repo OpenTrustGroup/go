@@ -97,7 +97,11 @@ func (f *VMOFile) IoctlSetHandle(op uint32, in mx.Handle) error {
 	return mx.Error{Status: mx.ErrNotSupported, Text: "rio.VMOFile"}
 }
 
-func (f *VMOFile) Misc(op uint32, off int64, in, out []byte) (n int, err error) {
+func (f *VMOFile) Misc(op uint32, off int64, in, out []byte, handles []mx.Handle) (n int, err error) {
+	for _, h := range handles {
+		h.Close()
+	}
+
 	switch op {
 	case OpStat:
 		attr := mxio.Vnattr{

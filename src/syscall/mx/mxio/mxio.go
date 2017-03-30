@@ -25,7 +25,7 @@ type MXIO interface {
 	Clone() ([]mx.Handle, error) // TODO(smklein): Pass type back from Clone
 	Ioctl(op uint32, in, out []byte) ([]mx.Handle, error)
 	IoctlSetHandle(op uint32, in mx.Handle) error
-	Misc(op uint32, off int64, in, out []byte) (n int, err error)
+	Misc(op uint32, off int64, in, out []byte, handles []mx.Handle) (n int, err error)
 	// TODO(smklein): Add missing ops, like "Wait"
 }
 
@@ -117,6 +117,7 @@ var IoctlDeviceSync = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 7)
 
 var IoctlDevmgrMountFS = IoctlNum(IoctlKindSetHandle, IoctlFamilyDevmgr, 0)
 var IoctlDevmgrUnmountFS = IoctlNum(IoctlKindDefault, IoctlFamilyDevmgr, 1)
+var IoctlDevmgrGetTokenFS = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevmgr, 5)
 
 // TODO: these IoPort* functions have been superceeded by mx.Port. Remove them.
 

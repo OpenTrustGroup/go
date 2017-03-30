@@ -129,6 +129,6 @@ func (f *Pipe) IoctlSetHandle(op uint32, in mx.Handle) error {
 	return mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
 }
 
-func (f *Pipe) Misc(op uint32, off int64, in, out []byte) (n int, err error) {
+func (f *Pipe) Misc(op uint32, off int64, in, out []byte, handles []mx.Handle) (n int, err error) {
 	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
 }
