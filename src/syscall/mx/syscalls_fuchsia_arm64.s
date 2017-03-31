@@ -602,8 +602,8 @@ TEXT ·sys_vmo_op_range(SB),NOSPLIT,$0-44
 	MOVW R0, ret+40(FP)
 	RET
 
-// func Sys_vmar_allocate(parent_vmar_handle Handle, offset uint, size uint, map_flags uint32, child_vmar *Handle, child_addr *uintptr) Status
-TEXT ·Sys_vmar_allocate(SB),NOSPLIT,$0-52
+// func sys_vmar_allocate(parent_vmar_handle Handle, offset uint, size uint, map_flags uint32, child_vmar *Handle, child_addr *uintptr) Status
+TEXT ·sys_vmar_allocate(SB),NOSPLIT,$0-52
 	MOVW parent_vmar_handle+0(FP), R0
 	MOVD offset+8(FP), R1
 	MOVD size+16(FP), R2
@@ -614,15 +614,15 @@ TEXT ·Sys_vmar_allocate(SB),NOSPLIT,$0-52
 	MOVW R0, ret+48(FP)
 	RET
 
-// func Sys_vmar_destroy(vmar_handle Handle) Status
-TEXT ·Sys_vmar_destroy(SB),NOSPLIT,$0-12
+// func sys_vmar_destroy(vmar_handle Handle) Status
+TEXT ·sys_vmar_destroy(SB),NOSPLIT,$0-12
 	MOVW vmar_handle+0(FP), R0
 	BL vdso_mx_vmar_destroy(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
-// func Sys_vmar_map(vmar_handle Handle, vmar_offset uint, vmo_handle Handle, vmo_offset uint64, len uint, map_flags uint32, mapped_addr *uintptr) Status
-TEXT ·Sys_vmar_map(SB),NOSPLIT,$0-60
+// func sys_vmar_map(vmar_handle Handle, vmar_offset uint, vmo_handle Handle, vmo_offset uint64, len uint, map_flags uint32, mapped_addr *uintptr) Status
+TEXT ·sys_vmar_map(SB),NOSPLIT,$0-60
 	MOVW vmar_handle+0(FP), R0
 	MOVD vmar_offset+8(FP), R1
 	MOVW vmo_handle+16(FP), R2
@@ -634,8 +634,8 @@ TEXT ·Sys_vmar_map(SB),NOSPLIT,$0-60
 	MOVW R0, ret+56(FP)
 	RET
 
-// func Sys_vmar_unmap(vmar_handle Handle, addr uintptr, len uint) Status
-TEXT ·Sys_vmar_unmap(SB),NOSPLIT,$0-28
+// func sys_vmar_unmap(vmar_handle Handle, addr uintptr, len uint) Status
+TEXT ·sys_vmar_unmap(SB),NOSPLIT,$0-28
 	MOVW vmar_handle+0(FP), R0
 	MOVD addr+8(FP), R1
 	MOVD len+16(FP), R2
@@ -643,8 +643,8 @@ TEXT ·Sys_vmar_unmap(SB),NOSPLIT,$0-28
 	MOVW R0, ret+24(FP)
 	RET
 
-// func Sys_vmar_protect(vmar_handle Handle, addr uintptr, len uint, prot_flags uint32) Status
-TEXT ·Sys_vmar_protect(SB),NOSPLIT,$0-36
+// func sys_vmar_protect(vmar_handle Handle, addr uintptr, len uint, prot_flags uint32) Status
+TEXT ·sys_vmar_protect(SB),NOSPLIT,$0-36
 	MOVW vmar_handle+0(FP), R0
 	MOVD addr+8(FP), R1
 	MOVD len+16(FP), R2

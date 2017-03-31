@@ -15,7 +15,7 @@ var (
 	StdioHandleTypes [3]int
 	CwdHandle        Handle
 	ProcHandle       Handle
-	VmarRootHandle   Handle
+	VMARRoot         VMAR
 )
 
 type HandleInfo uint32
@@ -314,6 +314,48 @@ func NewVMO(size uint64, options uint32) (VMO, error) {
 		return 0, Error{Status: status, Text: "mx.VMO"}
 	}
 	return VMO(h), nil
+}
+
+type VMAR Handle
+
+func (v VMAR) Destroy() error {
+	if status := sys_vmar_destroy(Handle(v)); status != ErrOk {
+		return Error{Status: status, Text: "mx.VMAR.Destroy"}
+	}
+	return nil
+}
+
+func (v VMAR) Map(vmarOffset uint64, vmo VMO, vmoOffset, len uint64, flags VMFlag) (addr uintptr, err error) {
+	status := sys_vmar_map(Handle(v), uint(vmarOffset), Handle(vmo), vmoOffset, uint(len), uint32(flags), &addr)
+	if status != ErrOk {
+		return 0, Error{Status: status, Text: "mx.VMAR.Map"}
+	}
+	return addr, nil
+}
+
+func (v VMAR) Unmap(addr uintptr, len uint64) error {
+	status := sys_vmar_unmap(Handle(v), addr, uint(len))
+	if status != ErrOk {
+		return Error{Status: status, Text: "mx.VMAR.Unmap"}
+	}
+	return nil
+}
+
+func (v VMAR) Protect(addr uintptr, len uint64, flags VMFlag) error {
+	status := sys_vmar_protect(Handle(v), addr, uint(len), uint32(flags))
+	if status != ErrOk {
+		return Error{Status: status, Text: "mx.VMAR.Protect"}
+	}
+	return nil
+}
+
+func NewVMAR(parent VMAR, offset, size uint64, flags VMFlag) (child VMAR, addr uintptr, err error) {
+	var childHandle Handle
+	status := sys_vmar_allocate(Handle(parent), uint(offset), uint(size), uint32(flags), &childHandle, &addr)
+	if status != ErrOk {
+		return 0, 0, Error{Status: status, Text: "mx.NewVMAR"}
+	}
+	return VMAR(childHandle), addr, nil
 }
 
 type Log struct {

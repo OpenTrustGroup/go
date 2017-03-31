@@ -57,7 +57,7 @@ func osinit() {
 		}
 		mx.CwdHandle = mx.Handle(mxioHandles.cwd)
 		mx.ProcHandle = mx.Handle(mxioHandles.processSelf)
-		mx.VmarRootHandle = mx.Handle(mxioHandles.vmarRootSelf)
+		mx.VMARRoot = mx.VMAR(mxioHandles.vmarRootSelf)
 	} else {
 		// TODO: implement cgo-less init
 		println("runtime: no fuchsia process handle without cgo yet")

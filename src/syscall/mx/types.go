@@ -343,3 +343,18 @@ var EPIPE error = epipe{}
 type epipe struct{}
 
 func (epipe) Error() string { return "errno(32)" }
+
+type VMFlag int
+
+const (
+	VMFlagPermRead          VMFlag = 1 << 0 // MX_VM_FLAG_PERM_READ
+	VMFlagPermWrite         VMFlag = 1 << 1 // MX_VM_FLAG_PERM_WRITE
+	VMFlagPermExecute       VMFlag = 1 << 2 // MX_VM_FLAG_PERM_EXECUTE
+	VMFlagCompact           VMFlag = 1 << 3 // MX_VM_FLAG_COMPACT
+	VMFlagSpecific          VMFlag = 1 << 4 // MX_VM_FLAG_SPECIFIC
+	VMFlagSpecificOverwrite VMFlag = 1 << 5 // MX_VM_FLAG_SPECIFIC_OVERWRITE
+	VMFlagCanMapSpecific    VMFlag = 1 << 6 // MX_VM_FLAG_CAN_MAP_SPECIFIC
+	VMFlagCanMapRead        VMFlag = 1 << 7 // MX_VM_FLAG_CAN_MAP_READ
+	VMFlagCanMapWrite       VMFlag = 1 << 8 // MX_VM_FLAG_CAN_MAP_WRITE
+	VMFlagCanMapExecute     VMFlag = 1 << 9 // MX_VM_FLAG_CAN_MAP_EXECUTE
+)

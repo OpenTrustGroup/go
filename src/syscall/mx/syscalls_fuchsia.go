@@ -634,23 +634,23 @@ func sys_vmo_op_range(handle Handle, op uint32, offset uint64, size uint64, buff
 
 //go:noescape
 //go:nosplit
-func Sys_vmar_allocate(parent_vmar_handle Handle, offset uint, size uint, map_flags uint32, child_vmar *Handle, child_addr *uintptr) Status
+func sys_vmar_allocate(parent_vmar_handle Handle, offset uint, size uint, map_flags uint32, child_vmar *Handle, child_addr *uintptr) Status
 
 //go:noescape
 //go:nosplit
-func Sys_vmar_destroy(vmar_handle Handle) Status
+func sys_vmar_destroy(vmar_handle Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_vmar_map(vmar_handle Handle, vmar_offset uint, vmo_handle Handle, vmo_offset uint64, len uint, map_flags uint32, mapped_addr *uintptr) Status
+func sys_vmar_map(vmar_handle Handle, vmar_offset uint, vmo_handle Handle, vmo_offset uint64, len uint, map_flags uint32, mapped_addr *uintptr) Status
 
 //go:noescape
 //go:nosplit
-func Sys_vmar_unmap(vmar_handle Handle, addr uintptr, len uint) Status
+func sys_vmar_unmap(vmar_handle Handle, addr uintptr, len uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_vmar_protect(vmar_handle Handle, addr uintptr, len uint, prot_flags uint32) Status
+func sys_vmar_protect(vmar_handle Handle, addr uintptr, len uint, prot_flags uint32) Status
 
 //go:noescape
 //go:nosplit
