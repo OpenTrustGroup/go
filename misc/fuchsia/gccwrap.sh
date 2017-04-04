@@ -7,10 +7,10 @@ if [ "$MAGENTA" == "" ]; then
 fi
 
 if [ "$GOARCH" == "amd64" ]; then
-	gccbin="$MAGENTA/prebuilt/downloads/x86_64-elf-6.2.0-$(uname)-x86_64/bin/x86_64-elf-gcc"
+	gccbin="$MAGENTA/prebuilt/downloads/x86_64-elf-6.3.0-$(uname)-x86_64/bin/x86_64-elf-gcc"
 	magentabuild="$MAGENTA/../out/build-magenta/build-magenta-pc-x86-64"
 elif [ "$GOARCH" == "arm64" ]; then
-	gccbin="$MAGENTA/prebuilt/downloads/aarch64-elf-6.2.0-$(uname)-x86_64/bin/aarch64-elf-gcc"
+	gccbin="$MAGENTA/prebuilt/downloads/aarch64-elf-6.3.0-$(uname)-x86_64/bin/aarch64-elf-gcc"
 	magentabuild="$MAGENTA/../out/build-magenta/build-magenta-qemu-arm64"
 else
 	echo "gccwrap.sh: unsupported GOARCH: $GOARCH" >&2
