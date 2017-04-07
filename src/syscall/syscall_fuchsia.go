@@ -555,11 +555,15 @@ func readdirnames(f mxio.MXIO, max int) (names []string, err error) {
 	const dirBufsize = rio.MessageChunkSize
 	var bufback [dirBufsize]byte
 
+	if max <= 0 {
+		max = -1
+	}
+
 	for max != 0 {
 		buf := bufback[:]
 		n, err := f.Misc(rio.OpReaddir, 0, nil, buf)
 		if err != nil {
-			return nil, err
+			return names, err
 		}
 		buf = buf[:n:n]
 		if n <= 0 {
@@ -570,10 +574,10 @@ func readdirnames(f mxio.MXIO, max int) (names []string, err error) {
 		for max != 0 && len(buf) >= sizeofSize {
 			d := (*Dirent)(unsafe.Pointer(&buf[0]))
 			if d.Size == 0 {
-				return nil, errDirentEmpty{}
+				return names, errDirentEmpty{}
 			}
 			if int(d.Size) > len(buf) {
-				return nil, errDirentTooLarge{}
+				return names, errDirentTooLarge{}
 			}
 			buf = buf[d.Size:]
 			bytes := (*[dirBufsize]byte)(unsafe.Pointer(&d.Name[0]))[:d.Size-8]
@@ -581,7 +585,9 @@ func readdirnames(f mxio.MXIO, max int) (names []string, err error) {
 			if name == "." || name == ".." {
 				continue
 			}
-			max--
+			if max > 0 {
+				max--
+			}
 			names = append(names, name)
 		}
 	}
