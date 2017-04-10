@@ -28,7 +28,7 @@ do
 done
 
 if ! $compiler; then
-	extra_args="-lc $magentabuild/ulib/crt1.o $magentabuild/ulib/magenta/libmagenta.so.abi"
+	extra_args="-lc $magentabuild/system/ulib/crt1.o $magentabuild/system/ulib/magenta/libmagenta.so.abi"
 fi
 
 exec $gccbin \
