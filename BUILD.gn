@@ -2,64 +2,62 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# Compile a version of Go which is capable of building Go executables for
-# Fuchsia.
+# The go_runtime action wraps go_toolchain, rebuilding just the standard
+# if it has changed.
 action("go_runtime") {
-  script = "magenta.py"
-
-  outputs = [ "$target_gen_dir/bin/go" ]
-
+  outputs = [ "$root_gen_dir/goroot/stdlib.done" ]
+  depfile = "$root_gen_dir/gostdlib.d"
+  script = rebase_path("//buildtools/go")
   args = [
-    "--fuchsia-root",
+    "run",
+    rebase_path("makestdlib.go", root_build_dir),
+    "-root-out-dir",
+    rebase_path("$root_out_dir"),
+    "-root-gen-dir",
+    rebase_path("$root_gen_dir"),
+    "-depfile",
+    rebase_path(depfile),
+  ]
+  deps = [ ":go_toolchain" ]
+}
+
+action("go_toolchain") {
+  outputs = [ "$root_gen_dir/goroot/bin/go" ]
+  depfile_path = "$root_gen_dir/goroot.d"
+
+  depfile = depfile_path
+
+  script = rebase_path("//buildtools/go")
+  args = [
+    "run",
+    rebase_path("makefuchsia.go", root_build_dir),
+    "-fuchsia-root",
     rebase_path("//."),
-    "--go-output-path",
-    rebase_path("$target_gen_dir/bin/go"),
+    "-root-out-dir",
+    rebase_path("$root_out_dir"),
+    "-root-gen-dir",
+    rebase_path("$root_gen_dir"),
+    "-depfile",
+    rebase_path(depfile_path),
+    "-host-os",
+    host_os,
+    "-host-cpu",
+    host_cpu,
+    "-target-cpu",
+    target_cpu,
   ]
 
-  # Convert "host" and "target" info to "GO{ARCH,OS}" formats
   if (host_os == "linux") {
     args += [
-      "--go-bootstrap-path",
+      "--bootstrap-path",
       rebase_path("//buildtools/linux64/go"),
-      "--go-host-os",
-      "linux",
     ]
   } else if (host_os == "mac") {
     args += [
-      "--go-bootstrap-path",
+      "--bootstrap-path",
       rebase_path("//buildtools/mac/go"),
-      "--go-host-os",
-      "darwin",
     ]
   } else {
     assert(false, "Go cross compiler currently only supported on Linux and Mac")
-  }
-
-  if (host_cpu == "x64") {
-    args += [
-      "--go-host-arch",
-      "amd64",
-    ]
-  } else if (host_cpu == "arm64") {
-    args += [
-      "--go-host-arch",
-      "arm64",
-    ]
-  } else {
-    assert(false, "Unsupported Host CPU")
-  }
-
-  if (target_cpu == "x64") {
-    args += [
-      "--go-target-arch",
-      "amd64",
-    ]
-  } else if (target_cpu == "arm64") {
-    args += [
-      "--go-target-arch",
-      "arm64",
-    ]
-  } else {
-    assert(false, "Unsupported Target CPU")
   }
 }
