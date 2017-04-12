@@ -147,32 +147,32 @@ const (
 	ErrOk Status = -iota
 	ErrInternal
 	ErrNotSupported
-	ErrNotFound
-	ErrNoMemory
 	ErrNoResources
-	_ // -6
+	ErrNoMemory
+	ErrCallFailed
+	ErrInterruptedRetry
 	_ // -7
 	_ // -8
 	_ // -9
 	ErrInvalidArgs
-	ErrBadSyscall
 	ErrBadHandle
+	ErrWrongType
+	ErrBadSyscall
 	ErrOutOfRange
 	ErrBufferTooSmall
-	ErrAlreadyExists
-	ErrAlreadyBound
+	_ // -16
 	_ // -17
 	_ // -18
 	_ // -19
 	ErrBadState
-	_ // -21
-	_ // -22
 	ErrTimedOut
-	ErrHandleClosed
-	ErrRemoteClosed
-	ErrUnavailable
 	ErrShouldWait
-	_ // -28
+	ErrCanceled
+	ErrPeerClosed
+	ErrNotFound
+	ErrAlreadyExists
+	ErrAlreadyBound
+	ErrUnavailable
 	_ // -29
 	ErrAccessDenied
 	_ // -31
@@ -197,8 +197,11 @@ const (
 	ErrBadPath
 	ErrNotDir
 	ErrNotFile
-	ErrCallFailed
-	ErrWrongType
+	ErrFileBig
+	ErrNoSpace
+
+	ErrHandleClosed = ErrCanceled
+	ErrRemoteClosed = ErrPeerClosed
 )
 
 const (
