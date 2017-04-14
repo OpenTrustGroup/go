@@ -13,11 +13,11 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_nanosleep mx_nanosleep "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_ticks_get mx_ticks_get "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_ticks_per_second mx_ticks_per_second "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_deadline_after mx_deadline_after "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_system_get_num_cpus mx_system_get_num_cpus "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_system_get_version mx_system_get_version "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_system_get_physmem mx_system_get_physmem "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_cache_flush mx_cache_flush "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_handle_cancel mx_handle_cancel "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_handle_close mx_handle_close "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_handle_duplicate mx_handle_duplicate "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_handle_replace mx_handle_replace "libmagenta.so"
@@ -51,6 +51,7 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_process_write_memory mx_process_write_memory "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_job_create mx_job_create "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_task_bind_exception_port mx_task_bind_exception_port "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_task_suspend mx_task_suspend "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_task_resume mx_task_resume "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_task_kill mx_task_kill "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_event_create mx_event_create "libmagenta.so"
@@ -66,6 +67,7 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_port_queue mx_port_queue "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_port_wait mx_port_wait "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_port_bind mx_port_bind "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_port_cancel mx_port_cancel "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_vmo_create mx_vmo_create "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_vmo_read mx_vmo_read "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_vmo_write mx_vmo_write "libmagenta.so"
@@ -136,11 +138,11 @@ import "unsafe"
 //go:linkname vdso_mx_nanosleep vdso_mx_nanosleep
 //go:linkname vdso_mx_ticks_get vdso_mx_ticks_get
 //go:linkname vdso_mx_ticks_per_second vdso_mx_ticks_per_second
+//go:linkname vdso_mx_deadline_after vdso_mx_deadline_after
 //go:linkname vdso_mx_system_get_num_cpus vdso_mx_system_get_num_cpus
 //go:linkname vdso_mx_system_get_version vdso_mx_system_get_version
 //go:linkname vdso_mx_system_get_physmem vdso_mx_system_get_physmem
 //go:linkname vdso_mx_cache_flush vdso_mx_cache_flush
-//go:linkname vdso_mx_handle_cancel vdso_mx_handle_cancel
 //go:linkname vdso_mx_handle_close vdso_mx_handle_close
 //go:linkname vdso_mx_handle_duplicate vdso_mx_handle_duplicate
 //go:linkname vdso_mx_handle_replace vdso_mx_handle_replace
@@ -174,6 +176,7 @@ import "unsafe"
 //go:linkname vdso_mx_process_write_memory vdso_mx_process_write_memory
 //go:linkname vdso_mx_job_create vdso_mx_job_create
 //go:linkname vdso_mx_task_bind_exception_port vdso_mx_task_bind_exception_port
+//go:linkname vdso_mx_task_suspend vdso_mx_task_suspend
 //go:linkname vdso_mx_task_resume vdso_mx_task_resume
 //go:linkname vdso_mx_task_kill vdso_mx_task_kill
 //go:linkname vdso_mx_event_create vdso_mx_event_create
@@ -189,6 +192,7 @@ import "unsafe"
 //go:linkname vdso_mx_port_queue vdso_mx_port_queue
 //go:linkname vdso_mx_port_wait vdso_mx_port_wait
 //go:linkname vdso_mx_port_bind vdso_mx_port_bind
+//go:linkname vdso_mx_port_cancel vdso_mx_port_cancel
 //go:linkname vdso_mx_vmo_create vdso_mx_vmo_create
 //go:linkname vdso_mx_vmo_read vdso_mx_vmo_read
 //go:linkname vdso_mx_vmo_write vdso_mx_vmo_write
@@ -260,11 +264,11 @@ var (
 	vdso_mx_nanosleep                           uintptr
 	vdso_mx_ticks_get                           uintptr
 	vdso_mx_ticks_per_second                    uintptr
+	vdso_mx_deadline_after                      uintptr
 	vdso_mx_system_get_num_cpus                 uintptr
 	vdso_mx_system_get_version                  uintptr
 	vdso_mx_system_get_physmem                  uintptr
 	vdso_mx_cache_flush                         uintptr
-	vdso_mx_handle_cancel                       uintptr
 	vdso_mx_handle_close                        uintptr
 	vdso_mx_handle_duplicate                    uintptr
 	vdso_mx_handle_replace                      uintptr
@@ -298,6 +302,7 @@ var (
 	vdso_mx_process_write_memory                uintptr
 	vdso_mx_job_create                          uintptr
 	vdso_mx_task_bind_exception_port            uintptr
+	vdso_mx_task_suspend                        uintptr
 	vdso_mx_task_resume                         uintptr
 	vdso_mx_task_kill                           uintptr
 	vdso_mx_event_create                        uintptr
@@ -313,6 +318,7 @@ var (
 	vdso_mx_port_queue                          uintptr
 	vdso_mx_port_wait                           uintptr
 	vdso_mx_port_bind                           uintptr
+	vdso_mx_port_cancel                         uintptr
 	vdso_mx_vmo_create                          uintptr
 	vdso_mx_vmo_read                            uintptr
 	vdso_mx_vmo_write                           uintptr
@@ -386,7 +392,7 @@ func Sys_time_get(clock_id uint32) Time
 
 //go:noescape
 //go:nosplit
-func Sys_nanosleep(nanoseconds Time) Status
+func Sys_nanosleep(deadline Time) Status
 
 //go:noescape
 //go:nosplit
@@ -395,6 +401,10 @@ func Sys_ticks_get() uint64
 //go:noescape
 //go:nosplit
 func Sys_ticks_per_second() uint64
+
+//go:noescape
+//go:nosplit
+func Sys_deadline_after(nanoseconds Duration) Time
 
 //go:noescape
 //go:nosplit
@@ -414,10 +424,6 @@ func Sys_cache_flush(addr unsafe.Pointer, len uint, options uint32) Status
 
 //go:noescape
 //go:nosplit
-func Sys_handle_cancel(handle Handle, key uint64, options uint32) Status
-
-//go:noescape
-//go:nosplit
 func sys_handle_close(handle Handle) Status
 
 //go:noescape
@@ -430,11 +436,11 @@ func Sys_handle_replace(handle Handle, rights Rights, out *Handle) Status
 
 //go:noescape
 //go:nosplit
-func sys_object_wait_one(handle Handle, waitfor Signals, timeout Time, observed *Signals) Status
+func sys_object_wait_one(handle Handle, waitfor Signals, deadline Time, observed *Signals) Status
 
 //go:noescape
 //go:nosplit
-func sys_object_wait_many(items *WaitItem, count uint32, timeout Time) Status
+func sys_object_wait_many(items *WaitItem, count uint32, deadline Time) Status
 
 //go:noescape
 //go:nosplit
@@ -486,7 +492,7 @@ func sys_channel_write(handle Handle, options uint32, bytes unsafe.Pointer, num_
 
 //go:noescape
 //go:nosplit
-func Sys_channel_call(handle Handle, options uint32, timeout Time, args *ChannelCallArgs, actual_bytes *uint32, actual_handles *uint32, read_status *Status) Status
+func Sys_channel_call(handle Handle, options uint32, deadline Time, args *ChannelCallArgs, actual_bytes *uint32, actual_handles *uint32, read_status *Status) Status
 
 //go:noescape
 //go:nosplit
@@ -550,6 +556,10 @@ func Sys_task_bind_exception_port(object Handle, eport Handle, key uint64, optio
 
 //go:noescape
 //go:nosplit
+func Sys_task_suspend(task_handle Handle) Status
+
+//go:noescape
+//go:nosplit
 func Sys_task_resume(task_handle Handle, options uint32) Status
 
 //go:noescape
@@ -566,7 +576,7 @@ func Sys_eventpair_create(options uint32, out0 *Handle, out1 *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_futex_wait(value_ptr *int, current_value int, timeout Time) Status
+func Sys_futex_wait(value_ptr *int, current_value int, deadline Time) Status
 
 //go:noescape
 //go:nosplit
@@ -590,7 +600,7 @@ func Sys_waitset_remove(waitset_handle Handle, cookie uint64) Status
 
 //go:noescape
 //go:nosplit
-func Sys_waitset_wait(waitset_handle Handle, timeout Time, results *WaitSetResult, count *uint32) Status
+func Sys_waitset_wait(waitset_handle Handle, deadline Time, results *WaitSetResult, count *uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -602,11 +612,15 @@ func Sys_port_queue(handle Handle, packet unsafe.Pointer, size uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_port_wait(handle Handle, timeout Time, packet unsafe.Pointer, size uint) Status
+func Sys_port_wait(handle Handle, deadline Time, packet unsafe.Pointer, size uint) Status
 
 //go:noescape
 //go:nosplit
 func Sys_port_bind(handle Handle, key uint64, source Handle, signals Signals) Status
+
+//go:noescape
+//go:nosplit
+func Sys_port_cancel(handle Handle, source Handle, key uint64) Status
 
 //go:noescape
 //go:nosplit

@@ -20,11 +20,11 @@ func getRandomData(r []byte) {
 
 //go:nosplit
 func futexsleep(addr *uint32, val uint32, ns int64) {
-	timeout := mx.Time(ns)
+	deadline := mx.Time(mx.TimensecInfinite)
 	if ns < 0 {
-		timeout = mx.TimensecInfinite
+		deadline = mx.Sys_deadline_after(mx.Duration(ns))
 	}
-	mx.Sys_futex_wait((*int)(unsafe.Pointer(addr)), int(val), timeout)
+	mx.Sys_futex_wait((*int)(unsafe.Pointer(addr)), int(val), deadline)
 }
 
 //go:nosplit
@@ -266,7 +266,7 @@ func exit(code int32) {
 
 //go:nosplit
 func usleep(usec uint32) {
-	mx.Sys_nanosleep(mx.Time(usec * 1000))
+	mx.Sys_nanosleep(mx.Sys_deadline_after(mx.Duration(usec * 1000)))
 }
 
 func signame(sig uint32) string {

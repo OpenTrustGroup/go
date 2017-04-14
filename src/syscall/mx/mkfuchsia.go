@@ -298,6 +298,8 @@ func typeSize(t magentaType) int {
 		return 4
 	case mx_time_t:
 		return 8
+	case mx_duration_t:
+		return 8
 	case mx_koid_t:
 		return 8
 	case mx_handle_t:
@@ -356,6 +358,8 @@ func printGoType(buf *bytes.Buffer, t magentaType) {
 		fmt.Fprint(buf, "Status")
 	case mx_time_t:
 		fmt.Fprint(buf, "Time")
+	case mx_duration_t:
+		fmt.Fprint(buf, "Duration")
 	case mx_koid_t:
 		fmt.Fprint(buf, "Koid")
 	case mx_handle_t:
@@ -739,6 +743,7 @@ const (
 	mx_size_t
 	mx_status_t
 	mx_time_t
+	mx_duration_t
 	mx_koid_t
 	mx_handle_t
 	mx_signals_t
@@ -772,8 +777,9 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"uint64_t":                 mx_uint64_t,
 	"uintptr_t":                mx_uintptr_t,
 	"size_t":                   mx_size_t,
-	"mx_status_t":              mx_status_t, // int32_t
-	"mx_time_t":                mx_time_t,   // uint64_t nanoseconds
+	"mx_status_t":              mx_status_t,   // int32_t
+	"mx_time_t":                mx_time_t,     // uint64_t monotonic time
+	"mx_duration_t":            mx_duration_t, // uint64_t nanoseconds
 	"mx_koid_t":                mx_koid_t,
 	"mx_handle_t":              mx_handle_t, // int32_t
 	"mx_futex_t":               mx_int,

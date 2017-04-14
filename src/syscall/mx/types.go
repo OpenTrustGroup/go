@@ -8,12 +8,13 @@ package mx
 
 import "unsafe"
 
-type Status int32   // mx_status_t
-type Handle int32   // mx_handle_t
-type Time uint64    // mx_time_t, nanoseconds
-type Signals uint32 // mx_signals_t
-type Rights uint32  // mx_rights_t
-type Paddr uintptr  // mx_paddr_t
+type Status int32    // mx_status_t
+type Handle int32    // mx_handle_t
+type Time uint64     // mx_time_t, nanoseconds
+type Duration uint64 // mx_duration_t, nanoseconds
+type Signals uint32  // mx_signals_t
+type Rights uint32   // mx_rights_t
+type Paddr uintptr   // mx_paddr_t
 
 type WaitSetResult struct {
 	Cookie     uint64

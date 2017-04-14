@@ -15,9 +15,9 @@ TEXT ·Sys_time_get(SB),NOSPLIT,$0-16
 	MOVQ AX, ret+8(FP)
 	RET
 
-// func Sys_nanosleep(nanoseconds Time) Status
+// func Sys_nanosleep(deadline Time) Status
 TEXT ·Sys_nanosleep(SB),NOSPLIT,$0-12
-	MOVQ nanoseconds+0(FP), DI
+	MOVQ deadline+0(FP), DI
 	MOVQ vdso_mx_nanosleep(SB), AX
 	CALL AX
 	MOVL AX, ret+8(FP)
@@ -35,6 +35,14 @@ TEXT ·Sys_ticks_per_second(SB),NOSPLIT,$0-8
 	MOVQ vdso_mx_ticks_per_second(SB), AX
 	CALL AX
 	MOVQ AX, ret+0(FP)
+	RET
+
+// func Sys_deadline_after(nanoseconds Duration) Time
+TEXT ·Sys_deadline_after(SB),NOSPLIT,$0-16
+	MOVQ nanoseconds+0(FP), DI
+	MOVQ vdso_mx_deadline_after(SB), AX
+	CALL AX
+	MOVQ AX, ret+8(FP)
 	RET
 
 // func Sys_system_get_num_cpus() uint32
@@ -70,16 +78,6 @@ TEXT ·Sys_cache_flush(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_handle_cancel(handle Handle, key uint64, options uint32) Status
-TEXT ·Sys_handle_cancel(SB),NOSPLIT,$0-28
-	MOVL handle+0(FP), DI
-	MOVQ key+8(FP), SI
-	MOVL options+16(FP), DX
-	MOVQ vdso_mx_handle_cancel(SB), AX
-	CALL AX
-	MOVL AX, ret+24(FP)
-	RET
-
 // func sys_handle_close(handle Handle) Status
 TEXT ·sys_handle_close(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
@@ -108,12 +106,12 @@ TEXT ·Sys_handle_replace(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func sys_object_wait_one(handle Handle, waitfor Signals, timeout Time, observed *Signals) Status
+// func sys_object_wait_one(handle Handle, waitfor Signals, deadline Time, observed *Signals) Status
 TEXT ·sys_object_wait_one(SB),NOSPLIT,$0-28
 	CALL runtime·entersyscall(SB)
 	MOVL handle+0(FP), DI
 	MOVL waitfor+4(FP), SI
-	MOVQ timeout+8(FP), DX
+	MOVQ deadline+8(FP), DX
 	MOVQ observed+16(FP), CX
 	MOVQ vdso_mx_object_wait_one(SB), AX
 	CALL AX
@@ -121,12 +119,12 @@ TEXT ·sys_object_wait_one(SB),NOSPLIT,$0-28
 	CALL runtime·exitsyscall(SB)
 	RET
 
-// func sys_object_wait_many(items *WaitItem, count uint32, timeout Time) Status
+// func sys_object_wait_many(items *WaitItem, count uint32, deadline Time) Status
 TEXT ·sys_object_wait_many(SB),NOSPLIT,$0-28
 	CALL runtime·entersyscall(SB)
 	MOVQ items+0(FP), DI
 	MOVL count+8(FP), SI
-	MOVQ timeout+16(FP), DX
+	MOVQ deadline+16(FP), DX
 	MOVQ vdso_mx_object_wait_many(SB), AX
 	CALL AX
 	MOVL AX, ret+24(FP)
@@ -276,11 +274,11 @@ TEXT ·sys_channel_write(SB),NOSPLIT,$0-44
 	MOVL AX, ret+40(FP)
 	RET
 
-// func Sys_channel_call(handle Handle, options uint32, timeout Time, args *ChannelCallArgs, actual_bytes *uint32, actual_handles *uint32, read_status *Status) Status
+// func Sys_channel_call(handle Handle, options uint32, deadline Time, args *ChannelCallArgs, actual_bytes *uint32, actual_handles *uint32, read_status *Status) Status
 TEXT ·Sys_channel_call(SB),NOSPLIT,$24-52
 	MOVL handle+0(FP), DI
 	MOVL options+4(FP), SI
-	MOVQ timeout+8(FP), DX
+	MOVQ deadline+8(FP), DX
 	MOVQ args+16(FP), CX
 	MOVQ actual_bytes+24(FP), R8
 	MOVQ actual_handles+32(FP), R9
@@ -460,6 +458,14 @@ TEXT ·Sys_task_bind_exception_port(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
+// func Sys_task_suspend(task_handle Handle) Status
+TEXT ·Sys_task_suspend(SB),NOSPLIT,$0-12
+	MOVL task_handle+0(FP), DI
+	MOVQ vdso_mx_task_suspend(SB), AX
+	CALL AX
+	MOVL AX, ret+8(FP)
+	RET
+
 // func Sys_task_resume(task_handle Handle, options uint32) Status
 TEXT ·Sys_task_resume(SB),NOSPLIT,$0-12
 	MOVL task_handle+0(FP), DI
@@ -496,11 +502,11 @@ TEXT ·Sys_eventpair_create(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_futex_wait(value_ptr *int, current_value int, timeout Time) Status
+// func Sys_futex_wait(value_ptr *int, current_value int, deadline Time) Status
 TEXT ·Sys_futex_wait(SB),NOSPLIT,$0-28
 	MOVQ value_ptr+0(FP), DI
 	MOVQ current_value+8(FP), SI
-	MOVQ timeout+16(FP), DX
+	MOVQ deadline+16(FP), DX
 	MOVQ vdso_mx_futex_wait(SB), AX
 	CALL AX
 	MOVL AX, ret+24(FP)
@@ -556,11 +562,11 @@ TEXT ·Sys_waitset_remove(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
-// func Sys_waitset_wait(waitset_handle Handle, timeout Time, results *WaitSetResult, count *uint32) Status
+// func Sys_waitset_wait(waitset_handle Handle, deadline Time, results *WaitSetResult, count *uint32) Status
 TEXT ·Sys_waitset_wait(SB),NOSPLIT,$0-36
 	CALL runtime·entersyscall(SB)
 	MOVL waitset_handle+0(FP), DI
-	MOVQ timeout+8(FP), SI
+	MOVQ deadline+8(FP), SI
 	MOVQ results+16(FP), DX
 	MOVQ count+24(FP), CX
 	MOVQ vdso_mx_waitset_wait(SB), AX
@@ -588,11 +594,11 @@ TEXT ·Sys_port_queue(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_port_wait(handle Handle, timeout Time, packet unsafe.Pointer, size uint) Status
+// func Sys_port_wait(handle Handle, deadline Time, packet unsafe.Pointer, size uint) Status
 TEXT ·Sys_port_wait(SB),NOSPLIT,$0-36
 	CALL runtime·entersyscall(SB)
 	MOVL handle+0(FP), DI
-	MOVQ timeout+8(FP), SI
+	MOVQ deadline+8(FP), SI
 	MOVQ packet+16(FP), DX
 	MOVQ size+24(FP), CX
 	MOVQ vdso_mx_port_wait(SB), AX
@@ -610,6 +616,16 @@ TEXT ·Sys_port_bind(SB),NOSPLIT,$0-28
 	MOVQ vdso_mx_port_bind(SB), AX
 	CALL AX
 	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_port_cancel(handle Handle, source Handle, key uint64) Status
+TEXT ·Sys_port_cancel(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVL source+4(FP), SI
+	MOVQ key+8(FP), DX
+	MOVQ vdso_mx_port_cancel(SB), AX
+	CALL AX
+	MOVL AX, ret+16(FP)
 	RET
 
 // func sys_vmo_create(size uint64, options uint32, out *Handle) Status

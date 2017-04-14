@@ -182,7 +182,7 @@ func (c *Channel) Write(data []byte, handles []Handle, flags uint32) error {
 	return nil
 }
 
-func (c *Channel) Call(flags uint32, timeout Time, wData []byte, wHandles []Handle, rData []byte, rHandles []Handle) (actualBytes, actualHandles uint32, actualStatus Status, err error) {
+func (c *Channel) Call(flags uint32, deadline Time, wData []byte, wHandles []Handle, rData []byte, rHandles []Handle) (actualBytes, actualHandles uint32, actualStatus Status, err error) {
 	var writeDataPtr uintptr
 	if len(wData) > 0 {
 		writeDataPtr = uintptr(unsafe.Pointer(&wData[0]))
@@ -210,7 +210,7 @@ func (c *Channel) Call(flags uint32, timeout Time, wData []byte, wHandles []Hand
 		ReadNumHandles:  uint32(len(rHandles)),
 	}
 
-	status := Sys_channel_call(c.Handle, flags, timeout, args, &actualBytes, &actualHandles, &actualStatus)
+	status := Sys_channel_call(c.Handle, flags, deadline, args, &actualBytes, &actualHandles, &actualStatus)
 	if status != ErrOk {
 		err = Error{Status: status, Text: "mx.Channel.Call"}
 	}
@@ -242,8 +242,8 @@ func (p *Port) Queue(packet []byte) error {
 	return nil
 }
 
-func (p *Port) Wait(packet []byte, timeout Time) error {
-	if status := Sys_port_wait(p.Handle, timeout, unsafe.Pointer(&packet[0]), uint(len(packet))); status != ErrOk {
+func (p *Port) Wait(packet []byte, deadline Time) error {
+	if status := Sys_port_wait(p.Handle, deadline, unsafe.Pointer(&packet[0]), uint(len(packet))); status != ErrOk {
 		return Error{Status: status, Text: "mx.Port.Wait"}
 	}
 	return nil
