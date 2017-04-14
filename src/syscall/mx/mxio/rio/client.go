@@ -251,23 +251,40 @@ func (r *RemoteIO) replyChannelCall(msg *Msg) (*RioObject, error) {
 	}
 }
 
+func closeAll(handles []mx.Handle) {
+	for i := range handles {
+		handles[i].Close()
+	}
+}
+
 // Consumes handles, wrapping them in mxio object or closing them on error.
 func createFromHandles(protocol mxio.Protocol, handles []mx.Handle, extra []byte) (mxio.MXIO, error) {
 	switch protocol {
 	case mxio.ProtocolPipe:
+		if len(handles) != 1 {
+			closeAll(handles)
+			return nil, mx.Error{Status: mx.ErrInvalidArgs, Text: "createFromHandles: Pipe"}
+		}
 		return pipe.New(handles)
 	case mxio.ProtocolRemote:
+		if len(handles) == 0 || len(handles) > 2 {
+			closeAll(handles)
+			return nil, mx.Error{Status: mx.ErrInvalidArgs, Text: "createFromHandles: RemoteIO"}
+		}
 		return New(handles)
 	case mxio.ProtocolVMOFile:
-		return NewVMOFile(handles[0], extra)
+		if len(handles) != 2 || len(extra) != 16 {
+			closeAll(handles)
+			return nil, mx.Error{Status: mx.ErrInvalidArgs, Text: "createFromHandles: VMOFile"}
+		}
+		handles[0].Close()
+		return NewVMOFile(handles[1], extra)
 	case mxio.ProtocolSocket:
 		return NewSocket(handles)
 	default:
 		println("Unknown mxio protocol, ", protocol)
 		// In the error case, the server may have given us handles -- close them
-		for i := range handles {
-			handles[i].Close()
-		}
+		closeAll(handles)
 		return nil, mx.Error{Status: mx.ErrNotSupported, Text: "RemoteIO"}
 	}
 }

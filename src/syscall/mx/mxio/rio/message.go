@@ -119,11 +119,14 @@ func (ro *RioObject) Write(h mx.Handle, flags uint32) {
 func (ro *RioObject) Read(h mx.Handle, flags uint32) mx.Status {
 	c := &mx.Channel{h}
 	msgBytes := (*[RioObjectMaxSize]byte)(unsafe.Pointer(ro))
-	numBytes, numHandles, err := c.Read(msgBytes[:], ro.Handle[:], flags)
-	c.Close()
+	numBytes, numHandles, err := c.Read(msgBytes[:], ro.Handle[1:], flags)
 	if err != nil {
+		c.Close()
 		return err.(mx.Error).Status
-	} else if numBytes < RioObjectMinSize {
+	}
+	ro.Handle[0] = c.Handle
+	numHandles++
+	if numBytes < RioObjectMinSize {
 		ro.DiscardHandles()
 		return mx.ErrIO
 	}
