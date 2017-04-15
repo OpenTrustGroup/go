@@ -20,9 +20,9 @@ func getRandomData(r []byte) {
 
 //go:nosplit
 func futexsleep(addr *uint32, val uint32, ns int64) {
-	deadline := mx.Time(mx.TimensecInfinite)
+	deadline := mx.Sys_deadline_after(mx.Duration(ns))
 	if ns < 0 {
-		deadline = mx.Sys_deadline_after(mx.Duration(ns))
+		deadline = mx.Time(mx.TimensecInfinite)
 	}
 	mx.Sys_futex_wait((*int)(unsafe.Pointer(addr)), int(val), deadline)
 }
