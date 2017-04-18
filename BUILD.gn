@@ -5,27 +5,42 @@
 # The go_runtime action wraps go_toolchain, rebuilding just the standard
 # if it has changed.
 action("go_runtime") {
-  outputs = [ "$root_gen_dir/goroot/stdlib.done" ]
+  outputs = [ "$root_gen_dir/gostdlib.done" ]
   depfile = "$root_gen_dir/gostdlib.d"
   script = rebase_path("//buildtools/go")
   args = [
     "run",
     rebase_path("makestdlib.go", root_build_dir),
+    "-fuchsia-root",
+    rebase_path("//."),
+    "-depfile",
+    rebase_path(depfile),
     "-root-out-dir",
     rebase_path("$root_out_dir"),
     "-root-gen-dir",
     rebase_path("$root_gen_dir"),
-    "-depfile",
-    rebase_path(depfile),
+    "-target-cpu",
+    target_cpu,
   ]
   deps = [ ":go_toolchain" ]
+
+  if (host_os == "linux") {
+    args += [
+      "--bootstrap-path",
+      rebase_path("//buildtools/linux64/go"),
+    ]
+  } else if (host_os == "mac") {
+    args += [
+      "--bootstrap-path",
+      rebase_path("//buildtools/mac/go"),
+    ]
+  } else {
+    assert(false, "Go cross compiler currently only supported on Linux and Mac")
+  }
 }
 
 action("go_toolchain") {
-  outputs = [ "$root_gen_dir/goroot/bin/go" ]
-  depfile_path = "$root_gen_dir/goroot.d"
-
-  depfile = depfile_path
+  outputs = [ "$root_gen_dir/goroot.done" ]
 
   script = rebase_path("//buildtools/go")
   args = [
@@ -33,18 +48,8 @@ action("go_toolchain") {
     rebase_path("makefuchsia.go", root_build_dir),
     "-fuchsia-root",
     rebase_path("//."),
-    "-root-out-dir",
-    rebase_path("$root_out_dir"),
     "-root-gen-dir",
     rebase_path("$root_gen_dir"),
-    "-depfile",
-    rebase_path(depfile_path),
-    "-host-os",
-    host_os,
-    "-host-cpu",
-    host_cpu,
-    "-target-cpu",
-    target_cpu,
   ]
 
   if (host_os == "linux") {
@@ -60,4 +65,8 @@ action("go_toolchain") {
   } else {
     assert(false, "Go cross compiler currently only supported on Linux and Mac")
   }
+}
+
+pool("gobuild_pool") {
+  depth = 1
 }

@@ -17,12 +17,16 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 var (
-	flagDepfile    = flag.String("depfile", "", "Stdlib depfile")
-	flagRootOutDir = flag.String("root-out-dir", "", "GN variable")
-	flagRootGenDir = flag.String("root-gen-dir", "", "GN variable")
+	flagFuchsiaRoot   = flag.String("fuchsia-root", "", "Path to root of the Fuchsia project")
+	flagDepfile       = flag.String("depfile", "", "Stdlib depfile")
+	flagRootOutDir    = flag.String("root-out-dir", "", "GN variable")
+	flagRootGenDir    = flag.String("root-gen-dir", "", "GN variable")
+	flagTargetCPU     = flag.String("target-cpu", "", "GN variable")
+	flagBootstrapPath = flag.String("bootstrap-path", "", "Path to bootstrap Go installation")
 )
 
 func genDepfileStdlib() {
@@ -35,8 +39,8 @@ func genDepfileStdlib() {
 	}
 	os.Remove(path)
 	buf := new(bytes.Buffer)
-	buf.WriteString(relGenDir() + "/goroot/stdlib.done:")
-	if err := collectDeps(buf, "goroot/src"); err != nil {
+	buf.WriteString(relGenDir() + "/gostdlib.done:")
+	if err := collectDeps(buf); err != nil {
 		log.Fatal("gen depfile stdlib: %v", err)
 	}
 	if err := ioutil.WriteFile(path, buf.Bytes(), 0664); err != nil {
@@ -48,7 +52,7 @@ func relGenDir() string {
 	return (*flagRootGenDir)[len(*flagRootOutDir)+1:]
 }
 
-func collectDeps(w io.Writer, path string) error {
+func collectDeps(w io.Writer) error {
 	fn := func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() || strings.HasSuffix(path, "_test.go") {
 			return err
@@ -56,7 +60,17 @@ func collectDeps(w io.Writer, path string) error {
 		fmt.Fprintf(w, " %s", path)
 		return err
 	}
-	return filepath.Walk(filepath.Join(*flagRootGenDir, path), fn)
+	return filepath.Walk(filepath.Join(*flagBootstrapPath, "src"), fn)
+}
+
+func convCPU(cpu string) (arch string) {
+	switch cpu {
+	case "x64":
+		return "amd64"
+	case "arm64":
+		return "arm64"
+	}
+	return ""
 }
 
 func main() {
@@ -68,15 +82,56 @@ func main() {
 		log.Fatal("must specify -root-gen-dir")
 	}
 
+	goarchTarget := convCPU(*flagTargetCPU)
+	if goarchTarget == "" {
+		log.Fatalf("unsupported target CPU: %s", *flagTargetCPU)
+	}
+
 	genDepfileStdlib()
 
-	cmd := exec.Command(filepath.Join(*flagRootGenDir, "goroot/bin/go"), "install", "std")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Fatal("go install std failed")
-	}
-	donePath := filepath.Join(*flagRootGenDir, "goroot/stdlib.done")
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		// Generate the stdlib for the host.
+		// It is changed by third_party/go srcs being symlinked into buildtools.
+		cmd := exec.Command(filepath.Join(*flagBootstrapPath, "bin/go"), "install", "std")
+		cmd.Env = []string{
+			"PATH=" + os.Getenv("PATH"),
+			"GOROOT=" + *flagBootstrapPath,
+		}
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Fatal("go install std for host failed")
+		}
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		// Now generate the stdlib for the Fuchsia target.
+		cmd := exec.Command(filepath.Join(*flagBootstrapPath, "bin/go"), "install", "std")
+		cmd.Env = []string{
+			"PATH=" + os.Getenv("PATH"),
+			"GOOS=fuchsia",
+			"GOARCH=" + goarchTarget,
+			"GOROOT=" + *flagBootstrapPath,
+			"CGO_ENABLED=1",
+			"CC=" + filepath.Join(*flagBootstrapPath, "misc/fuchsia/gccwrap.sh"),
+			"MAGENTA=" + filepath.Join(*flagFuchsiaRoot, "magenta"), // used by gccwrap.sh
+		}
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Fatal("go install std for target failed")
+		}
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	donePath := filepath.Join(*flagRootGenDir, "gostdlib.done")
 	os.Remove(donePath)
 	if err := ioutil.WriteFile(donePath, []byte("done"), 0664); err != nil {
 		log.Fatalf("writing done file failed: %v", err)
