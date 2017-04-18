@@ -25,16 +25,31 @@ import (
 	"time"
 )
 
-var dot = []string{
-	"dir_unix.go",
-	"env.go",
-	"error.go",
-	"file.go",
-	"os_test.go",
-	"types.go",
-	"stat_darwin.go",
-	"stat_linux.go",
-}
+var dot = func() []string {
+	switch runtime.GOOS {
+	case "fuchsia":
+		return []string{
+			"dev",
+			"boot",
+			"tmp",
+			"blobstore",
+			"data",
+			"volume",
+			"system",
+		}
+	default:
+		return []string{
+			"dir_unix.go",
+			"env.go",
+			"error.go",
+			"file.go",
+			"os_test.go",
+			"types.go",
+			"stat_darwin.go",
+			"stat_linux.go",
+		}
+	}
+}()
 
 type sysDir struct {
 	name  string
@@ -43,6 +58,14 @@ type sysDir struct {
 
 var sysdir = func() *sysDir {
 	switch runtime.GOOS {
+	case "fuchsia":
+		return &sysDir{
+			"/system/lib",
+			[]string{
+				"libc++abi.so.1",
+				"libc++.so.2",
+			},
+		}
 	case "android":
 		return &sysDir{
 			"/system/lib",
@@ -109,7 +132,7 @@ func size(name string, t *testing.T) int64 {
 			break
 		}
 		if e != nil {
-			t.Fatal("read failed:", err)
+			t.Fatal("read failed:", e)
 		}
 	}
 	return int64(len)
@@ -385,6 +408,8 @@ func TestReaddirnamesOneAtATime(t *testing.T) {
 	// big directory that doesn't change often.
 	dir := "/usr/bin"
 	switch runtime.GOOS {
+	case "fuchsia":
+		dir = "/boot/bin"
 	case "android":
 		dir = "/system/bin"
 	case "darwin":
@@ -910,6 +935,8 @@ func TestStartProcess(t *testing.T) {
 	switch runtime.GOOS {
 	case "android":
 		t.Skip("android doesn't have /bin/pwd")
+	case "fuchsia":
+		t.Skip("fuchsia doesn't have /bin/pwd")
 	case "windows":
 		cmd = Getenv("COMSPEC")
 		dir = Getenv("SystemRoot")
@@ -938,8 +965,8 @@ func checkMode(t *testing.T, path string, mode FileMode) {
 }
 
 func TestChmod(t *testing.T) {
-	// Chmod is not supported under windows.
-	if runtime.GOOS == "windows" {
+	// Chmod is not supported under windows or Fuchsia
+	if runtime.GOOS == "windows" || runtime.GOOS == "fuchsia" {
 		return
 	}
 	f := newFile("TestChmod", t)
@@ -1012,6 +1039,11 @@ func TestTruncate(t *testing.T) {
 // On NFS, timings can be off due to caching of meta-data on
 // NFS servers (Issue 848).
 func TestChtimes(t *testing.T) {
+	if runtime.GOOS == "fuchsia" {
+		// It passes sometimes, but seems to be flakey
+		t.Skipf("TODO(smklein): Implement")
+	}
+
 	f := newFile("TestChtimes", t)
 	defer Remove(f.Name())
 
@@ -1026,6 +1058,11 @@ func TestChtimes(t *testing.T) {
 // On NFS, timings can be off due to caching of meta-data on
 // NFS servers (Issue 848).
 func TestChtimesDir(t *testing.T) {
+	if runtime.GOOS == "fuchsia" {
+		// It passes sometimes, but seems to be flakey
+		t.Skipf("TODO(smklein): Implement")
+	}
+
 	name := newDir("TestChtimes", t)
 	defer RemoveAll(name)
 
@@ -1059,7 +1096,7 @@ func testChtimes(t *testing.T, name string) {
 	*/
 	pat := Atime(postStat)
 	pmt := postStat.ModTime()
-	if !pat.Before(at) && runtime.GOOS != "plan9" && runtime.GOOS != "nacl" {
+	if !pat.Before(at) && runtime.GOOS != "plan9" && runtime.GOOS != "nacl" && runtime.GOOS != "fuchsia" {
 		t.Errorf("AccessTime didn't go backwards; was=%d, after=%d", at, pat)
 	}
 
@@ -1070,7 +1107,7 @@ func testChtimes(t *testing.T, name string) {
 
 func TestChdirAndGetwd(t *testing.T) {
 	// TODO(brainman): file.Chdir() is not implemented on windows.
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == "windows" || runtime.GOOS == "fuchsia" {
 		return
 	}
 	fd, err := Open(".")
@@ -1146,6 +1183,10 @@ func TestChdirAndGetwd(t *testing.T) {
 
 // Test that Chdir+Getwd is program-wide.
 func TestProgWideChdir(t *testing.T) {
+	if runtime.GOOS == "fuchsia" {
+		t.Skipf("TODO(smklein): Implement")
+	}
+
 	const N = 10
 	c := make(chan bool)
 	cpwd := make(chan string)
@@ -1263,6 +1304,10 @@ var openErrorTests = []openErrorTest{
 }
 
 func TestOpenError(t *testing.T) {
+	if runtime.GOOS == "fuchsia" {
+		t.Skipf("TODO(smklein): Implement")
+	}
+
 	for _, tt := range openErrorTests {
 		f, err := OpenFile(tt.path, tt.mode, 0)
 		if err == nil {
@@ -1367,7 +1412,7 @@ func TestHostname(t *testing.T) {
 	// There is no other way to fetch hostname on windows, but via winapi.
 	// On Plan 9 it can be taken from #c/sysname as Hostname() does.
 	switch runtime.GOOS {
-	case "android", "plan9":
+	case "android", "plan9", "fuchsia":
 		t.Skipf("%s doesn't have /bin/hostname", runtime.GOOS)
 	case "windows":
 		testWindowsHostname(t)
@@ -1546,6 +1591,10 @@ func TestNilProcessStateString(t *testing.T) {
 }
 
 func TestSameFile(t *testing.T) {
+	if runtime.GOOS == "fuchsia" {
+		t.Skipf("TODO(smklein): Implement")
+	}
+
 	defer chtmpdir(t)()
 	fa, err := Create("a")
 	if err != nil {
@@ -1628,6 +1677,10 @@ func TestLargeWriteToConsole(t *testing.T) {
 }
 
 func TestStatDirModeExec(t *testing.T) {
+	if runtime.GOOS == "fuchsia" {
+		t.Skipf("TODO(smklein): Implement")
+	}
+
 	const mode = 0111
 
 	path, err := ioutil.TempDir("", "go-build")
@@ -1651,7 +1704,8 @@ func TestStatDirModeExec(t *testing.T) {
 
 func TestStatStdin(t *testing.T) {
 	switch runtime.GOOS {
-	case "android", "plan9":
+	case "android", "plan9", "fuchsia":
+		// TODO(smklein): Implement on Fuchsia
 		t.Skipf("%s doesn't have /bin/sh", runtime.GOOS)
 	}
 
@@ -1809,6 +1863,9 @@ func TestGetppid(t *testing.T) {
 		// TODO: golang.org/issue/8206
 		t.Skipf("skipping test on plan9; see issue 8206")
 	}
+	if runtime.GOOS == "fuchsia" {
+		t.Skipf("TODO(smklein): Implement")
+	}
 
 	testenv.MustHaveExec(t)
 
@@ -1834,6 +1891,10 @@ func TestGetppid(t *testing.T) {
 }
 
 func TestKillFindProcess(t *testing.T) {
+	if runtime.GOOS == "fuchsia" {
+		t.Skipf("TODO(smklein): Implement")
+	}
+
 	testKillProcess(t, func(p *Process) {
 		p2, err := FindProcess(p.Pid)
 		if err != nil {
@@ -1869,6 +1930,10 @@ var nilFileMethodTests = []struct {
 
 // Test that all File methods give ErrInvalid if the receiver is nil.
 func TestNilFileMethods(t *testing.T) {
+	if runtime.GOOS == "fuchsia" {
+		t.Skipf("TODO(smklein): Implement")
+	}
+
 	for _, tt := range nilFileMethodTests {
 		var file *File
 		got := tt.f(file)

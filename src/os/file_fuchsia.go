@@ -6,64 +6,32 @@ package os
 
 import (
 	"errors"
-	"io"
 	"syscall"
 	"time"
 
 	"syscall/mx/mxio/pipe"
 )
 
-func (f *File) readdir(n int) (fi []FileInfo, err error) {
-	dirname := f.name
-	if dirname == "" {
-		dirname = "."
-	}
-	names, err := f.Readdirnames(n)
-	fi = make([]FileInfo, 0, len(names))
-	for _, filename := range names {
-		fip, lerr := lstat(dirname + "/" + filename)
-		if IsNotExist(lerr) {
-			// File disappeared between readdir + stat.
-			// Just treat it as if it didn't exist.
-			continue
-		}
-		if lerr != nil {
-			return fi, lerr
-		}
-		fi = append(fi, fip)
-	}
-	if len(fi) == 0 && err == nil && n > 0 {
-		// Per File.Readdir, the slice must be non-empty or err
-		// must be non-nil if n > 0.
-		err = io.EOF
-	}
-	return fi, err
-}
-
-func (f *File) readdirnames(n int) (names []string, err error) {
-	return syscall.Readdirnames(f.fd, n)
-}
-
 func (f *File) Chmod(mode FileMode) error {
-	panic("TODO os.Chmod")
+	return errors.New("Chmod unimplemented")
 }
 
 func (f *File) Chown(uid, gid int) error {
-	panic("TODO os.Chown")
+	return errors.New("Chown unimplemented")
 }
 
 func (f *File) Truncate(size int64) error {
-	panic("TODO os.Truncate")
+	if f == nil {
+		return ErrInvalid
+	}
+	return syscall.Ftruncate(f.fd, size)
 }
 
 func (f *File) Sync() error {
 	if f == nil {
 		return ErrInvalid
 	}
-	if e := syscall.Fsync(f.fd); e != nil {
-		return e
-	}
-	return nil
+	return syscall.Fsync(f.fd)
 }
 
 func syscallMode(i FileMode) (o uint32) {
@@ -75,19 +43,25 @@ func syscallMode(i FileMode) (o uint32) {
 }
 
 func Chmod(name string, mode FileMode) error {
-	panic("TODO os.Chmod")
+	return errors.New("Chmod unimplemented")
 }
 
 func Chown(name string, uid, gid int) error {
-	panic("TODO os.Chown")
+	return errors.New("Chown unimplemented")
 }
 
 func Chtimes(name string, atime time.Time, mtime time.Time) error {
-	panic("TODO os.Chtimes")
+	var utimes [2]syscall.Timespec
+	utimes[0] = syscall.NsecToTimespec(atime.UnixNano())
+	utimes[1] = syscall.NsecToTimespec(mtime.UnixNano())
+	if e := syscall.UtimesNano(fixLongPath(name), utimes[0:]); e != nil {
+		return &PathError{"chtimes", name, e}
+	}
+	return nil
 }
 
 func Readlink(name string) (string, error) {
-	panic("TODO os.Readlink")
+	return "", errors.New("Readlink unimplemented")
 }
 
 func Pipe() (r *File, w *File, err error) {
@@ -130,8 +104,4 @@ func fillFileStatFromSys(fs *fileStat, name string) {
 func atime(fi FileInfo) time.Time {
 	// TODO: mxio doesn't have atime yet
 	return time.Time{}
-}
-
-func executable() (string, error) {
-	return "", errors.New("os.Executable not supported on fuchsia")
 }

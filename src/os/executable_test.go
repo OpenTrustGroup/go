@@ -21,7 +21,7 @@ func TestExecutable(t *testing.T) {
 	ep, err := os.Executable()
 	if err != nil {
 		switch goos := runtime.GOOS; goos {
-		case "openbsd": // procfs is not mounted by default
+		case "openbsd", "fuchsia": // procfs is not mounted by default
 			t.Skipf("Executable failed on %s: %v, expected", goos, err)
 		}
 		t.Fatalf("Executable failed: %v", err)

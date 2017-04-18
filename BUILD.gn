@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import("//build/gobuild.gni")
+
 # The go_runtime action wraps go_toolchain, rebuilding just the standard
 # if it has changed.
 action("go_runtime") {
@@ -69,4 +71,15 @@ action("go_toolchain") {
 
 pool("gobuild_pool") {
   depth = 1
+}
+
+gotest("go_os_test") {
+  gopackage = "os"
+}
+
+group("go_stdlib_tests") {
+  testonly = true
+  deps = [
+    ":go_os_test",
+  ]
 }

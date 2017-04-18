@@ -5,7 +5,9 @@
 package syscall
 
 import (
+	"errors"
 	"io"
+	"strings"
 	"sync"
 	"unsafe"
 
@@ -89,27 +91,27 @@ func Getpid() (pid int) {
 }
 
 func Getppid() (ppid int) {
-	panic("syscall.Getppid TODO")
+	return 0;
 }
 
 func Getuid() (uid int) {
-	panic("syscall.Getuid TODO")
+	return 0;
 }
 
 func Geteuid() (uid int) {
-	panic("syscall.Geteuid TODO")
+	return 0;
 }
 
 func Getgid() (uid int) {
-	panic("syscall.Getgid TODO")
+	return 0;
 }
 
 func Getegid() (uid int) {
-	panic("syscall.Getegid TODO")
+	return 0;
 }
 
 func Getgroups() (gids []int, err error) {
-	panic("syscall.Getgroups TODO")
+	return nil, errors.New("Getgroups unimplemented")
 }
 
 func Exit(code int) {
@@ -119,12 +121,12 @@ func Exit(code int) {
 const ImplementsGetwd = false
 
 func Getwd() (wd string, err error) {
-	panic("syscall.Getwd TODO")
+	return "", errors.New("Gwd unimplemented")
 }
 
 func Chdir(path string) (err error) {
 	// TODO: if cgo enabled, change the working directory there too.
-	f, err := openPath(path, 0, 0)
+	f, err := OpenPath(path, 0, 0)
 	if err != nil {
 		return err
 	}
@@ -135,7 +137,7 @@ func Chdir(path string) (err error) {
 }
 
 func Mkdir(path string, mode uint32) (err error) {
-	f, err := openPath(path, O_CREAT|O_EXCL|O_RDWR, mode&0777|S_IFDIR)
+	f, err := OpenPath(path, O_CREAT|O_EXCL|O_RDWR, mode&0777|S_IFDIR)
 	if err != nil {
 		return err
 	}
@@ -150,7 +152,7 @@ func Rmdir(path string) (err error) {
 func Unlink(path string) (err error) {
 	dir, file := splitpath(path)
 
-	f, err := openPath(dir, 0, 0)
+	f, err := OpenPath(dir, 0, 0)
 	if err != nil {
 		return err
 	}
@@ -169,7 +171,15 @@ func splitpath(path string) (dir, file string) {
 	return dir, file
 }
 
-func Rename(oldpath, newpath string) (err error) {
+func Rename(oldpath, newpath string) error {
+	return twoPathOp(oldpath, newpath, rio.OpRename)
+}
+
+func Link(oldpath, newpath string) error {
+	return twoPathOp(oldpath, newpath, rio.OpLink)
+}
+
+func twoPathOp(oldpath, newpath string, op uint32) (err error) {
 	if oldpath == "" || newpath == "" {
 		return EINVAL
 	}
@@ -177,12 +187,12 @@ func Rename(oldpath, newpath string) (err error) {
 	olddir, oldfile := splitpath(oldpath)
 	newdir, newfile := splitpath(newpath)
 
-	old, err := openPath(olddir, O_DIRECTORY, 0)
+	old, err := OpenPath(olddir, O_DIRECTORY, 0)
 	if err != nil {
 		return err
 	}
 	defer old.Close()
-	new, err := openPath(newdir, O_DIRECTORY, 0)
+	new, err := OpenPath(newdir, O_DIRECTORY, 0)
 	if err != nil {
 		return err
 	}
@@ -195,7 +205,7 @@ func Rename(oldpath, newpath string) (err error) {
 	buf := make([]byte, len(oldfile)+len(newfile)+2)
 	copy(buf, oldfile)
 	copy(buf[len(oldfile)+1:], newfile)
-	_, err = old.Misc(rio.OpRename, 0, buf, nil, token)
+	_, err = old.Misc(op, 0, buf, nil, token)
 	return err
 }
 
@@ -209,7 +219,7 @@ func Fsync(fd int) (err error) {
 }
 
 func Fchdir(fd int) (err error) {
-	panic("syscall.Fchdir TODO")
+	return errors.New("Fchdir unimplemented")
 }
 
 func CloseOnExec(r int) {
@@ -357,8 +367,14 @@ func Close(fd int) (err error) {
 	return f.Close()
 }
 
-func openPath(path string, mode int, perm uint32) (f mxio.MXIO, err error) {
-	if path == "" || path[0] != '/' {
+func OpenPath(path string, mode int, perm uint32) (f mxio.MXIO, err error) {
+	if path == "" {
+		path = "."
+	}
+
+	if strings.Contains(path, "\x00") {
+		return nil, EINVAL
+	} else if path[0] != '/' {
 		cwdMu.Lock()
 		f, err = cwd.Open(path, int32(mode), perm)
 		cwdMu.Unlock()
@@ -371,7 +387,10 @@ func openPath(path string, mode int, perm uint32) (f mxio.MXIO, err error) {
 }
 
 func Open(path string, mode int, perm uint32) (fd int, err error) {
-	f, err := openPath(path, mode, perm)
+	if path == "" {
+		return -1, EINVAL
+	}
+	f, err := OpenPath(path, mode, perm)
 	if err != nil {
 		return -1, err
 	}
@@ -519,11 +538,21 @@ func Truncate(path string, length int64) (err error) {
 	return err
 }
 
-func Link(oldpath string, newpath string) (err error) {
-	return EOPNOTSUPP // no fuchsia support yet
-}
 func Symlink(oldpath string, newpath string) (err error) {
 	return EOPNOTSUPP // no fuchsia support yet
+}
+
+func UtimesNano(path string, ts []Timespec) (err error) {
+	f, err := OpenPath(path, 0, 0)
+	if err != nil {
+		return err
+	}
+	vn := &mxio.Vnattr{
+		Valid: mxio.AttrMtime,
+		ModifyTime: uint64(TimespecToNsec(ts[1])),
+	}
+	_, err = f.Misc(rio.OpSetAttr, 0, (*[unsafe.Sizeof(mxio.Vnattr{})]byte)(unsafe.Pointer(vn))[:], nil, nil)
+	return err
 }
 
 func clen(n []byte) int {
@@ -535,67 +564,30 @@ func clen(n []byte) int {
 	return len(n)
 }
 
-type errDirentEmpty struct{}
-
-func (errDirentEmpty) Error() string {
-	return "syscall.Readdirnames: remoteio readdir returned empty dirent"
-}
-
-type errDirentTooLarge struct{}
-
-func (errDirentTooLarge) Error() string {
-	return "syscall.Readdirnames: remoteio readdir returned oversized dirent"
-}
-
-func Readdirnames(fd int, max int) (names []string, err error) {
+func ReadDirent(fd int, buf []byte) (n int, err error) {
 	fdsMu.Lock()
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
-	return readdirnames(f, max)
+
+	return f.Misc(rio.OpReaddir, 0, nil, buf, nil)
 }
 
-func readdirnames(f mxio.MXIO, max int) (names []string, err error) {
-	const dirBufsize = rio.MessageChunkSize
-	var bufback [dirBufsize]byte
+func direntIno(buf []byte) (uint64, bool) {
+	// Inodes aren't exposed through Fuchsia; just lie.
+	// Use '1' instead of '0', since '0' means "entry not filled" on some operating systems.
+	return 1, true
+}
 
-	if max <= 0 {
-		max = -1
+func direntReclen(buf []byte) (uint64, bool) {
+	return readInt(buf, unsafe.Offsetof(Dirent{}.Size), unsafe.Sizeof(Dirent{}.Size))
+}
+
+func direntNamlen(buf []byte) (uint64, bool) {
+	reclen, ok := direntReclen(buf)
+	if !ok {
+		return 0, false
 	}
-
-	for max != 0 {
-		buf := bufback[:]
-		n, err := f.Misc(rio.OpReaddir, 0, nil, buf, nil)
-		if err != nil {
-			return names, err
-		}
-		buf = buf[:n:n]
-		if n <= 0 {
-			break // EOF
-		}
-
-		const sizeofSize = 4
-		for max != 0 && len(buf) >= sizeofSize {
-			d := (*Dirent)(unsafe.Pointer(&buf[0]))
-			if d.Size == 0 {
-				return names, errDirentEmpty{}
-			}
-			if int(d.Size) > len(buf) {
-				return names, errDirentTooLarge{}
-			}
-			buf = buf[d.Size:]
-			bytes := (*[dirBufsize]byte)(unsafe.Pointer(&d.Name[0]))[:d.Size-8]
-			name := string(bytes[:clen(bytes)])
-			if name == "." || name == ".." {
-				continue
-			}
-			if max > 0 {
-				max--
-			}
-			names = append(names, name)
-		}
-	}
-
-	return names, nil
+	return reclen - uint64(unsafe.Offsetof(Dirent{}.Name)), true
 }
 
 type Dirent struct {

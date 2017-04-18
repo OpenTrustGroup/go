@@ -19,3 +19,11 @@ type Timeval struct {
 	Sec  int64
 	Usec int64
 }
+
+func setTimespec(sec, nsec int64) Timespec {
+	return Timespec{Sec: sec, Nsec: nsec}
+}
+
+func setTimeval(sec, usec int64) Timeval {
+	return Timeval{Sec: sec, Usec: usec}
+}
