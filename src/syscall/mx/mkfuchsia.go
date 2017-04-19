@@ -366,8 +366,6 @@ func printGoType(buf *bytes.Buffer, t magentaType) {
 		fmt.Fprint(buf, "Handle")
 	case mx_signals_t:
 		fmt.Fprint(buf, "Signals")
-	case mx_waitset_result_t:
-		fmt.Fprint(buf, "WaitSetResult")
 	case mx_wait_item_t:
 		fmt.Fprint(buf, "WaitItem")
 	case mx_rights_t:
@@ -748,7 +746,6 @@ const (
 	mx_handle_t
 	mx_signals_t
 	mx_signals_state_t
-	mx_waitset_result_t
 	mx_wait_item_t
 	mx_rights_t
 	mx_vaddr_t
@@ -785,7 +782,6 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"mx_futex_t":               mx_int,
 	"mx_signals_t":             mx_signals_t,
 	"mx_signals_state_t":       mx_signals_state_t,
-	"mx_waitset_result_t":      mx_waitset_result_t,
 	"mx_wait_item_t":           mx_wait_item_t,
 	"mx_rights_t":              mx_rights_t,
 	"mx_vaddr_t":               mx_vaddr_t,

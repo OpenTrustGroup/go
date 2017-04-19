@@ -59,10 +59,6 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_futex_wait mx_futex_wait "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_futex_wake mx_futex_wake "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_futex_requeue mx_futex_requeue "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_waitset_create mx_waitset_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_waitset_add mx_waitset_add "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_waitset_remove mx_waitset_remove "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_waitset_wait mx_waitset_wait "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_port_create mx_port_create "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_port_queue mx_port_queue "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_port_wait mx_port_wait "libmagenta.so"
@@ -74,6 +70,7 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_vmo_get_size mx_vmo_get_size "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_vmo_set_size mx_vmo_set_size "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_vmo_op_range mx_vmo_op_range "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_vmo_clone mx_vmo_clone "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_vmar_allocate mx_vmar_allocate "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_vmar_destroy mx_vmar_destroy "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_vmar_map mx_vmar_map "libmagenta.so"
@@ -184,10 +181,6 @@ import "unsafe"
 //go:linkname vdso_mx_futex_wait vdso_mx_futex_wait
 //go:linkname vdso_mx_futex_wake vdso_mx_futex_wake
 //go:linkname vdso_mx_futex_requeue vdso_mx_futex_requeue
-//go:linkname vdso_mx_waitset_create vdso_mx_waitset_create
-//go:linkname vdso_mx_waitset_add vdso_mx_waitset_add
-//go:linkname vdso_mx_waitset_remove vdso_mx_waitset_remove
-//go:linkname vdso_mx_waitset_wait vdso_mx_waitset_wait
 //go:linkname vdso_mx_port_create vdso_mx_port_create
 //go:linkname vdso_mx_port_queue vdso_mx_port_queue
 //go:linkname vdso_mx_port_wait vdso_mx_port_wait
@@ -199,6 +192,7 @@ import "unsafe"
 //go:linkname vdso_mx_vmo_get_size vdso_mx_vmo_get_size
 //go:linkname vdso_mx_vmo_set_size vdso_mx_vmo_set_size
 //go:linkname vdso_mx_vmo_op_range vdso_mx_vmo_op_range
+//go:linkname vdso_mx_vmo_clone vdso_mx_vmo_clone
 //go:linkname vdso_mx_vmar_allocate vdso_mx_vmar_allocate
 //go:linkname vdso_mx_vmar_destroy vdso_mx_vmar_destroy
 //go:linkname vdso_mx_vmar_map vdso_mx_vmar_map
@@ -310,10 +304,6 @@ var (
 	vdso_mx_futex_wait                          uintptr
 	vdso_mx_futex_wake                          uintptr
 	vdso_mx_futex_requeue                       uintptr
-	vdso_mx_waitset_create                      uintptr
-	vdso_mx_waitset_add                         uintptr
-	vdso_mx_waitset_remove                      uintptr
-	vdso_mx_waitset_wait                        uintptr
 	vdso_mx_port_create                         uintptr
 	vdso_mx_port_queue                          uintptr
 	vdso_mx_port_wait                           uintptr
@@ -325,6 +315,7 @@ var (
 	vdso_mx_vmo_get_size                        uintptr
 	vdso_mx_vmo_set_size                        uintptr
 	vdso_mx_vmo_op_range                        uintptr
+	vdso_mx_vmo_clone                           uintptr
 	vdso_mx_vmar_allocate                       uintptr
 	vdso_mx_vmar_destroy                        uintptr
 	vdso_mx_vmar_map                            uintptr
@@ -392,7 +383,7 @@ func Sys_time_get(clock_id uint32) Time
 
 //go:noescape
 //go:nosplit
-func Sys_nanosleep(deadline Time) Status
+func Sys_nanosleep(nanoseconds Time) Status
 
 //go:noescape
 //go:nosplit
@@ -436,11 +427,11 @@ func Sys_handle_replace(handle Handle, rights Rights, out *Handle) Status
 
 //go:noescape
 //go:nosplit
-func sys_object_wait_one(handle Handle, waitfor Signals, deadline Time, observed *Signals) Status
+func sys_object_wait_one(handle Handle, waitfor Signals, timeout Time, observed *Signals) Status
 
 //go:noescape
 //go:nosplit
-func sys_object_wait_many(items *WaitItem, count uint32, deadline Time) Status
+func sys_object_wait_many(items *WaitItem, count uint32, timeout Time) Status
 
 //go:noescape
 //go:nosplit
@@ -492,7 +483,7 @@ func sys_channel_write(handle Handle, options uint32, bytes unsafe.Pointer, num_
 
 //go:noescape
 //go:nosplit
-func Sys_channel_call(handle Handle, options uint32, deadline Time, args *ChannelCallArgs, actual_bytes *uint32, actual_handles *uint32, read_status *Status) Status
+func Sys_channel_call(handle Handle, options uint32, timeout Time, args *ChannelCallArgs, actual_bytes *uint32, actual_handles *uint32, read_status *Status) Status
 
 //go:noescape
 //go:nosplit
@@ -576,7 +567,7 @@ func Sys_eventpair_create(options uint32, out0 *Handle, out1 *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_futex_wait(value_ptr *int, current_value int, deadline Time) Status
+func Sys_futex_wait(value_ptr *int, current_value int, timeout Time) Status
 
 //go:noescape
 //go:nosplit
@@ -588,22 +579,6 @@ func Sys_futex_requeue(wake_ptr *int, wake_count uint32, current_value int, requ
 
 //go:noescape
 //go:nosplit
-func Sys_waitset_create(options uint32, out *Handle) Status
-
-//go:noescape
-//go:nosplit
-func Sys_waitset_add(waitset_handle Handle, cookie uint64, handle Handle, signals Signals) Status
-
-//go:noescape
-//go:nosplit
-func Sys_waitset_remove(waitset_handle Handle, cookie uint64) Status
-
-//go:noescape
-//go:nosplit
-func Sys_waitset_wait(waitset_handle Handle, deadline Time, results *WaitSetResult, count *uint32) Status
-
-//go:noescape
-//go:nosplit
 func Sys_port_create(options uint32, out *Handle) Status
 
 //go:noescape
@@ -612,7 +587,7 @@ func Sys_port_queue(handle Handle, packet unsafe.Pointer, size uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_port_wait(handle Handle, deadline Time, packet unsafe.Pointer, size uint) Status
+func Sys_port_wait(handle Handle, timeout Time, packet unsafe.Pointer, size uint) Status
 
 //go:noescape
 //go:nosplit
@@ -645,6 +620,10 @@ func sys_vmo_set_size(handle Handle, size uint64) Status
 //go:noescape
 //go:nosplit
 func sys_vmo_op_range(handle Handle, op uint32, offset uint64, size uint64, buffer unsafe.Pointer, buffer_size uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_vmo_clone(handle Handle, options uint32, offset uint64, size uint64, out *Handle) Status
 
 //go:noescape
 //go:nosplit

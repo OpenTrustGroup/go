@@ -16,12 +16,6 @@ type Signals uint32  // mx_signals_t
 type Rights uint32   // mx_rights_t
 type Paddr uintptr   // mx_paddr_t
 
-type WaitSetResult struct {
-	Cookie     uint64
-	WaitResult Status
-	Observed   Signals
-} // mx_waitset_result_t
-
 type WaitItem struct {
 	Handle  Handle
 	WaitFor Signals
@@ -276,10 +270,6 @@ const (
 	SignalFIFOWritable   = SignalObject1
 	SignalFIFOPeerClosed = SignalObject2
 	SignalFIFOSignalMask = SignalFIFOReadable | SignalFIFOWritable | SignalFIFOPeerClosed
-
-	// Waitset
-	SignalWaitSetReadable   = SignalObject0
-	SignalWaitSetPeerClosed = SignalObject2
 
 	// Task signals (process, thread, job)
 	SignalTaskTerminated = SignalObject3
