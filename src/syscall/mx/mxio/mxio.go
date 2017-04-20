@@ -105,6 +105,7 @@ const (
 	IoctlFamilyDevice
 	IoctlFamilyDevmgr
 )
+const IoctlFamilyBlock = 0x13
 
 var IoctlDeviceBind = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 0)
 var IoctlDeviceWatchDir = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevice, 1)
