@@ -349,7 +349,7 @@ func (r *RemoteIO) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
 	switch mxio.IoctlKind(op) {
 	case mxio.IoctlKindGetHandle:
 		if msg.Hcount < 1 {
-			return nil, nil
+			return nil, mx.Error{Status: mx.ErrIO, Text: "RemoteIO.Ioctl too few handles"}
 		}
 		outh := []mx.Handle{msg.Handle[0]}
 		msg.Handle[0] = 0
@@ -360,7 +360,8 @@ func (r *RemoteIO) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
 		return outh, nil
 	case mxio.IoctlKindGetTwoHandles:
 		if msg.Hcount < 2 {
-			return nil, nil
+			msg.DiscardHandles()
+			return nil, mx.Error{Status: mx.ErrIO, Text: "RemoteIO.Ioctl too few handles"}
 		}
 		outh := []mx.Handle{msg.Handle[0], msg.Handle[1]}
 		msg.Handle[0] = 0
@@ -372,7 +373,8 @@ func (r *RemoteIO) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
 		return outh, nil
 	case mxio.IoctlKindGetThreeHandles:
 		if msg.Hcount < 3 {
-			return nil, nil
+			msg.DiscardHandles()
+			return nil, mx.Error{Status: mx.ErrIO, Text: "RemoteIO.Ioctl too few handles"}
 		}
 		outh := []mx.Handle{msg.Handle[0], msg.Handle[1], msg.Handle[2]}
 		msg.Handle[0] = 0
