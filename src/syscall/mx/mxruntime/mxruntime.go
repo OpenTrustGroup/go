@@ -14,9 +14,9 @@ import "syscall/mx"
 type HandleType uint16
 
 const (
-	HandleUser0 HandleType = 0xFFF0
-	HandleUser1 HandleType = 0xFFF1
-	HandleUser2 HandleType = 0xFFF2
+	HandleUser0 HandleType = 0xF0
+	HandleUser1 HandleType = 0xF1
+	HandleUser2 HandleType = 0xF2
 )
 
 type HandleInfo struct {

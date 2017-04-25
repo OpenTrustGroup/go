@@ -204,9 +204,9 @@ const (
 )
 
 const (
-	HandleTypeRemote = 0x11
-	HandleTypePipe   = 0x12
-	HandleTypeEvent  = 0x13
-	HandleTypeLogger = 0x14
-	HandleTypeCWD    = 0x15
+	HandleTypeCWD    = 0x31
+	HandleTypeRemote = 0x32
+	HandleTypePipe   = 0x33
+	HandleTypeEvent  = 0x34
+	HandleTypeLogger = 0x35
 )
