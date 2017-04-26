@@ -58,17 +58,20 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 		laddr: laddr,
 		raddr: raddr,
 	}
-	if laddr != nil && raddr == nil {
-		switch sotype {
-		case syscall.SOCK_STREAM:
-		case syscall.SOCK_DGRAM:
-		}
-		return nil, errors.New("net: TODO listen")
-	}
 	if laddr != nil {
 		addr, port := laddr.sockaddr()
 		if err := rio.Bind(fd.m, mxnet.Addr(addr), port); err != nil {
 			return nil, err
+		}
+		if raddr == nil {
+			switch sotype {
+			case syscall.SOCK_STREAM:
+				if err := rio.ListenStream(m, listenerBacklog); err != nil {
+					return nil, err
+				}
+			case syscall.SOCK_DGRAM:
+				return nil, errors.New("net: TODO listen datagram")
+			}
 		}
 	}
 	if raddr != nil {

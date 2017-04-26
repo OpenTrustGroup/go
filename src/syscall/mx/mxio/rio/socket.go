@@ -175,8 +175,8 @@ func (s *Socket) Close() error {
 	return nil
 }
 
-func (*Socket) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
-	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "rio.Socket.Open"}
+func (s *Socket) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
+	return s.r.Open(path, flags, mode)
 }
 func (*Socket) Clone() ([]mx.Handle, error) {
 	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "rio.Socket.Clone"}
@@ -248,6 +248,63 @@ func Connect(m mxio.MXIO, addr mxnet.Addr, port uint16) error {
 		return err
 	}
 	return nil
+}
+
+func ListenStream(m mxio.MXIO, backlog int) error {
+	if m == nil {
+		return errors.New("rio.ListenStream: nil argument")
+	}
+	s, ok := m.(*Socket)
+	if !ok {
+		return errors.New("rio.ListenStream: argument is not a *Socket")
+	}
+	b := make([]byte, 4)
+	b[0] = byte(backlog)
+	b[1] = byte(backlog >> 8)
+	b[2] = byte(backlog >> 16)
+	b[3] = byte(backlog >> 24)
+	_, err := s.Misc(OpListen, 0, b, nil, nil)
+	return err
+}
+
+func Accept(m mxio.MXIO) (newm mxio.MXIO, addr mxnet.Addr, port uint16, err error) {
+	if m == nil {
+		return nil, "", 0, errors.New("rio.Accept: nil argument")
+	}
+	s, ok := m.(*Socket)
+	if !ok {
+		return nil, "", 0, errors.New("rio.Accept: argument is not a *Socket")
+	}
+
+	for {
+		newm, err = m.Open("accept", 0, 0)
+		if err == nil {
+			break
+		}
+		if mxStatus(err) != mx.ErrShouldWait {
+			return nil, "", 0, err
+		}
+		// TODO: non-blocking support, pass this to the poller
+		const MXSIO_SIGNAL_INCOMING = mx.SignalUser0
+		_, err = s.socket.WaitOne(mxnet.MXSIO_SIGNAL_INCOMING, mx.TimensecInfinite)
+		if err != nil {
+			return nil, "", 0, err
+		}
+	}
+
+	out := make([]byte, mxnet.SockaddrReplyLen)
+	_, err = newm.(*Socket).Misc(OpGetPeerName, 0, nil, out, nil)
+	if err != nil {
+		newm.Close()
+		return nil, "", 0, err
+	}
+	addr, port, err = mxnet.DecodeSockaddr(out)
+	if err != nil {
+		newm.Close()
+		return nil, "", 0, err
+	}
+
+	return newm, addr, port, nil
 }
 
 func mxStatus(err error) mx.Status {

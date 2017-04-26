@@ -44,22 +44,24 @@ func dialTCP(ctx context.Context, net string, laddr, raddr *TCPAddr) (*TCPConn, 
 	return newTCPConn(fd), nil
 }
 
-func (ln *TCPListener) ok() bool {
-	panic("TODO")
-}
+func (ln *TCPListener) ok() bool { return ln != nil && ln.fd != nil }
 
 func (ln *TCPListener) accept() (*TCPConn, error) {
-	panic("TODO")
+	fd, err := ln.fd.accept()
+	if err != nil {
+		return nil, err
+	}
+	return newTCPConn(fd), nil
 }
 
-func (ln *TCPListener) close() error {
-	panic("TODO")
-}
+func (ln *TCPListener) close() error { return ln.fd.Close() }
 
-func (ln *TCPListener) file() (*os.File, error) {
-	panic("TODO")
-}
+func (ln *TCPListener) file() (*os.File, error) { return ln.fd.dup() }
 
 func listenTCP(ctx context.Context, network string, laddr *TCPAddr) (*TCPListener, error) {
-	panic("TODO")
+	fd, err := dialFuchsia(ctx, network, laddr, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &TCPListener{fd}, nil
 }

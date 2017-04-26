@@ -7,6 +7,7 @@ package net
 import (
 	"errors"
 	"os"
+	"syscall"
 	"syscall/mx"
 	"syscall/mx/mxio"
 	"syscall/mx/mxio/rio"
@@ -79,7 +80,7 @@ func (fd *netFD) Close() error {
 }
 
 func (fd *netFD) dup() (*os.File, error) {
-	panic("TODO")
+	return nil, errors.New("net: dup not implemented on fuchsia")
 }
 
 func (fd *netFD) setDeadline(t time.Time) error {
@@ -92,4 +93,27 @@ func (fd *netFD) setReadDeadline(t time.Time) error {
 
 func (fd *netFD) setWriteDeadline(t time.Time) error {
 	return errors.New("net: setWriteDeadline not implemented on fuchsia")
+}
+
+func (fd *netFD) accept() (netfd *netFD, err error) {
+	if err := fd.readLock(); err != nil {
+		return nil, err
+	}
+	defer fd.readUnlock()
+
+	m, raddrip, raddrport, err := rio.Accept(fd.m)
+	if err != nil {
+		return nil, err
+	}
+	netfd = &netFD{
+		hsrc:  os.NewFile(uintptr(syscall.OpenMXIO(m)), "socket"),
+		m:     m,
+		net:   fd.net,
+		laddr: fd.laddr, // TODO not right
+		raddr: &TCPAddr{
+			IP:   IP(raddrip),
+			Port: int(raddrport),
+		},
+	}
+	return netfd, nil
 }

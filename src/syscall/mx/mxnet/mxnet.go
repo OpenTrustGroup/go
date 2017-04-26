@@ -35,6 +35,7 @@ type Addr string
 
 const SockaddrLen = c_sockaddr_in6_len
 const SockmsgHdrLen = c_mxio_socket_msg_hdr_len
+const SockaddrReplyLen = c_mxrio_sockaddr_reply_len
 
 func EncodeSockmsgHdr(dst []byte, addr Addr, port uint16, flags int) (err error) {
 	if len(dst) < SockmsgHdrLen {
@@ -127,9 +128,10 @@ type errString string
 func (err errString) Error() string { return string(err) }
 
 const (
-	c_sockaddr_in_len         = int(unsafe.Sizeof(c_sockaddr_in{}))
-	c_sockaddr_in6_len        = int(unsafe.Sizeof(c_sockaddr_in6{}))
-	c_mxio_socket_msg_hdr_len = int(unsafe.Sizeof(c_mxio_socket_msg_hdr{}))
+	c_sockaddr_in_len          = int(unsafe.Sizeof(c_sockaddr_in{}))
+	c_sockaddr_in6_len         = int(unsafe.Sizeof(c_sockaddr_in6{}))
+	c_mxio_socket_msg_hdr_len  = int(unsafe.Sizeof(c_mxio_socket_msg_hdr{}))
+	c_mxrio_sockaddr_reply_len = int(unsafe.Sizeof(c_mxrio_sockaddr_reply{}))
 )
 
 func (v c_in_port) port() uint16 {
