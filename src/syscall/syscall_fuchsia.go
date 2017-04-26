@@ -56,6 +56,7 @@ const (
 	ENOENT       = Errno(0x02)
 	EINTR        = Errno(0x04)
 	EIO          = Errno(0x05)
+	EBADF        = Errno(0x09)
 	EACCES       = Errno(0x0d)
 	EEXIST       = Errno(0x11)
 	ENOTDIR      = Errno(0x14)
@@ -91,23 +92,23 @@ func Getpid() (pid int) {
 }
 
 func Getppid() (ppid int) {
-	return 0;
+	return 0
 }
 
 func Getuid() (uid int) {
-	return 0;
+	return 0
 }
 
 func Geteuid() (uid int) {
-	return 0;
+	return 0
 }
 
 func Getgid() (uid int) {
-	return 0;
+	return 0
 }
 
 func Getegid() (uid int) {
-	return 0;
+	return 0
 }
 
 func Getgroups() (gids []int, err error) {
@@ -397,6 +398,18 @@ func Open(path string, mode int, perm uint32) (fd int, err error) {
 	return OpenMXIO(f), nil
 }
 
+func OpenAt(fdParent int, path string, mode int, perm uint32) (fd int, err error) {
+	parent := MXIOForFD(fdParent)
+	if parent == nil {
+		return -1, EBADF
+	}
+	f, err := parent.Open(path, int32(mode), perm)
+	if err != nil {
+		return -1, err
+	}
+	return OpenMXIO(f), nil
+}
+
 func MXIOForFD(fd int) mxio.MXIO {
 	switch fd {
 	case Stdin:
@@ -548,7 +561,7 @@ func UtimesNano(path string, ts []Timespec) (err error) {
 		return err
 	}
 	vn := &mxio.Vnattr{
-		Valid: mxio.AttrMtime,
+		Valid:      mxio.AttrMtime,
 		ModifyTime: uint64(TimespecToNsec(ts[1])),
 	}
 	_, err = f.Misc(rio.OpSetAttr, 0, (*[unsafe.Sizeof(mxio.Vnattr{})]byte)(unsafe.Pointer(vn))[:], nil, nil)
