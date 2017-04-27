@@ -500,12 +500,34 @@ func (p *parser) parseSyscall() (call magentaSyscallDef, err error) {
 			p.panicf("expected \"returns\" but got \"%s\"", kw)
 		}
 		p.expect('(')
-		rtype, err := p.parseType()
-		if err != nil {
-			return magentaSyscallDef{}, err
+		first := true
+		for {
+			p.skipWhitespace()
+			if p.r == ')' {
+				p.nextRune()
+				break
+			}
+			if first {
+				first = false
+				rtype, err := p.parseType()
+				if err != nil {
+					return magentaSyscallDef{}, err
+				}
+				call.ret = rtype
+			} else {
+				arg, err := p.parseArg()
+				if err != nil {
+					return magentaSyscallDef{}, err
+				}
+				// Extra return types are returned as pointers.
+				arg.atype.isArray = true
+				arg.atype.arraySize = "1"
+				call.args = append(call.args, arg)
+			}
+			if p.r == ',' {
+				p.nextRune()
+			}
 		}
-		call.ret = rtype
-		p.expect(')')
 	}
 	p.skipWhitespace()
 	p.expect(';')

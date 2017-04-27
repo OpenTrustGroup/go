@@ -50,6 +50,7 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_mx_process_read_memory mx_process_read_memory "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_process_write_memory mx_process_write_memory "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_job_create mx_job_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_mx_job_set_policy mx_job_set_policy "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_task_bind_exception_port mx_task_bind_exception_port "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_task_suspend mx_task_suspend "libmagenta.so"
 //go:cgo_import_dynamic vdso_mx_task_resume mx_task_resume "libmagenta.so"
@@ -172,6 +173,7 @@ import "unsafe"
 //go:linkname vdso_mx_process_read_memory vdso_mx_process_read_memory
 //go:linkname vdso_mx_process_write_memory vdso_mx_process_write_memory
 //go:linkname vdso_mx_job_create vdso_mx_job_create
+//go:linkname vdso_mx_job_set_policy vdso_mx_job_set_policy
 //go:linkname vdso_mx_task_bind_exception_port vdso_mx_task_bind_exception_port
 //go:linkname vdso_mx_task_suspend vdso_mx_task_suspend
 //go:linkname vdso_mx_task_resume vdso_mx_task_resume
@@ -295,6 +297,7 @@ var (
 	vdso_mx_process_read_memory                 uintptr
 	vdso_mx_process_write_memory                uintptr
 	vdso_mx_job_create                          uintptr
+	vdso_mx_job_set_policy                      uintptr
 	vdso_mx_task_bind_exception_port            uintptr
 	vdso_mx_task_suspend                        uintptr
 	vdso_mx_task_resume                         uintptr
@@ -383,7 +386,7 @@ func Sys_time_get(clock_id uint32) Time
 
 //go:noescape
 //go:nosplit
-func Sys_nanosleep(nanoseconds Time) Status
+func Sys_nanosleep(deadline Time) Status
 
 //go:noescape
 //go:nosplit
@@ -427,11 +430,11 @@ func Sys_handle_replace(handle Handle, rights Rights, out *Handle) Status
 
 //go:noescape
 //go:nosplit
-func sys_object_wait_one(handle Handle, waitfor Signals, timeout Time, observed *Signals) Status
+func sys_object_wait_one(handle Handle, waitfor Signals, deadline Time, observed *Signals) Status
 
 //go:noescape
 //go:nosplit
-func sys_object_wait_many(items *WaitItem, count uint32, timeout Time) Status
+func sys_object_wait_many(items *WaitItem, count uint32, deadline Time) Status
 
 //go:noescape
 //go:nosplit
@@ -475,7 +478,7 @@ func sys_channel_create(options uint32, out0 *Handle, out1 *Handle) Status
 
 //go:noescape
 //go:nosplit
-func sys_channel_read(handle Handle, options uint32, bytes unsafe.Pointer, num_bytes uint32, actual_bytes *uint32, handles *Handle, num_handles uint32, actual_handles *uint32) Status
+func sys_channel_read(handle Handle, options uint32, bytes unsafe.Pointer, handles *Handle, num_bytes uint32, num_handles uint32, actual_bytes *uint32, actual_handles *uint32) Status
 
 //go:noescape
 //go:nosplit
@@ -483,7 +486,7 @@ func sys_channel_write(handle Handle, options uint32, bytes unsafe.Pointer, num_
 
 //go:noescape
 //go:nosplit
-func Sys_channel_call(handle Handle, options uint32, timeout Time, args *ChannelCallArgs, actual_bytes *uint32, actual_handles *uint32, read_status *Status) Status
+func Sys_channel_call(handle Handle, options uint32, deadline Time, args *ChannelCallArgs, actual_bytes *uint32, actual_handles *uint32, read_status *Status) Status
 
 //go:noescape
 //go:nosplit
@@ -543,6 +546,10 @@ func Sys_job_create(parent_job Handle, options uint32, out *Handle) Status
 
 //go:noescape
 //go:nosplit
+func Sys_job_set_policy(job Handle, options uint32, topic uint32, policy unsafe.Pointer, count uint32) Status
+
+//go:noescape
+//go:nosplit
 func Sys_task_bind_exception_port(object Handle, eport Handle, key uint64, options uint32) Status
 
 //go:noescape
@@ -567,7 +574,7 @@ func Sys_eventpair_create(options uint32, out0 *Handle, out1 *Handle) Status
 
 //go:noescape
 //go:nosplit
-func Sys_futex_wait(value_ptr *int, current_value int, timeout Time) Status
+func Sys_futex_wait(value_ptr *int, current_value int, deadline Time) Status
 
 //go:noescape
 //go:nosplit
@@ -587,7 +594,7 @@ func Sys_port_queue(handle Handle, packet unsafe.Pointer, size uint) Status
 
 //go:noescape
 //go:nosplit
-func Sys_port_wait(handle Handle, timeout Time, packet unsafe.Pointer, size uint) Status
+func Sys_port_wait(handle Handle, deadline Time, packet unsafe.Pointer, size uint) Status
 
 //go:noescape
 //go:nosplit

@@ -160,7 +160,7 @@ func (c *Channel) Read(data []byte, handles []Handle, flags uint32) (numBytes, n
 	if len(handles) > 0 {
 		handlePtr = &handles[0]
 	}
-	if status := sys_channel_read(c.Handle, flags, dataPtr, numBytes, &numBytes, handlePtr, numHandles, &numHandles); status != ErrOk {
+	if status := sys_channel_read(c.Handle, flags, dataPtr, handlePtr, numBytes, numHandles, &numBytes, &numHandles); status != ErrOk {
 		err = Error{Status: status, Text: "mx.Channel.Read"}
 	}
 	return numBytes, numHandles, err
