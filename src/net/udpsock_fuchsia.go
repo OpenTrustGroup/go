@@ -16,6 +16,16 @@ func (a *UDPAddr) encode() ([]byte, error) {
 	return b, err
 }
 
+func (a *UDPAddr) family() int {
+	if a == nil || len(a.IP) <= IPv4len {
+		return syscall.AF_INET
+	}
+	if a.IP.To4() != nil {
+		return syscall.AF_INET
+	}
+	return syscall.AF_INET6
+}
+
 func (a *UDPAddr) sockaddr() (addr string, port uint16) {
 	if a == nil {
 		return "", 0

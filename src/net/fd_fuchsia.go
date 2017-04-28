@@ -7,10 +7,12 @@ package net
 import (
 	"errors"
 	"os"
+	"runtime"
 	"syscall"
 	"syscall/mx"
 	"syscall/mx/mxio"
 	"syscall/mx/mxio/rio"
+	"syscall/mx/mxnet"
 	"time"
 )
 
@@ -31,11 +33,14 @@ type netFD struct {
 	hsrc *os.File
 	m    mxio.MXIO
 
-	isConnected bool
-
 	// immutable until Close
-	net          string
-	laddr, raddr Addr
+	net         string
+	family      int
+	sotype      int
+	isStream    bool
+	isConnected bool
+	laddr       Addr
+	raddr       Addr
 }
 
 func (fd *netFD) destroy() {
@@ -101,19 +106,40 @@ func (fd *netFD) accept() (netfd *netFD, err error) {
 	}
 	defer fd.readUnlock()
 
-	m, raddrip, raddrport, err := rio.Accept(fd.m)
+	m, err := rio.Accept(fd.m)
 	if err != nil {
 		return nil, err
 	}
 	netfd = &netFD{
-		hsrc:  os.NewFile(uintptr(syscall.OpenMXIO(m)), "socket"),
-		m:     m,
-		net:   fd.net,
-		laddr: fd.laddr, // TODO not right
-		raddr: &TCPAddr{
-			IP:   IP(raddrip),
-			Port: int(raddrport),
-		},
+		hsrc:   os.NewFile(uintptr(syscall.OpenMXIO(m)), "socket"),
+		m:      m,
+		family: fd.family,
+		sotype: fd.sotype,
+		net:    fd.net,
 	}
+	netfd.setAddr()
 	return netfd, nil
+}
+
+func (fd *netFD) asAddr(ipAddr mxnet.Addr, port uint16, err error) sockaddr {
+	if err != nil {
+		return nil
+	}
+	ip := IP(ipAddr)
+	if isZeros(ip) && port == 0 {
+		return nil
+	}
+	switch fd.sotype {
+	case syscall.SOCK_STREAM:
+		return &TCPAddr{IP: ip, Port: int(port)}
+	case syscall.SOCK_DGRAM:
+		return &UDPAddr{IP: ip, Port: int(port)}
+	}
+	return nil
+}
+
+func (fd *netFD) setAddr() {
+	fd.laddr = fd.asAddr(rio.GetSockName(fd.m))
+	fd.raddr = fd.asAddr(rio.GetPeerName(fd.m))
+	runtime.SetFinalizer(fd, (*netFD).Close)
 }

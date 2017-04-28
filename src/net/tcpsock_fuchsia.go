@@ -8,6 +8,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"syscall"
 	"syscall/mx/mxnet"
 )
 
@@ -15,6 +16,16 @@ func (a *TCPAddr) encode() ([]byte, error) { // TODO remove
 	b := make([]byte, mxnet.SockaddrLen)
 	_, err := mxnet.EncodeSockaddr(b, mxnet.Addr(a.IP), uint16(a.Port))
 	return b, err
+}
+
+func (a *TCPAddr) family() int {
+	if a == nil || len(a.IP) <= IPv4len {
+		return syscall.AF_INET
+	}
+	if a.IP.To4() != nil {
+		return syscall.AF_INET
+	}
+	return syscall.AF_INET6
 }
 
 func (a *TCPAddr) sockaddr() (addr string, port uint16) {
@@ -29,6 +40,13 @@ func (c *TCPConn) readFrom(r io.Reader) (int64, error) {
 }
 
 func dialTCP(ctx context.Context, net string, laddr, raddr *TCPAddr) (*TCPConn, error) {
+	if testHookDialTCP != nil {
+		return testHookDialTCP(ctx, net, laddr, raddr)
+	}
+	return doDialTCP(ctx, net, laddr, raddr)
+}
+
+func doDialTCP(ctx context.Context, net string, laddr, raddr *TCPAddr) (*TCPConn, error) {
 	switch net {
 	case "tcp", "tcp4", "tcp6":
 	default:

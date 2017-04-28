@@ -15,11 +15,11 @@ import (
 )
 
 func probeIPv4Stack() bool {
-	return false
+	return true
 }
 
 func probeIPv6Stack() (supportsIPv6, supportsIPv4map bool) {
-	return false, false
+	return true, false
 }
 
 // A sockaddr represents a TCP, UDP, IP or Unix network endpoint
@@ -52,11 +52,11 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 	}
 
 	fd = &netFD{
-		hsrc:  f,
-		m:     m,
-		net:   net,
-		laddr: laddr,
-		raddr: raddr,
+		hsrc:   f,
+		m:      m,
+		family: domain,
+		sotype: sotype,
+		net:    net,
 	}
 	if laddr != nil {
 		addr, port := laddr.sockaddr()
@@ -81,7 +81,7 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 		}
 		fd.isConnected = true
 	}
-	// TODO: setAddr
+	fd.setAddr()
 
 	return fd, nil
 }

@@ -267,13 +267,13 @@ func ListenStream(m mxio.MXIO, backlog int) error {
 	return err
 }
 
-func Accept(m mxio.MXIO) (newm mxio.MXIO, addr mxnet.Addr, port uint16, err error) {
+func Accept(m mxio.MXIO) (newm mxio.MXIO, err error) {
 	if m == nil {
-		return nil, "", 0, errors.New("rio.Accept: nil argument")
+		return nil, errors.New("rio.Accept: nil argument")
 	}
 	s, ok := m.(*Socket)
 	if !ok {
-		return nil, "", 0, errors.New("rio.Accept: argument is not a *Socket")
+		return nil, errors.New("rio.Accept: argument is not a *Socket")
 	}
 
 	for {
@@ -282,29 +282,46 @@ func Accept(m mxio.MXIO) (newm mxio.MXIO, addr mxnet.Addr, port uint16, err erro
 			break
 		}
 		if mxStatus(err) != mx.ErrShouldWait {
-			return nil, "", 0, err
+			return nil, err
 		}
 		// TODO: non-blocking support, pass this to the poller
 		const MXSIO_SIGNAL_INCOMING = mx.SignalUser0
 		_, err = s.socket.WaitOne(mxnet.MXSIO_SIGNAL_INCOMING, mx.TimensecInfinite)
 		if err != nil {
-			return nil, "", 0, err
+			return nil, err
 		}
 	}
 
+	return newm, nil
+}
+
+func getName(m mxio.MXIO, op uint32, debug string) (addr mxnet.Addr, port uint16, err error) {
+	if m == nil {
+		return "", 0, errors.New("rio." + debug + ": nil argument")
+	}
+	s, ok := m.(*Socket)
+	if !ok {
+		return "", 0, errors.New("rio." + debug + ": argument is not a *Socket")
+	}
 	out := make([]byte, mxnet.SockaddrReplyLen)
-	_, err = newm.(*Socket).Misc(OpGetPeerName, 0, nil, out, nil)
+	_, err = s.Misc(OpGetSockname, 0, nil, out, nil)
 	if err != nil {
-		newm.Close()
-		return nil, "", 0, err
+		return "", 0, err
 	}
 	addr, port, err = mxnet.DecodeSockaddr(out)
 	if err != nil {
-		newm.Close()
-		return nil, "", 0, err
+		return "", 0, err
 	}
 
-	return newm, addr, port, nil
+	return addr, port, nil
+}
+
+func GetSockName(m mxio.MXIO) (addr mxnet.Addr, port uint16, err error) {
+	return getName(m, OpGetSockname, "GetSockName")
+}
+
+func GetPeerName(m mxio.MXIO) (addr mxnet.Addr, port uint16, err error) {
+	return getName(m, OpGetPeerName, "GetPeerName")
 }
 
 func mxStatus(err error) mx.Status {
