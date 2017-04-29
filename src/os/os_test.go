@@ -32,7 +32,6 @@ var dot = func() []string {
 			"dev",
 			"boot",
 			"tmp",
-			"blobstore",
 			"data",
 			"volume",
 			"system",
