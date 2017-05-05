@@ -22,6 +22,8 @@ type WaitItem struct {
 	Pending Signals
 } // mx_wait_item_t
 
+const HANDLE_INVALID = Handle(0)
+
 const MX_MAX_NAME_LEN = 32
 
 const (

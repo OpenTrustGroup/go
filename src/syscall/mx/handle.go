@@ -132,6 +132,10 @@ func (h Handle) GetCookie(scope Handle) (uint64, error) {
 	return cookie, nil
 }
 
+func (h Handle) IsValid() bool {
+	return h > HANDLE_INVALID
+}
+
 func WaitMany(items []WaitItem, timeout Time) error {
 	if status := sys_object_wait_many(&items[0], uint32(len(items)), timeout); status != ErrOk {
 		return Error{Status: status, Text: "mx.Handle.WaitMany"}
