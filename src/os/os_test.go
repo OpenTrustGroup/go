@@ -59,10 +59,10 @@ var sysdir = func() *sysDir {
 	switch runtime.GOOS {
 	case "fuchsia":
 		return &sysDir{
-			"/system/lib",
+			"/boot/lib",
 			[]string{
-				"libc++abi.so.1",
-				"libc++.so.2",
+				"libmxio.so",
+				"ld.so.1",
 			},
 		}
 	case "android":
