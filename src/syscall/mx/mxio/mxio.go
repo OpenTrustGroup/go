@@ -101,11 +101,17 @@ const (
 )
 
 const (
-	IoctlFamilyReserved = iota
-	IoctlFamilyDevice
-	IoctlFamilyDevmgr
+	IoctlFamilyReserved = 0x00 // IOCTL_FAMILY_RESERVED
+	IoctlFamilyDevice   = 0x01 // IOCTL_FAMILY_DEVICE
+	IoctlFamilyDevmgr   = 0x02 // IOCTL_FAMILY_VFS, TODO rename to IoctlFamilyVFS
+	IoctlFamilyDMCTL    = 0x03 // IOCTL_FAMILY_DMCTL
+	IoctlFamilyTest     = 0x04 // IOCTL_FAMILY_TEST
 )
-const IoctlFamilyBlock = 0x13
+
+const (
+	IoctlFamilyBlock     = 0x13 // IOCTL_FAMILY_BLOCK
+	IoctlFamilyNetconfig = 0x26 // IOCTL_FAMILY_NETCONFIG
+)
 
 var IoctlDeviceBind = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 0)
 var IoctlDeviceWatchDir = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevice, 1)
