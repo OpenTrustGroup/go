@@ -110,6 +110,13 @@ func (h Handle) WaitOne(waitFor Signals, timeout Time) (observed Signals, err er
 	return observed, nil
 }
 
+func (h Handle) Signal(clearMask, setMask Signals) error {
+	if status := Sys_object_signal(h, uint32(clearMask), uint32(setMask)); status != ErrOk {
+		return Error{Status: status, Text: "mx.Handle.Signal"}
+	}
+	return nil
+}
+
 func (h Handle) SignalPeer(clearMask, setMask Signals) error {
 	if status := Sys_object_signal_peer(h, uint32(clearMask), uint32(setMask)); status != ErrOk {
 		return Error{Status: status, Text: "mx.Handle.SignalPeer"}
