@@ -2,7 +2,7 @@
   "tests":[
     {
       "name":"go_os_test",
-      "exec":"/system/bin/report_result /system/test/go_os_test",
+      "exec":"/system/bin/report_result /system/test/go_os_test"
     }
   ]
 }
