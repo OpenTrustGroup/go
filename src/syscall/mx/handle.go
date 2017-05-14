@@ -236,6 +236,59 @@ func NewChannel(flags uint32) (c0, c1 *Channel, err error) {
 	return c0, c1, nil
 }
 
+const (
+	PortWaitAsyncOnce = iota
+	PortWaitAsyncRepeating
+)
+
+const (
+	PortPacketTypeUser = iota
+	PortPacketTypeSignalOne
+	PortPacketTypeSignalRepeating
+)
+
+const (
+	PacketHeaderSize = uint(unsafe.Sizeof(PacketHeader{}))
+	PacketMaxSize    = uint(unsafe.Sizeof(Packet{}))
+)
+
+type PacketHeader struct {
+	Key   uint64
+	Type  uint32
+	Extra uint32
+}
+
+// Packet describes the unit of communication via an MXIO protocol
+type Packet struct {
+	Hdr   PacketHeader
+	Bytes [32]uint8
+}
+
+func (p *Packet) Signal() *PacketSignal {
+	return (*PacketSignal)(unsafe.Pointer(p))
+}
+
+type PortPacket interface {
+	Header() *PacketHeader
+	Length() int
+}
+
+// PacketSignal describes packets of type PortPacketTypeSignal
+type PacketSignal struct {
+	Hdr      PacketHeader
+	Trigger  Signals
+	Observed Signals
+	Count    uint64
+}
+
+func (s *PacketSignal) Header() *PacketHeader {
+	return &s.Hdr
+}
+
+func (s *PacketSignal) Length() int {
+	return int(unsafe.Sizeof(*s))
+}
+
 type Port struct {
 	Handle Handle
 }
@@ -246,15 +299,18 @@ func (p *Port) Close() error {
 	return err
 }
 
-func (p *Port) Queue(packet []byte) error {
-	if status := Sys_port_queue(p.Handle, unsafe.Pointer(&packet[0]), uint(len(packet))); status != ErrOk {
+// Queue a PortPacket, which may have a varying size.
+func (p *Port) Queue(packet PortPacket) error {
+	if status := Sys_port_queue(p.Handle, unsafe.Pointer(packet.Header()), uint(packet.Length())); status != ErrOk {
 		return Error{Status: status, Text: "mx.Port.Queue"}
 	}
 	return nil
 }
 
-func (p *Port) Wait(packet []byte, deadline Time) error {
-	if status := Sys_port_wait(p.Handle, deadline, unsafe.Pointer(&packet[0]), uint(len(packet))); status != ErrOk {
+// Wait for a Packet, which must be as large as the largest
+// possible packet that may be received.
+func (p *Port) Wait(packet *Packet, deadline Time) error {
+	if status := Sys_port_wait(p.Handle, deadline, unsafe.Pointer(packet), 0); status != ErrOk {
 		return Error{Status: status, Text: "mx.Port.Wait"}
 	}
 	return nil
@@ -263,6 +319,20 @@ func (p *Port) Wait(packet []byte, deadline Time) error {
 func (p *Port) Bind(key uint64, source Handle, signals Signals) error {
 	if status := Sys_port_bind(p.Handle, key, source, signals); status != ErrOk {
 		return Error{Status: status, Text: "mx.Port.Bind"}
+	}
+	return nil
+}
+
+func (p *Port) Cancel(source Handle, key uint64) error {
+	if status := Sys_port_cancel(p.Handle, source, key); status != ErrOk {
+		return Error{Status: status, Text: "mx.Port.Cancel"}
+	}
+	return nil
+}
+
+func (p *Port) WaitAsync(handle Handle, key uint64, signals Signals, options uint32) error {
+	if status := Sys_object_wait_async(handle, p.Handle, key, signals, options); status != ErrOk {
+		return Error{Status: status, Text: "mxio.Port.WaitAsync"}
 	}
 	return nil
 }

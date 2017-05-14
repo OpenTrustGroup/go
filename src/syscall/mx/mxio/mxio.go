@@ -8,8 +8,6 @@
 package mxio
 
 import (
-	"unsafe"
-
 	"syscall/mx"
 )
 
@@ -30,7 +28,6 @@ type MXIO interface {
 }
 
 const (
-	PacketSize = uint(unsafe.Sizeof(Packet{}))
 	// MaxHandles is the maximum number of handles which can be transferred in an mxio op.
 	MaxHandles = 3
 	// ChunkSize is the largest number of bytes which can be used in a single low-level op.
@@ -38,29 +35,6 @@ const (
 	// IoctlMaxInput is the largest acceptable size for an Ioctl op input.
 	IoctlMaxInput = 1024
 )
-
-const (
-	PortPacketTypeKernel = iota
-	PortPacketTypeIosn
-	PortPacketTypeUser
-	PortPacketTypeException
-)
-
-// PacketHeader describes the following packet
-type PacketHeader struct {
-	Key        uint64
-	PacketType uint32
-	Extra      uint32
-}
-
-// Packet describes the unit of communication via an MXIO protocol
-type Packet struct {
-	Hdr       PacketHeader
-	Timestamp mx.Time
-	Bytes     uintptr
-	Signals   mx.Signals
-	Reserved  uint32
-}
 
 type Protocol uint32
 
@@ -125,43 +99,6 @@ var IoctlDeviceSync = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 7)
 var IoctlDevmgrMountFS = IoctlNum(IoctlKindSetHandle, IoctlFamilyDevmgr, 0)
 var IoctlDevmgrUnmountFS = IoctlNum(IoctlKindDefault, IoctlFamilyDevmgr, 1)
 var IoctlDevmgrGetTokenFS = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevmgr, 5)
-
-// TODO: these IoPort* functions have been superceeded by mx.Port. Remove them.
-
-// IoPortCreate wraps the corresponding syscall
-func IoPortCreate(options uint32) (mx.Handle, error) {
-	var h mx.Handle
-	if status := mx.Sys_port_create(options, &h); status != mx.ErrOk {
-		return 0, mx.Error{Status: status, Text: "mxio.IoPort"}
-	}
-	return h, nil
-}
-
-// IoPortQueue wraps the corresponding syscall
-func IoPortQueue(handle mx.Handle, packet *Packet, size uint) error {
-	if status := mx.Sys_port_queue(handle, unsafe.Pointer(packet), size); status != mx.ErrOk {
-		return mx.Error{Status: status, Text: "mxio.IoPort"}
-	}
-	return nil
-}
-
-// IoPortWait wraps the corresponding syscall
-func IoPortWait(handle mx.Handle, deadline mx.Time, size uint) (*Packet, error) {
-	var packet Packet
-	status := mx.Sys_port_wait(handle, deadline, unsafe.Pointer(&packet), size)
-	if status != mx.ErrOk {
-		return nil, mx.Error{Status: status, Text: "mxio.IoPort"}
-	}
-	return &packet, nil
-}
-
-// IoPortBind wraps the corresponding syscall
-func IoPortBind(handle mx.Handle, key uint64, source mx.Handle, signals mx.Signals) error {
-	if status := mx.Sys_port_bind(handle, key, source, signals); status != mx.ErrOk {
-		return mx.Error{Status: status, Text: "mxio.IoPort"}
-	}
-	return nil
-}
 
 type Vnattr struct {
 	Valid      uint32
