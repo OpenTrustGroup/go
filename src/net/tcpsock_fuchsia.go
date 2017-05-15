@@ -28,11 +28,11 @@ func (a *TCPAddr) family() int {
 	return syscall.AF_INET6
 }
 
-func (a *TCPAddr) sockaddr() (addr string, port uint16) {
+func (a *TCPAddr) sockaddr(family int) (addr mxnet.Addr, port uint16, err error) {
 	if a == nil {
-		return "", 0
+		return "", 0, nil
 	}
-	return string(a.IP), uint16(a.Port)
+	return ipToSockaddr(family, a.IP, a.Port, a.Zone)
 }
 
 func (c *TCPConn) readFrom(r io.Reader) (int64, error) {

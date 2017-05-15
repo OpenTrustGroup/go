@@ -26,11 +26,11 @@ func (a *UDPAddr) family() int {
 	return syscall.AF_INET6
 }
 
-func (a *UDPAddr) sockaddr() (addr string, port uint16) {
+func (a *UDPAddr) sockaddr(family int) (addr mxnet.Addr, port uint16, err error) {
 	if a == nil {
-		return "", 0
+		return "", 0, nil
 	}
-	return string(a.IP), uint16(a.Port)
+	return ipToSockaddr(family, a.IP, a.Port, a.Zone)
 }
 
 func (c *UDPConn) readFrom(b []byte) (n int, addr *UDPAddr, err error) {

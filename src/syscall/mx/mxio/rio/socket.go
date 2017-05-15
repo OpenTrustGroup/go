@@ -211,10 +211,11 @@ func Bind(m mxio.MXIO, addr mxnet.Addr, port uint16) error {
 		return errors.New("rio.Bind: nil argument")
 	}
 	b := make([]byte, mxnet.SockaddrLen)
-	_, err := mxnet.EncodeSockaddr(b, addr, port)
+	addrlen, err := mxnet.EncodeSockaddr(b, addr, port)
 	if err != nil {
 		return err
 	}
+	b = b[:addrlen]
 
 	s, ok := m.(*Socket)
 	if !ok {
@@ -230,10 +231,11 @@ func Connect(m mxio.MXIO, addr mxnet.Addr, port uint16) error {
 		return errors.New("rio.Connect: nil argument")
 	}
 	b := make([]byte, mxnet.SockaddrLen)
-	_, err := mxnet.EncodeSockaddr(b, addr, port)
+	addrlen, err := mxnet.EncodeSockaddr(b, addr, port)
 	if err != nil {
 		return err
 	}
+	b = b[:addrlen]
 
 	s, ok := m.(*Socket)
 	if !ok {
