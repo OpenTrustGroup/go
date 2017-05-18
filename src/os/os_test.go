@@ -29,12 +29,9 @@ var dot = func() []string {
 	switch runtime.GOOS {
 	case "fuchsia":
 		return []string{
-			"dev",
-			"boot",
-			"tmp",
-			"data",
-			"volume",
-			"system",
+			"go_os_test_foo",
+			"go_os_test_bar",
+			"go_os_test_baz",
 		}
 	default:
 		return []string{
@@ -49,6 +46,19 @@ var dot = func() []string {
 		}
 	}
 }()
+
+func tmpInit(t *testing.T) {
+	if runtime.GOOS == "fuchsia" {
+		for _, fname := range dot {
+			if err := MkdirAll("/tmp/"+fname, ModePerm); err != nil {
+				t.Fatalf("Initializing /tmp: %v", err)
+			}
+		}
+		if err := Chdir("/tmp"); err != nil {
+			t.Fatalf("chdir: %v", err)
+		}
+	}
+}
 
 type sysDir struct {
 	name  string
@@ -329,11 +339,13 @@ func testReaddir(dir string, contents []string, t *testing.T) {
 }
 
 func TestReaddirnames(t *testing.T) {
+	tmpInit(t)
 	testReaddirnames(".", dot, t)
 	testReaddirnames(sysdir.name, sysdir.files, t)
 }
 
 func TestReaddir(t *testing.T) {
+	tmpInit(t)
 	testReaddir(".", dot, t)
 	testReaddir(sysdir.name, sysdir.files, t)
 }
