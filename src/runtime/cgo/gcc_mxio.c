@@ -11,6 +11,7 @@
 #include <magenta/process.h>
 #include <magenta/processargs.h>
 #include <mxio/io.h>
+#include <mxio/namespace.h>
 #include <mxio/util.h>
 
 extern char **environ;
@@ -27,6 +28,10 @@ struct mxio_init {
 	int32_t unused;
 	int32_t envlen;
 	char**  environ;
+	mx_handle_t svcRootClone;
+	int32_t rootNSNumHandles;
+	mx_handle_t *rootNSHandles;
+	char** rootNSPaths;
 };
 
 void
@@ -42,9 +47,13 @@ x_cgo_get_mxio_root(struct mxio_init *handles)
 	uint32_t type;
 	mx_status_t r;
 	r = mxio_clone_root(&handles->rootClone, &type);
-	if (r <= 0 || type != MX_HND_TYPE_MXIO_ROOT) {
+	if (r <= 0 || type != PA_MXIO_ROOT) {
 		printf("runtime/cgo: mxio_clone_root failed: %d\n", r);
 		handles->rootClone = 0;
+	}
+	r = mxio_clone_svcroot(&handles->svcRootClone, &type);
+	if (r <= 0 || type != PA_SERVICE_ROOT) {
+		handles->svcRootClone = 0;
 	}
 	// mxio may have initialized std{in,out,err} with a single fd if the MXIO_FLAG_USE_FOR_STDIO
 	// flag was set, or have separate in/out/err fds. We clone fds {0,1,2} to separate fds for use
@@ -75,4 +84,16 @@ x_cgo_get_mxio_root(struct mxio_init *handles)
 		handles->envlen++;
 	}
 	handles->environ = environ;
+
+	mxio_flat_namespace_t* rootNS;
+	r = mxio_ns_export_root(&rootNS);
+	if (r < 0) {
+		handles->rootNSNumHandles = 0;
+		handles->rootNSHandles = NULL;
+		handles->rootNSPaths = NULL;
+	} else {
+		handles->rootNSNumHandles = (int32_t)rootNS->count;
+		handles->rootNSHandles = rootNS->handle;
+		handles->rootNSPaths = (char**)rootNS->path;
+	}
 }

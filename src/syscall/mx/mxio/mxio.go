@@ -34,6 +34,8 @@ const (
 	ChunkSize = 8192
 	// IoctlMaxInput is the largest acceptable size for an Ioctl op input.
 	IoctlMaxInput = 1024
+	// maximum number of bytes in a path
+	PathMax = 4096
 )
 
 type Protocol uint32

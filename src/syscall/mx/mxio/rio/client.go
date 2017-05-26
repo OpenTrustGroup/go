@@ -8,6 +8,7 @@
 package rio
 
 import (
+	"strings"
 	"sync/atomic"
 	"syscall/mx"
 	"syscall/mx/mxio"
@@ -249,6 +250,58 @@ func (r *RemoteIO) replyChannelCall(msg *Msg) (*RioObject, error) {
 	} else {
 		return &ro, nil
 	}
+}
+
+func connect(svc mx.Handle, cnxn mx.Handle, op uint32, name string) error {
+	if len(name) >= mxio.PathMax {
+		return mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO.connect"}
+	}
+
+	msg := Msg{}
+	msg.SetOp(op)
+	msg.Datalen = uint32(len(name))
+	msg.Arg = int32(OpOpenFlagPipeline | OpOpenFlagRDWR)
+	msg.SetMode(0755)
+	msg.Hcount = 1
+	msg.Handle[0] = cnxn
+	copy(msg.Data[:], name)
+
+	if err := msg.WriteMsg(&mx.Channel{svc}); err != nil {
+		cnxn.Close()
+		return err
+	}
+
+	return nil
+}
+
+func ServiceConnect(svcpath string, h mx.Handle) error {
+	if mx.SVCRootHandle.IsValid() {
+		// If there's an explicit svcroot handle, attempt to connect
+		// through that.
+		if svcpath == "/svc" {
+			// TODO: may want to pass "" instead of "."
+			//       once svcfs accepts it.
+			return ServiceConnectAt(mx.SVCRootHandle, ".", h)
+		} else if strings.HasPrefix(svcpath, "/svc/") {
+			return ServiceConnectAt(mx.SVCRootHandle,
+				strings.TrimPrefix(svcpath, "/svc/"), h)
+		}
+	} else {
+		// Otherwise attempt to connect through the root namespace.
+		ns, err := NewNSFromMap(mx.RootNSMap)
+		if err == nil {
+			return ns.Connect(svcpath, h)
+		}
+	}
+	h.Close()
+	return mx.Error{Status: mx.ErrNotFound, Text: "RemoteIO.ServiceConnect"}
+}
+
+func ServiceConnectAt(dir mx.Handle, path string, h mx.Handle) error {
+	if !dir.IsValid() || !h.IsValid() {
+		return mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO.ServiceConnectAt"}
+	}
+	return connect(dir, h, OpOpen, path)
 }
 
 func closeAll(handles []mx.Handle) {

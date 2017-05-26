@@ -49,6 +49,7 @@ func osinit() {
 	if _cgo_get_mxio_root != nil {
 		cgocallm0(_cgo_get_mxio_root, unsafe.Pointer(&mxioHandles))
 		mx.RootHandle = mx.Handle(mxioHandles.rootClone)
+		mx.SVCRootHandle = mx.Handle(mxioHandles.svcRootClone)
 		for i := 0; i < 3; i = i + 1 {
 			for j := 0; j < int(mxioHandles.stdioCloneNumHandles[i]); j = j + 1 {
 				mx.StdioHandles[i][j] = mxioHandles.stdioClones[i*3+j]
@@ -66,6 +67,18 @@ func osinit() {
 
 	ncpu = int32(mx.Sys_system_get_num_cpus())
 	physPageSize = 4096
+}
+
+func parseRootNS() {
+	if (mxioHandles.rootNSNumHandles > 0) {
+		const maxHandleCount = 1 << 20 // arbitrary
+		paths := (*(*[maxHandleCount]*byte)(unsafe.Pointer(mxioHandles.rootNSPaths)))[:mxioHandles.rootNSNumHandles]
+		handles := (*(*[maxHandleCount]mx.Handle)(unsafe.Pointer(mxioHandles.rootNSHandles)))[:mxioHandles.rootNSNumHandles]
+		mx.RootNSMap = make(map[string]mx.Handle)
+		for i, p := range paths {
+			mx.RootNSMap[gostring(p)] = handles[i]
+		}
+	}
 }
 
 // Filled in by runtime/cgo when linked into binary.
@@ -188,6 +201,10 @@ type mxio_init struct {
 	_                    int32
 	envlen               int32
 	environ              **byte
+	svcRootClone         mx.Handle
+	rootNSNumHandles     int32
+	rootNSHandles        *mx.Handle
+	rootNSPaths          **byte
 }
 
 var mxioHandles mxio_init
@@ -200,6 +217,8 @@ func goenvs() {
 		for i, e := range envp {
 			envs[i] = gostring(e)
 		}
+		// TODO: find a better place to call this
+		parseRootNS()
 	} else {
 		// TODO: implement cgo-less init
 		println("runtime: no fuchsia process handle without cgo yet")
