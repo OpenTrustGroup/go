@@ -24,16 +24,9 @@ type DispatcherCallback func(h mx.Handle, callback interface{}, cookie int64) er
 
 type handler struct {
 	h        mx.Handle
-	flags    uint32
 	callback interface{}
 	cookie   int64
 }
-
-// handler flag options
-const (
-	// flagDisconnected identifies that a handler is no longer usable.
-	flagDisconnected = 1
-)
 
 // Dispatcher can read messages from a handle and assign them to a callback.
 type Dispatcher struct {
@@ -74,30 +67,39 @@ func New(callback DispatcherCallback) (*Dispatcher, error) {
 // handles from being added.
 func (d *Dispatcher) close() {
 	d.port.Close()
+	// TODO(abarth): We need to close all the handlers in d.handlers.
 }
 
 func (d *Dispatcher) destroyHandler(hr *handler, handlerID uint64, doCloseCallback bool) {
-	if doCloseCallback {
-		d.callback(0, hr.callback, hr.cookie)
-	}
+	// Prevent future dispatching to this handler.
 	d.mu.Lock()
 	delete(d.handlers, handlerID)
 	d.mu.Unlock()
+
+	// Issue the final callback to this handler, if required.
+	if doCloseCallback {
+		d.callback(0, hr.callback, hr.cookie)
+	}
+
+	// Close the underlying channel.
+	hr.h.Close()
 }
 
-// Unbind a handler from the dispatcher to prevent further messages from arriving.
-func (d *Dispatcher) disconnectHandler(hr *handler, handlerID uint64, doCloseCallback bool) {
-	// close handle, so we get no further messages
-	hr.h.Close()
-
-	// Send a "SignalPortSignaled" close message to shut down the handler
-	var signal mx.PacketSignal
-	signal.Hdr.Key = handlerID
-	if doCloseCallback {
-		signal.Observed = mx.SignalPortSignaled
+func (d *Dispatcher) dispatchHandler(hr *handler, handlerID uint64) {
+	// Actually call the handler's callback.
+	if err := d.callback(hr.h, hr.callback, hr.cookie); err != nil {
+		if err != ErrNoWork {
+			d.destroyHandler(hr, handlerID, err != nil)
+			return
+		}
 	}
-	d.port.Queue(&signal)
-	hr.flags |= flagDisconnected
+	// Rearm the handler
+	err := d.port.WaitAsync(hr.h, handlerID, mx.SignalChannelReadable|mx.SignalChannelPeerClosed, mx.PortWaitAsyncOnce)
+	if err != nil {
+		d.mu.Lock()
+		delete(d.handlers, handlerID)
+		d.mu.Unlock()
+	}
 }
 
 // Serve launches a dispatcher, which will continue serving 'forever'.
@@ -117,37 +119,17 @@ func (d *Dispatcher) Serve() {
 		hr, ok := d.handlers[handlerID]
 		d.mu.Unlock()
 		if !ok {
-			// The handler is concurrently being closed by another thread
+			// The handler was removed while this packet was in the queue.
 			continue
 		}
-		if (hr.flags & flagDisconnected) != 0 {
-			// Do not process packets from disconnected handlers.
-			// Ignore all events until a "destroy" packet is received.
-			if packet.Hdr.Type == mx.PortPacketTypeUser {
-				d.destroyHandler(hr, handlerID, (packet.Signal().Observed&mx.SignalPortSignaled) != 0)
-			}
-			continue
-		}
-		// Read everything we can from this single handler
+		// Dispatch to the appropriate handler.
 		if (packet.Signal().Observed & mx.SignalChannelReadable) != 0 {
-			if err := d.callback(hr.h, hr.callback, hr.cookie); err != nil {
-				if err != ErrNoWork {
-					d.disconnectHandler(hr, handlerID, err != nil)
-					continue
-				}
-			}
-			// Requeue the handler
-			err := d.port.WaitAsync(hr.h, handlerID, mx.SignalChannelReadable|mx.SignalChannelPeerClosed, mx.PortWaitAsyncOnce)
-			if err != nil {
-				d.mu.Lock()
-				delete(d.handlers, handlerID)
-				d.mu.Unlock()
-			}
-
+			go d.dispatchHandler(hr, handlerID)
+			continue
 		}
-		// We haven't yet disconnected from the handler. Should we?
+		// Destroy the handler and issue a final callback.
 		if (packet.Signal().Observed & mx.SignalChannelPeerClosed) != 0 {
-			d.disconnectHandler(hr, handlerID, true)
+			go d.destroyHandler(hr, handlerID, true)
 		}
 	}
 }
@@ -157,7 +139,6 @@ func (d *Dispatcher) Serve() {
 func (d *Dispatcher) AddHandler(h mx.Handle, callback interface{}, cookie int64) error {
 	hr := &handler{
 		h:        h,
-		flags:    0,
 		callback: callback,
 		cookie:   cookie,
 	}
