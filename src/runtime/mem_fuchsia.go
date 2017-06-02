@@ -42,6 +42,7 @@ func sysMmap(ptr unsafe.Pointer, len uintptr, flags uint32) {
 		println("runtime: mx.NewVMO failed, len=", len, " err=", err.Error())
 		exit(2)
 	}
+	(mx.Handle)(vmo).SetProperty(mx.PropName, []byte("mmap-go"))
 	vmflags := mx.VMFlagPermRead | mx.VMFlagPermWrite
 	res, err := mx.VMARRoot.Map(0, vmo, 0, uint64(len), vmflags)
 	*(*uintptr)(ptr) = res

@@ -139,6 +139,30 @@ func (h Handle) GetCookie(scope Handle) (uint64, error) {
 	return cookie, nil
 }
 
+func (h Handle) GetProperty(property uint32, data []byte) error {
+	var numBytes = uint(len(data))
+	var dataPtr unsafe.Pointer
+	if numBytes > 0 {
+		dataPtr = unsafe.Pointer(&data[0])
+	}
+	if status := Sys_object_get_property(h, property, dataPtr, numBytes); status != ErrOk {
+		return Error{Status: status, Text: "mx.Handle.GetProperty"}
+	}
+	return nil
+}
+
+func (h Handle) SetProperty(property uint32, data []byte) error {
+	var numBytes = uint(len(data))
+	var dataPtr unsafe.Pointer
+	if numBytes > 0 {
+		dataPtr = unsafe.Pointer(&data[0])
+	}
+	if status := Sys_object_set_property(h, property, dataPtr, numBytes); status != ErrOk {
+		return Error{Status: status, Text: "mx.Handle.SetProperty"}
+	}
+	return nil
+}
+
 func (h Handle) IsValid() bool {
 	return h > HANDLE_INVALID
 }

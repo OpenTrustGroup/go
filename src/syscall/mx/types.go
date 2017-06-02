@@ -315,6 +315,17 @@ const (
 )
 
 const (
+	_                          = iota // 0
+	_                                 // 1
+	PropNumStateKinds                 // MX_PROP_NUM_STATE_KINDS
+	PropName                          // MX_PROP_NAME
+	PropRegisterFS                    // MX_PROP_REGISTER_FS
+	PropProcessDebugAddr              // MX_PROP_PROCESS_DEBUG_ADDR
+	PropProcessVDSOBaseAddress        // MX_PROP_PROCESS_VDSO_BASE_ADDRESS
+	PropJobMaxHeight                  // MX_PROP_JOB_MAX_HEIGHT
+)
+
+const (
 	TimensecInfinite = Time(0xFFFFFFFFFFFFFFFF)
 )
 
