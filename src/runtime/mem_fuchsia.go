@@ -33,7 +33,10 @@ func sysUsed(v unsafe.Pointer, n uintptr) {
 //go:nosplit
 func sysFree(v unsafe.Pointer, n uintptr, sysStat *uint64) {
 	mSysStatDec(sysStat, n)
-	println("TODO sysFree")
+	err := mx.VMARRoot.Unmap(uintptr(v), uint64(n))
+	if err != nil {
+		println("runtime: mx.VMAR.Unmap failed, err=", err.Error())
+	}
 }
 
 func sysMmap(ptr unsafe.Pointer, len uintptr, flags uint32) {
@@ -48,7 +51,7 @@ func sysMmap(ptr unsafe.Pointer, len uintptr, flags uint32) {
 	*(*uintptr)(ptr) = res
 	vmo.Close()
 	if err != nil {
-		println("runtime: mx.Sys_vmar_map failed, err=", err.Error())
+		println("runtime: mx.VMAR.Map failed, err=", err.Error())
 		exit(2)
 	}
 }
