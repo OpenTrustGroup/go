@@ -105,10 +105,15 @@ type Vnattr struct {
 	Mode       Vtype
 	Inode      uint64
 	Size       uint64
+	Blksize    uint64
+	Blkcount   uint64
 	Nlink      uint64
 	CreateTime uint64
 	ModifyTime uint64
 }
+
+// VnattrBlksize is the size of block used in "Blockcount", which may be distinct from Blksize.
+const VnattrBlksize = 512
 
 const (
 	AttrCtime = 1 << iota
