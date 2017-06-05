@@ -197,6 +197,7 @@ const (
 	ErrFileBig
 	ErrNoSpace
 
+	// deprecated
 	ErrHandleClosed = ErrCanceled
 	ErrRemoteClosed = ErrPeerClosed
 )

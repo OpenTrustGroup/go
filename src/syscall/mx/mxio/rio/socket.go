@@ -54,7 +54,7 @@ func (s *Socket) Read(data []byte) (n int, err error) {
 		switch mxStatus(err) {
 		case mx.ErrOk:
 			return n, nil
-		case mx.ErrRemoteClosed:
+		case mx.ErrPeerClosed:
 			return 0, io.EOF
 		case mx.ErrShouldWait:
 			obs, err := s.socket.WaitOne(mx.SignalSocketReadable|mx.SignalSocketPeerClosed, mx.TimensecInfinite)
@@ -66,7 +66,7 @@ func (s *Socket) Read(data []byte) (n int, err error) {
 				case obs&mx.SignalSocketPeerClosed != 0:
 					return 0, io.EOF
 				}
-			case mx.ErrBadHandle, mx.ErrHandleClosed:
+			case mx.ErrBadHandle, mx.ErrCanceled:
 				return 0, io.EOF
 			default:
 				return 0, err
@@ -137,7 +137,7 @@ func (s *Socket) recvMsg(data []byte) (n int, err error) {
 				continue
 			}
 			if obs&mx.SignalChannelPeerClosed != 0 {
-				return 0, mx.Error{Status: mx.ErrRemoteClosed, Text: "rio.Socket.recvMsg"}
+				return 0, mx.Error{Status: mx.ErrPeerClosed, Text: "rio.Socket.recvMsg"}
 			}
 			return 0, mx.Error{Status: mx.ErrInternal, Text: "rio.Socket.recvMsg"}
 		default:

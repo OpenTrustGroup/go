@@ -38,7 +38,7 @@ func (f *Pipe) Read(data []byte) (n int, err error) {
 			return n, err
 		}
 		switch mxerr.Status {
-		case mx.ErrRemoteClosed:
+		case mx.ErrPeerClosed:
 			return 0, mx.EOF
 		case mx.ErrShouldWait:
 			pending, err := f.s.WaitOne(mx.SignalSocketReadable|mx.SignalSocketPeerClosed, mx.TimensecInfinite)
@@ -69,7 +69,7 @@ func (f *Pipe) Write(data []byte) (n int, err error) {
 			return n, err
 		}
 		switch mxerr.Status {
-		case mx.ErrRemoteClosed:
+		case mx.ErrPeerClosed:
 			return 0, mx.EOF
 			return 0, mx.EPIPE
 		case mx.ErrShouldWait:
