@@ -371,6 +371,14 @@ func NewPort(options uint32) (*Port, error) {
 
 type VMO Handle
 
+func (vmo VMO) Clone(options uint32, offset, size uint64) (VMO, error) {
+	var h Handle
+	if status := Sys_vmo_clone(Handle(vmo), options, offset, size, &h); status != ErrOk {
+		return 0, Error{Status: status, Text: "mx.VMO.Clone"}
+	}
+	return VMO(h), nil
+}
+
 func (vmo VMO) Read(b []byte, offset uint64) (n int, err error) {
 	var actual uint
 	if status := sys_vmo_read(Handle(vmo), unsafe.Pointer(&b[0]), offset, uint(len(b)), &actual); status != ErrOk {
