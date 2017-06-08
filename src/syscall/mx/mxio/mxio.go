@@ -50,6 +50,8 @@ const (
 	ProtocolVMOFile
 	// The SOCKET protocol provides socket access.
 	ProtocolSocket
+	// The SERVICE protocol provides generic services.
+	ProtocolService
 )
 
 // MXIO Ioctls
