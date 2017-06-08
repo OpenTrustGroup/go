@@ -3,14 +3,11 @@
 # found in the LICENSE file.
 
 import("//build/go/go_test.gni")
-import("//packages/package.gni")
 
 # The go_runtime action wraps go_toolchain, rebuilding just the standard
 # if it has changed.
 action("go_runtime") {
-  outputs = [
-    "$root_gen_dir/gostdlib.done",
-  ]
+  outputs = [ "$root_gen_dir/gostdlib.done" ]
   depfile = "$root_gen_dir/gostdlib.d"
   script = rebase_path("//buildtools/go")
   args = [
@@ -27,9 +24,7 @@ action("go_runtime") {
     "-target-cpu",
     target_cpu,
   ]
-  deps = [
-    ":go_toolchain",
-  ]
+  deps = [ ":go_toolchain" ]
 
   if (host_os == "linux") {
     args += [
@@ -47,9 +42,7 @@ action("go_runtime") {
 }
 
 action("go_toolchain") {
-  outputs = [
-    "$root_gen_dir/goroot.done",
-  ]
+  outputs = [ "$root_gen_dir/goroot.done" ]
 
   script = rebase_path("//buildtools/go")
   args = [
@@ -84,13 +77,9 @@ go_test("go_os_test") {
   gopackage = "os"
 }
 
-package("go_stdlib_tests") {
+group("go_stdlib_tests") {
   testonly = true
   deps = [
     ":go_os_test",
   ]
-
-  binaries = [ {
-        name = "go_os_test"
-      } ]
 }
