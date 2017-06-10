@@ -76,9 +76,9 @@ var testData = []struct {
 	// IN: Arg: Max length of "out", Arg2: Opcode (arbitrary), Data: Arbitrary bytes
 	// OUT: Retval: 0, Data: Arbitrary bytes
 	{rio.OpIoctl, rio.MessageChunkSize, 1337, []uint8{'i', 'n'}, 0, 0, []uint8{'o', 'u', 't'}, []mx.Handle{}},
-	// IN: Arg: Max length of "out", Arg2: Opcode (IoctlDevmgr)
+	// IN: Arg: Max length of "out", Arg2: Opcode (IoctlVFS)
 	// OUT: Retval: 0, Handles: Opened object (set elsewhere)
-	{rio.OpIoctl, rio.MessageChunkSize, int64(mxio.IoctlDevmgrMountFS), []uint8{}, 0, 0, []uint8{}, []mx.Handle{}},
+	{rio.OpIoctl, rio.MessageChunkSize, int64(mxio.IoctlVFSMountFS), []uint8{}, 0, 0, []uint8{}, []mx.Handle{}},
 	// IN: Nothing
 	// OUT: Nothing
 	{rio.OpClose, 0, 0, []uint8{}, 0, 0, []uint8{}, []mx.Handle{}},
@@ -145,7 +145,7 @@ func checkSeek(client *rio.RemoteIO, opIndex int) {
 }
 
 func checkIoctl(client *rio.RemoteIO, opIndex int) {
-	if testData[opIndex].inArg2 == int64(mxio.IoctlDevmgrMountFS) {
+	if testData[opIndex].inArg2 == int64(mxio.IoctlVFSMountFS) {
 		// Create the expected return handle here, since dummy values would be rejected.
 		h0, _, err := mx.NewChannel(0)
 		if err != nil {

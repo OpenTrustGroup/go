@@ -204,7 +204,7 @@ func twoPathOp(oldpath, newpath string, op uint32) (err error) {
 	}
 	defer new.Close()
 
-	token, err := new.Ioctl(mxio.IoctlDevmgrGetTokenFS, nil, nil)
+	token, err := new.Ioctl(mxio.IoctlVFSGetTokenFS, nil, nil)
 	if err != nil {
 		return err
 	}

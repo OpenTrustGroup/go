@@ -81,7 +81,7 @@ const (
 const (
 	IoctlFamilyReserved = 0x00 // IOCTL_FAMILY_RESERVED
 	IoctlFamilyDevice   = 0x01 // IOCTL_FAMILY_DEVICE
-	IoctlFamilyDevmgr   = 0x02 // IOCTL_FAMILY_VFS, TODO rename to IoctlFamilyVFS
+	IoctlFamilyVFS      = 0x02 // IOCTL_FAMILY_VFS
 	IoctlFamilyDMCTL    = 0x03 // IOCTL_FAMILY_DMCTL
 	IoctlFamilyTest     = 0x04 // IOCTL_FAMILY_TEST
 )
@@ -92,17 +92,40 @@ const (
 )
 
 var IoctlDeviceBind = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 0)
-var IoctlDeviceWatchDir = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevice, 1)
-var IoctlDeviceGetEventHandle = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevice, 2)
-var IoctlDeviceGetDriverName = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 3)
-var IoctlDeviceGetDeviceName = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 4)
-var IoctlDeviceDebugSuspend = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 5)
-var IoctlDeviceDebugResume = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 6)
-var IoctlDeviceSync = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 7)
+var IoctlDeviceGetEventHandle = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevice, 1)
+var IoctlDeviceGetDriverName = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 2)
+var IoctlDeviceGetDeviceName = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 3)
+var IoctlDeviceSync = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 6)
+var IoctlDeviceDebugSuspend = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 7)
+var IoctlDeviceDebugResume = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 8)
 
-var IoctlDevmgrMountFS = IoctlNum(IoctlKindSetHandle, IoctlFamilyDevmgr, 0)
-var IoctlDevmgrUnmountFS = IoctlNum(IoctlKindDefault, IoctlFamilyDevmgr, 1)
-var IoctlDevmgrGetTokenFS = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevmgr, 5)
+var IoctlVFSMountFS = IoctlNum(IoctlKindSetHandle, IoctlFamilyVFS, 0)
+var IoctlVFSUnmountFS = IoctlNum(IoctlKindDefault, IoctlFamilyVFS, 1)
+var IoctlVFSGetTokenFS = IoctlNum(IoctlKindGetHandle, IoctlFamilyVFS, 5)
+var IoctlVFSWatchDir = IoctlNum(IoctlKindSetHandle, IoctlFamilyVFS, 8) // NOTE: Actually v2
+
+type VFSWatchDirRequest struct {
+	H       mx.Handle
+	Mask    uint32
+	Options uint32
+}
+
+const (
+	VFSWatchEventDeleted = iota
+	VFSWatchEventAdded
+	VFSWatchEventRemoved
+	VFSWatchEventExisting
+	VFSWatchEventIdle
+)
+
+const (
+	VFSWatchMaskDeleted = 1 << iota
+	VFSWatchMaskAdded
+	VFSWatchMaskRemoved
+	VFSWatchMaskExisting
+	VFSWatchMaskIdle
+	VFSWatchMaskAll = 0x1F
+)
 
 type Vnattr struct {
 	Valid      uint32
