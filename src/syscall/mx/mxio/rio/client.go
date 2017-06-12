@@ -360,6 +360,7 @@ func (r *RemoteIO) Clone() ([]mx.Handle, error) {
 
 const handleSize = uint32(unsafe.Sizeof(mx.Handle(0)))
 
+// TODO(smklein): Remove; this function is a subset of "Ioctl".
 func (r *RemoteIO) IoctlSetHandle(op uint32, in mx.Handle) error {
 	if mxio.IoctlKind(op) != mxio.IoctlKindSetHandle {
 		return mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO"}
@@ -391,6 +392,13 @@ func (r *RemoteIO) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
 		msg.Arg = int32(2 * handleSize)
 	case mxio.IoctlKindGetThreeHandles:
 		msg.Arg = int32(3 * handleSize)
+	case mxio.IoctlKindSetHandle:
+		msg.SetOp(OpIoctlOneHandle)
+		if len(in) < int(handleSize) {
+			return nil, mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO"}
+		}
+		msg.Handle[0] = mx.Handle(*(*mx.Handle)(unsafe.Pointer(&in[0])))
+		msg.Hcount = 1
 	}
 	msg.Arg += int32(len(out))
 	msg.SetIoctlOp(op)
