@@ -287,17 +287,17 @@ func init() {
 
 	rootMu.Lock()
 	root, err = rio.New([]mx.Handle{mx.RootHandle})
+	rootMu.Unlock()
 	if err != nil {
 		println("syscall: failed to create mxio root: ", err.Error())
 	}
-	rootMu.Unlock()
 
 	cwdMu.Lock()
 	cwd, err = rio.New([]mx.Handle{mx.CwdHandle})
+	cwdMu.Unlock()
 	if err != nil {
 		println("syscall: failed to create mxio cwd: ", err.Error())
 	}
-	cwdMu.Unlock()
 
 	initStdio := func(i int) (mxio.MXIO, error) {
 		switch mx.StdioHandleTypes[i] {
@@ -382,12 +382,14 @@ func OpenPath(path string, mode int, perm uint32) (f mxio.MXIO, err error) {
 		return nil, EINVAL
 	} else if path[0] != '/' {
 		cwdMu.Lock()
-		f, err = cwd.Open(path, int32(mode), perm)
+		c := cwd
 		cwdMu.Unlock()
+		f, err = c.Open(path, int32(mode), perm)
 	} else {
 		rootMu.Lock()
-		f, err = root.Open(path, int32(mode), perm)
+		r := root
 		rootMu.Unlock()
+		f, err = r.Open(path, int32(mode), perm)
 	}
 	return f, err
 }
