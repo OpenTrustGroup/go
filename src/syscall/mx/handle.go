@@ -20,6 +20,8 @@ var (
 	RootNSMap        map[string]Handle
 )
 
+const _MX_CPRNG_DRAW_MAX_LEN = 256
+
 type HandleInfo uint32
 
 func NewHandleInfo(t, arg uint32) HandleInfo {
@@ -507,11 +509,22 @@ func (l *Log) Close() (err error) {
 }
 
 func RandRead(b []byte) (n int, err error) {
-	var actual uint
-	if status := sys_cprng_draw(unsafe.Pointer(&b[0]), uint(len(b)), &actual); status != ErrOk {
-		return int(actual), Error{Status: status, Text: "mx.RandRead"}
+	var total uint
+
+	toRead := _MX_CPRNG_DRAW_MAX_LEN
+	for start := 0; start < len(b); start += _MX_CPRNG_DRAW_MAX_LEN {
+		if start+toRead > len(b) {
+			toRead = len(b) - start
+		}
+		var actual uint
+		if status := sys_cprng_draw(unsafe.Pointer(&b[start]), uint(toRead), &actual); status != ErrOk {
+			total += actual
+			return int(total), Error{Status: status, Text: "mx.RandRead"}
+		}
+		total += actual
 	}
-	return int(actual), nil
+
+	return int(total), nil
 }
 
 // Error is a Status with associated error text.
