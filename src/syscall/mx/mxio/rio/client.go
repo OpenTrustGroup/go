@@ -98,6 +98,11 @@ func (r *RemoteIO) read(op uint32, out []byte, off int64) (int, error) {
 
 		r, err := r.txn(&msg)
 		if err != nil {
+			if mxe, ok := err.(mx.Error); ok {
+				status = mxe.Status
+			} else {
+				status = mx.ErrIO
+			}
 			break
 		}
 		msg.DiscardHandles()
@@ -150,6 +155,11 @@ func (r *RemoteIO) write(op uint32, p []byte, off int64) (int, error) {
 
 		transferred, err := r.txn(&msg)
 		if err != nil {
+			if mxe, ok := err.(mx.Error); ok {
+				status = mxe.Status
+			} else {
+				status = mx.ErrIO
+			}
 			break
 		}
 		msg.DiscardHandles() // We shouldn't be receiving handles
