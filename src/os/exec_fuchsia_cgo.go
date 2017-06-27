@@ -26,13 +26,13 @@ import (
 )
 
 const (
-	LaunchpadCloneMxioRoot   = 1
-	LaunchpadCloneMxioCwd    = 2
-	LaunchpadCloneMxioStdio  = 4
-	LaunchpadCloneMxioAll    = 0xff
-	LaunchpadCloneEnviron    = 0x100
-	LaunchpadCloneDefaultJob = 0x200
-	LaunchpadCloneAll        = 0xffff
+	LaunchpadCloneMxioNamespace = 1
+	LaunchpadCloneMxioCwd       = 2
+	LaunchpadCloneMxioStdio     = 4
+	LaunchpadCloneMxioAll       = 0xff
+	LaunchpadCloneEnviron       = 0x100
+	LaunchpadCloneDefaultJob    = 0x200
+	LaunchpadCloneAll           = 0xffff
 )
 
 func makeCStringArray(s []string) []*C.char {
@@ -177,9 +177,9 @@ func launchpadLaunchMxio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 	if status != mx.ErrOk {
 		return 0, errors.New("environ")
 	}
-	status = mx.Status(C.launchpad_clone(lp, C.uint32_t(LaunchpadCloneMxioRoot)))
+	status = mx.Status(C.launchpad_clone(lp, C.uint32_t(LaunchpadCloneMxioNamespace)))
 	if status != mx.ErrOk {
-		return 0, errors.New("clone_mxio_root")
+		return 0, errors.New("launchpad_clone")
 	}
 	if attr.Dir != "" {
 		err := launchpadSetWd(lp, attr.Dir)

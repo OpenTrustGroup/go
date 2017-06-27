@@ -11,7 +11,6 @@ import "unsafe"
 // Process-wide MXIO handles.
 var (
 	RootHandle       Handle
-	SVCRootHandle    Handle
 	StdioHandles     [3][3]Handle // 3 stdio files, each with up to 3 (mxio.MaxHandles) handles
 	StdioHandleTypes [3]int
 	CwdHandle        Handle

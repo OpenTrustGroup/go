@@ -28,7 +28,7 @@ struct mxio_init {
 	int32_t unused;
 	int32_t envlen;
 	char**  environ;
-	mx_handle_t svcRootClone;
+	int32_t unused2;
 	int32_t rootNSNumHandles;
 	mx_handle_t *rootNSHandles;
 	char** rootNSPaths;
@@ -47,14 +47,11 @@ x_cgo_get_mxio_root(struct mxio_init *handles)
 	uint32_t type;
 	mx_status_t r;
 	r = mxio_clone_root(&handles->rootClone, &type);
-	if (r <= 0 || type != PA_MXIO_ROOT) {
+	if (r <= 0 || type != PA_MXIO_REMOTE) {
 		printf("runtime/cgo: mxio_clone_root failed: %d\n", r);
 		handles->rootClone = 0;
 	}
-	r = mxio_clone_svcroot(&handles->svcRootClone, &type);
-	if (r <= 0 || type != PA_SERVICE_ROOT) {
-		handles->svcRootClone = 0;
-	}
+
 	// mxio may have initialized std{in,out,err} with a single fd if the MXIO_FLAG_USE_FOR_STDIO
 	// flag was set, or have separate in/out/err fds. We clone fds {0,1,2} to separate fds for use
 	// in the Go runtime. The cloned fds aren't installed into mxio's fd table so they are only

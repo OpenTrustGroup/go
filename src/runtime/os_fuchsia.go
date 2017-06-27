@@ -49,7 +49,6 @@ func osinit() {
 	if _cgo_get_mxio_root != nil {
 		cgocallm0(_cgo_get_mxio_root, unsafe.Pointer(&mxioHandles))
 		mx.RootHandle = mx.Handle(mxioHandles.rootClone)
-		mx.SVCRootHandle = mx.Handle(mxioHandles.svcRootClone)
 		for i := 0; i < 3; i = i + 1 {
 			for j := 0; j < int(mxioHandles.stdioCloneNumHandles[i]); j = j + 1 {
 				mx.StdioHandles[i][j] = mxioHandles.stdioClones[i*3+j]
@@ -70,7 +69,7 @@ func osinit() {
 }
 
 func parseRootNS() {
-	if (mxioHandles.rootNSNumHandles > 0) {
+	if mxioHandles.rootNSNumHandles > 0 {
 		const maxHandleCount = 1 << 20 // arbitrary
 		paths := (*(*[maxHandleCount]*byte)(unsafe.Pointer(mxioHandles.rootNSPaths)))[:mxioHandles.rootNSNumHandles]
 		handles := (*(*[maxHandleCount]mx.Handle)(unsafe.Pointer(mxioHandles.rootNSHandles)))[:mxioHandles.rootNSNumHandles]
@@ -201,7 +200,7 @@ type mxio_init struct {
 	_                    int32
 	envlen               int32
 	environ              **byte
-	svcRootClone         mx.Handle
+	_                    int32
 	rootNSNumHandles     int32
 	rootNSHandles        *mx.Handle
 	rootNSPaths          **byte

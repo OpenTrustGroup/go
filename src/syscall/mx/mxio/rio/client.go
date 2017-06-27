@@ -8,7 +8,6 @@
 package rio
 
 import (
-	"strings"
 	"sync/atomic"
 	"syscall/mx"
 	"syscall/mx/mxio"
@@ -285,23 +284,10 @@ func connect(svc mx.Handle, cnxn mx.Handle, op uint32, name string) error {
 }
 
 func ServiceConnect(svcpath string, h mx.Handle) error {
-	if mx.SVCRootHandle.IsValid() {
-		// If there's an explicit svcroot handle, attempt to connect
-		// through that.
-		if svcpath == "/svc" {
-			// TODO: may want to pass "" instead of "."
-			//       once svcfs accepts it.
-			return ServiceConnectAt(mx.SVCRootHandle, ".", h)
-		} else if strings.HasPrefix(svcpath, "/svc/") {
-			return ServiceConnectAt(mx.SVCRootHandle,
-				strings.TrimPrefix(svcpath, "/svc/"), h)
-		}
-	} else {
-		// Otherwise attempt to connect through the root namespace.
-		ns, err := NewNSFromMap(mx.RootNSMap)
-		if err == nil {
-			return ns.Connect(svcpath, h)
-		}
+	// Otherwise attempt to connect through the root namespace.
+	ns, err := NewNSFromMap(mx.RootNSMap)
+	if err == nil {
+		return ns.Connect(svcpath, h)
 	}
 	h.Close()
 	return mx.Error{Status: mx.ErrNotFound, Text: "RemoteIO.ServiceConnect"}
