@@ -63,6 +63,8 @@ const (
 	OpSetAttr
 	OpSync
 	OpLink   = uint32(iota) | OpFlagOneHandle
+	OpMmap   = uint32(iota)
+	OpFcntl
 	OpNumOps = uint32(iota) // The total number of operations
 )
 
@@ -81,6 +83,11 @@ const (
 // Ops which correspond to a previously listed operation, but have a different number of handles
 const (
 	OpIoctlOneHandle = OpIoctl | OpFlagOneHandle
+)
+
+const (
+	OpFcntlCmdGetFL = uint32(iota + 3)
+	OpFcntlCmdSetFL
 )
 
 const (
@@ -253,6 +260,14 @@ func (m *Msg) IoctlOp() uint32 {
 	return uint32(m.arg2)
 }
 func (m *Msg) SetIoctlOp(v uint32) {
+	m.arg2 = int64(v)
+}
+
+func (m *Msg) FcntlFlags() uint32 {
+	return uint32(m.arg2)
+}
+
+func (m *Msg) SetFcntlFlags(v uint32) {
 	m.arg2 = int64(v)
 }
 
