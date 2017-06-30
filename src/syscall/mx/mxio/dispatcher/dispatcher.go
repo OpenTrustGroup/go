@@ -52,7 +52,7 @@ var (
 
 // New creates a new dispatcher.
 func New(callback DispatcherCallback) (*Dispatcher, error) {
-	port, err := mx.NewPort(1)
+	port, err := mx.NewPort(0)
 	if err != nil {
 		return nil, err
 	}
