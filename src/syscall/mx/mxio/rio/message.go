@@ -62,8 +62,8 @@ const (
 	OpGetAddrInfo
 	OpSetAttr
 	OpSync
-	OpLink   = uint32(iota) | OpFlagOneHandle
-	OpMmap   = uint32(iota)
+	OpLink = uint32(iota) | OpFlagOneHandle
+	OpMmap = uint32(iota)
 	OpFcntl
 	OpNumOps = uint32(iota) // The total number of operations
 )

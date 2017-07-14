@@ -196,6 +196,7 @@ const (
 	ErrNotFile
 	ErrFileBig
 	ErrNoSpace
+	ErrNotEmpty
 
 	// deprecated
 	ErrHandleClosed = ErrCanceled
