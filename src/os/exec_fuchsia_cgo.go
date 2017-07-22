@@ -159,13 +159,7 @@ func launchpadLaunchMxio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 		return 0, errors.New("launchpad_create")
 	}
 	defer C.launchpad_destroy(lp)
-	vmo := mx.Handle(C.launchpad_vmo_from_file(nameC))
-	status = mx.Status(C.launchpad_elf_load(lp, C.mx_handle_t(vmo)))
-	if status != mx.ErrOk {
-		vmo.Close()
-		return 0, errors.New("loading elf")
-	}
-	status = mx.Status(C.launchpad_load_vdso(lp, C.mx_handle_t(0)))
+	status = mx.Status(C.launchpad_load_from_file(lp, nameC))
 	if status != mx.ErrOk {
 		return 0, errors.New("loading vdso")
 	}
