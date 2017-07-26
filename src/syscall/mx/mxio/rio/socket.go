@@ -17,7 +17,7 @@ import (
 // Socket is an MXIO socket.
 type Socket struct {
 	ctrl   mx.Channel
-	socket mx.Handle // mx.Socket for TCP, mx.Channel for UDP
+	socket mx.Socket
 
 	dgram bool
 
@@ -37,7 +37,7 @@ func NewSocket(handles []mx.Handle) (*Socket, error) {
 		r:    r,
 	}
 	if len(handles) > 1 {
-		s.socket = handles[1]
+		s.socket = mx.Socket(handles[1])
 	}
 	return s, nil
 }
@@ -122,9 +122,8 @@ func (s *Socket) RecvMsg(maxLen int) (b []byte, flags int, addr string, port uin
 }
 
 func (s *Socket) recvMsg(data []byte) (n int, err error) {
-	ch := mx.Channel{s.socket}
 	for {
-		n, _, err := ch.Read(data, nil, 0)
+		n, err := s.socket.Read(data, 0)
 		switch mxStatus(err) {
 		case mx.ErrOk:
 			return int(n), err
@@ -153,8 +152,7 @@ func (s *Socket) SendMsg(b []byte, addr string, port uint16) (n int, err error) 
 		return 0, err
 	}
 	copy(data[mxnet.SockmsgHdrLen:], b)
-	ch := mx.Channel{s.socket}
-	err = ch.Write(data, nil, 0)
+	_, err = s.socket.Write(data, 0)
 	if err != nil {
 		return 0, err
 	}
