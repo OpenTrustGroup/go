@@ -197,6 +197,28 @@ const (
 	ErrFileBig
 	ErrNoSpace
 	ErrNotEmpty
+	_ // -55
+	_ // -56
+	_ // -57
+	_ // -58
+	_ // -59
+	ErrStop
+	ErrNext
+	_ // -62
+	_ // -63
+	_ // -64
+	_ // -65
+	_ // -66
+	_ // -67
+	_ // -68
+	_ // -69
+	ErrProtocolNotSupported
+	ErrAddressUnreacheable
+	ErrAddressInUse
+	ErrNotConnected
+	ErrConnectionRefused
+	ErrConnectionReset
+	ErrConnectionAborted
 
 	// deprecated
 	ErrHandleClosed = ErrCanceled
