@@ -64,7 +64,7 @@ x_cgo_get_mxio_root(struct mxio_init *handles)
 			handles->stdioCloneNumHandles[i] = 0;
 		} else {
 			handles->stdioCloneNumHandles[i] = r;
-			handles->stdioCloneTypes[i] = MX_HND_INFO_TYPE(handle_types[0]);
+			handles->stdioCloneTypes[i] = PA_HND_TYPE(handle_types[0]);
 		}
 	}
 	type = 0;
