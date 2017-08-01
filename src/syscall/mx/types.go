@@ -213,7 +213,7 @@ const (
 	_ // -68
 	_ // -69
 	ErrProtocolNotSupported
-	ErrAddressUnreacheable
+	ErrAddressUnreachable
 	ErrAddressInUse
 	ErrNotConnected
 	ErrConnectionRefused
