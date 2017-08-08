@@ -95,6 +95,7 @@ var IoctlDeviceBind = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 0)
 var IoctlDeviceGetEventHandle = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevice, 1)
 var IoctlDeviceGetDriverName = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 2)
 var IoctlDeviceGetDeviceName = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 3)
+var IoctlDeviceGetTopoPath = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 4)
 var IoctlDeviceSync = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 6)
 var IoctlDeviceDebugSuspend = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 7)
 var IoctlDeviceDebugResume = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 8)
@@ -104,6 +105,7 @@ var IoctlVFSUnmountFS = IoctlNum(IoctlKindDefault, IoctlFamilyVFS, 1)
 var IoctlVFSQueryFS = IoctlNum(IoctlKindDefault, IoctlFamilyVFS, 4)
 var IoctlVFSGetTokenFS = IoctlNum(IoctlKindGetHandle, IoctlFamilyVFS, 5)
 var IoctlVFSWatchDir = IoctlNum(IoctlKindSetHandle, IoctlFamilyVFS, 8) // NOTE: Actually v2
+var IoctlVFSGetDevicePath = IoctlNum(IoctlKindDefault, IoctlFamilyVFS, 9)
 
 type VFSWatchDirRequest struct {
 	H       mx.Handle
