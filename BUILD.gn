@@ -27,22 +27,10 @@ if (current_toolchain == target_toolchain) {
       rebase_path("$root_gen_dir"),
       "-target-cpu",
       target_cpu,
+      "--bootstrap-path",
+      rebase_path("//buildtools/${host_os}-${host_cpu}/go"),
     ]
     deps = [ ":go_toolchain" ]
-
-    if (host_os == "linux") {
-      args += [
-        "--bootstrap-path",
-        rebase_path("//buildtools/linux64/go"),
-      ]
-    } else if (host_os == "mac") {
-      args += [
-        "--bootstrap-path",
-        rebase_path("//buildtools/mac/go"),
-      ]
-    } else {
-      assert(false, "Go cross compiler currently only supported on Linux and Mac")
-    }
   }
 
   action("go_toolchain") {
@@ -58,23 +46,10 @@ if (current_toolchain == target_toolchain) {
       rebase_path("//."),
       "-root-gen-dir",
       rebase_path("$root_gen_dir"),
+      "--bootstrap-path",
+      rebase_path("//buildtools/${host_os}-${host_cpu}/go"),
     ]
-
-    if (host_os == "linux") {
-      args += [
-        "--bootstrap-path",
-        rebase_path("//buildtools/linux64/go"),
-      ]
-    } else if (host_os == "mac") {
-      args += [
-        "--bootstrap-path",
-        rebase_path("//buildtools/mac/go"),
-      ]
-    } else {
-      assert(false, "Go cross compiler currently only supported on Linux and Mac")
-    }
   }
-
 }
 
 group("go_runtime") {
