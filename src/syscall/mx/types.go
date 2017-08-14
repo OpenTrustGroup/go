@@ -197,7 +197,6 @@ const (
 	ErrFileBig
 	ErrNoSpace
 	ErrNotEmpty
-	_ // -55
 	_ // -56
 	_ // -57
 	_ // -58
