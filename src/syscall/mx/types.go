@@ -276,9 +276,11 @@ const (
 	SignalChannelPeerClosed = SignalObject2
 
 	// Socket
-	SignalSocketReadable   = SignalObject0
-	SignalSocketWritable   = SignalObject1
-	SignalSocketPeerClosed = SignalObject2
+	SignalSocketReadable      = SignalObject0
+	SignalSocketWritable      = SignalObject1
+	SignalSocketPeerClosed    = SignalObject2
+	SignalSocketReadDisabled  = SignalObject4
+	SignalSocketWriteDisabled = SignalObject5
 
 	// Port
 	SignalPortReadable   = SignalObject0
@@ -335,6 +337,20 @@ const (
 	ObjectInfoResourceChildren
 	ObjectInfoResourceRecords
 	ObjectInfoVMAR
+)
+
+// Options for socket_create
+
+const (
+	SocketStream   = iota // 0
+	SocketDatagram        // 1
+)
+
+// Options for socket_write
+const (
+	_                   = iota // 0
+	SocketShutdownWrite        // 1
+	SocketShutdownRead         // 2
 )
 
 const (
