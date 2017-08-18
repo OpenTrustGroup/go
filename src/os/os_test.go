@@ -49,12 +49,16 @@ var dot = func() []string {
 
 func tmpInit(t *testing.T) {
 	if runtime.GOOS == "fuchsia" {
+		dir, err := ioutil.TempDir("", "")
+		if err != nil {
+			t.Fatalf("tempdir: %v", err)
+		}
 		for _, fname := range dot {
-			if err := MkdirAll("/tmp/"+fname, ModePerm); err != nil {
-				t.Fatalf("Initializing /tmp: %v", err)
+			if err := MkdirAll(filepath.Join(dir, fname), ModePerm); err != nil {
+				t.Fatalf("Initializing tmp: %v", err)
 			}
 		}
-		if err := Chdir("/tmp"); err != nil {
+		if err := Chdir(dir); err != nil {
 			t.Fatalf("chdir: %v", err)
 		}
 	}
