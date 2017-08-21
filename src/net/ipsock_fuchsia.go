@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"syscall/mx/mxio/rio"
 	"syscall/mx/mxnet"
+	"time"
 )
 
 func probeIPv4Stack() bool {
@@ -65,8 +66,18 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 		sotype = syscall.SOCK_DGRAM
 	}
 	proto := syscall.IPPROTO_IP
-	path := "/dev/socket/socket/" + strconv.Itoa(family) + "/" + strconv.Itoa(sotype) + "/" + strconv.Itoa(proto)
-	f, err := os.Open(path)
+
+	var f *os.File
+	// Wait for the network stack to publish the socket device.
+	// See similar logic in magenta/system/ulib/mxio/bsdsocket.c.
+	for i := 0; i < 40; i++ {
+		path := "/dev/socket/socket/" + strconv.Itoa(family) + "/" + strconv.Itoa(sotype) + "/" + strconv.Itoa(proto)
+		f, err = os.Open(path)
+		if !os.IsNotExist(err) {
+			break
+		}
+		time.Sleep(250 * time.Millisecond)
+	}
 	if err != nil {
 		return nil, err
 	}
