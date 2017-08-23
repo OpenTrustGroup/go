@@ -91,6 +91,10 @@ const (
 	IoctlFamilyNetconfig = 0x26 // IOCTL_FAMILY_NETCONFIG
 )
 
+const (
+	IoctlFamilyPower = 0x30 // IOCTL_FAMILY_POWER
+)
+
 var IoctlDeviceBind = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 0)
 var IoctlDeviceGetEventHandle = IoctlNum(IoctlKindGetHandle, IoctlFamilyDevice, 1)
 var IoctlDeviceGetDriverName = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 2)
@@ -106,6 +110,42 @@ var IoctlVFSQueryFS = IoctlNum(IoctlKindDefault, IoctlFamilyVFS, 4)
 var IoctlVFSGetTokenFS = IoctlNum(IoctlKindGetHandle, IoctlFamilyVFS, 5)
 var IoctlVFSWatchDir = IoctlNum(IoctlKindSetHandle, IoctlFamilyVFS, 8) // NOTE: Actually v2
 var IoctlVFSGetDevicePath = IoctlNum(IoctlKindDefault, IoctlFamilyVFS, 9)
+
+var IoctlPowerGetInfo = IoctlNum(IoctlKindDefault, IoctlFamilyPower, 1)
+var IoctlPowerGetBatteryInfo = IoctlNum(IoctlKindDefault, IoctlFamilyPower, 2)
+var IoctlPowerGetStateChangeEvent = IoctlNum(IoctlKindGetHandle, IoctlFamilyPower, 3)
+
+type PowerInfoResult struct {
+	PowerType uint32
+	State     uint32
+}
+
+type BatteryInfoResult struct {
+	Unit                           uint32
+	DesignCapacity                 uint32
+	LastFullCapacity               uint32
+	DesignVoltage                  uint32
+	CapacityWarning                uint32
+	CapacityLow                    uint32
+	CapacityGranularityLowWarning  uint32
+	CapacityGranularityWarningFull uint32
+	PresentRate                    int32
+	RemainingCapacity              uint32
+	PresentVoltage                 uint32
+}
+
+const (
+	PowerTypeAC      = 0
+	PowerTypeBattery = 1
+
+	PowerStateOnline      = 1 << 0
+	PowerStateDischarging = 1 << 1
+	PowerStateCharging    = 1 << 2
+	PowerStateCritical    = 1 << 3
+
+	BatteryUnitMW = 0
+	BatteryUnitMA = 1
+)
 
 type VFSWatchDirRequest struct {
 	H       mx.Handle
