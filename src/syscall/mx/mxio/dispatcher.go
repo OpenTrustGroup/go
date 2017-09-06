@@ -4,8 +4,7 @@
 
 // +build fuchsia
 
-// Package dispatcher provides a mechanism to dispatch callbacks to readable handles
-package dispatcher
+package mxio
 
 import (
 	"sync"
@@ -51,7 +50,7 @@ var (
 )
 
 // New creates a new dispatcher.
-func New(callback DispatcherCallback) (*Dispatcher, error) {
+func NewDispatcher(callback DispatcherCallback) (*Dispatcher, error) {
 	port, err := mx.NewPort(0)
 	if err != nil {
 		return nil, err

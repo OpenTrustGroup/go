@@ -4,21 +4,18 @@
 
 // +build fuchsia
 
-package rio_test
+package mxio
 
 import (
 	"bytes"
 	"testing"
 
 	"syscall/mx"
-	"syscall/mx/mxio"
-	"syscall/mx/mxio/dispatcher"
-	"syscall/mx/mxio/rio"
 )
 
 // Create a new dispatcher, running a RIO server. It is initialized with no clients.
-func CreateRIOServer() *dispatcher.Dispatcher {
-	d, err := dispatcher.New(rio.Handler)
+func CreateRIOServer() *Dispatcher {
+	d, err := NewDispatcher(Handler)
 	if err != nil {
 		panic(err)
 	}
@@ -27,7 +24,7 @@ func CreateRIOServer() *dispatcher.Dispatcher {
 }
 
 // Create a pair of handles, and add one end to the RIO server, along with a RIO Server callback.
-func CreateRIOClient(d *dispatcher.Dispatcher, cb rio.ServerHandler, cookie int64) *rio.RemoteIO {
+func CreateRIOClient(d *Dispatcher, cb ServerHandler, cookie int64) *RemoteIO {
 	h0, h1, err := mx.NewChannel(0)
 	if err != nil {
 		panic(err)
@@ -38,7 +35,7 @@ func CreateRIOClient(d *dispatcher.Dispatcher, cb rio.ServerHandler, cookie int6
 	}
 
 	// TODO(smklein): Add 'event' handle to clientHandles when testing 'wait'
-	client, err := rio.New([]mx.Handle{h1.Handle})
+	client, err := NewRIO([]mx.Handle{h1.Handle})
 	if err != nil {
 		panic(err)
 	}
@@ -60,31 +57,31 @@ var testData = []struct {
 }{
 	// IN: Arg: Flags, Arg2: Mode, Data: Name
 	// OUT: Retval: 0, Arg2: Protocol, Handles: Opened object (set elsewhere)
-	{rio.OpOpen, 12, 34, []uint8{'f', 'i', 'l', 'e'}, 0, int64(mxio.ProtocolRemote), []uint8{}, []mx.Handle{}},
+	{OpOpen, 12, 34, []uint8{'f', 'i', 'l', 'e'}, 0, int64(ProtocolRemote), []uint8{}, []mx.Handle{}},
 	// IN: Nothing
 	// OUT: Retval: 0, Arg2: Protocol, Handles: Opened object (set elsewhere)
-	{rio.OpClone, 0, 0, []uint8{}, 0, int64(mxio.ProtocolRemote), []uint8{}, []mx.Handle{}},
+	{OpClone, 0, 0, []uint8{}, 0, int64(ProtocolRemote), []uint8{}, []mx.Handle{}},
 	// IN: Arg: Max bytes to read
 	// OUT: Retval: Bytes read, Arg2: New offset, Data: Data read
-	{rio.OpRead, 4, 0, []uint8{}, 4, 5, []uint8{'d', 'a', 't', 'a'}, []mx.Handle{}},
+	{OpRead, 4, 0, []uint8{}, 4, 5, []uint8{'d', 'a', 't', 'a'}, []mx.Handle{}},
 	// IN: Data: Data to write
 	// OUT: Retval: Bytes read, Arg2: New offset
-	{rio.OpWrite, 0, 0, []uint8{'i', 'n', 'p', 'u', 't'}, 5, 10, []uint8{}, []mx.Handle{}},
+	{OpWrite, 0, 0, []uint8{'i', 'n', 'p', 'u', 't'}, 5, 10, []uint8{}, []mx.Handle{}},
 	// IN: Arg: Whence, Arg2: Offset
 	// OUT: Retval: 0, Arg2: Offset
-	{rio.OpSeek, 1, 0x1234567, []uint8{}, 0, 0x7654321, []uint8{}, []mx.Handle{}},
+	{OpSeek, 1, 0x1234567, []uint8{}, 0, 0x7654321, []uint8{}, []mx.Handle{}},
 	// IN: Arg: Max length of "out", Arg2: Opcode (arbitrary), Data: Arbitrary bytes
 	// OUT: Retval: 0, Data: Arbitrary bytes
-	{rio.OpIoctl, rio.MessageChunkSize, 1337, []uint8{'i', 'n'}, 0, 0, []uint8{'o', 'u', 't'}, []mx.Handle{}},
+	{OpIoctl, MessageChunkSize, 1337, []uint8{'i', 'n'}, 0, 0, []uint8{'o', 'u', 't'}, []mx.Handle{}},
 	// IN: Arg: Max length of "out", Arg2: Opcode (IoctlVFS)
 	// OUT: Retval: 0, Handles: Opened object (set elsewhere)
-	{rio.OpIoctl, rio.MessageChunkSize, int64(mxio.IoctlVFSMountFS), []uint8{}, 0, 0, []uint8{}, []mx.Handle{}},
+	{OpIoctl, MessageChunkSize, int64(IoctlVFSMountFS), []uint8{}, 0, 0, []uint8{}, []mx.Handle{}},
 	// IN: Nothing
 	// OUT: Nothing
-	{rio.OpClose, 0, 0, []uint8{}, 0, 0, []uint8{}, []mx.Handle{}},
+	{OpClose, 0, 0, []uint8{}, 0, 0, []uint8{}, []mx.Handle{}},
 }
 
-func checkOpen(client *rio.RemoteIO, opIndex int) {
+func checkOpen(client *RemoteIO, opIndex int) {
 	// Create the expected return handle here, since dummy values would be rejected.
 	h0, _, err := mx.NewChannel(0)
 	if err != nil {
@@ -97,7 +94,7 @@ func checkOpen(client *rio.RemoteIO, opIndex int) {
 	}
 }
 
-func checkClone(client *rio.RemoteIO, opIndex int) {
+func checkClone(client *RemoteIO, opIndex int) {
 	// Create the expected return handle here, since dummy values would be rejected.
 	h0, _, err := mx.NewChannel(0)
 	if err != nil {
@@ -114,7 +111,7 @@ func checkClone(client *rio.RemoteIO, opIndex int) {
 	}
 }
 
-func checkRead(client *rio.RemoteIO, opIndex int) {
+func checkRead(client *RemoteIO, opIndex int) {
 	buf := make([]byte, len(testData[opIndex].outData))
 	count, err := client.Read(buf)
 	if err != nil {
@@ -126,7 +123,7 @@ func checkRead(client *rio.RemoteIO, opIndex int) {
 	}
 }
 
-func checkWrite(client *rio.RemoteIO, opIndex int) {
+func checkWrite(client *RemoteIO, opIndex int) {
 	count, err := client.Write(testData[opIndex].inData)
 	if err != nil {
 		panic(err)
@@ -135,7 +132,7 @@ func checkWrite(client *rio.RemoteIO, opIndex int) {
 	}
 }
 
-func checkSeek(client *rio.RemoteIO, opIndex int) {
+func checkSeek(client *RemoteIO, opIndex int) {
 	off, err := client.Seek(testData[opIndex].inArg2, int(testData[opIndex].inArg))
 	if err != nil {
 		panic(err)
@@ -144,8 +141,8 @@ func checkSeek(client *rio.RemoteIO, opIndex int) {
 	}
 }
 
-func checkIoctl(client *rio.RemoteIO, opIndex int) {
-	if testData[opIndex].inArg2 == int64(mxio.IoctlVFSMountFS) {
+func checkIoctl(client *RemoteIO, opIndex int) {
+	if testData[opIndex].inArg2 == int64(IoctlVFSMountFS) {
 		// Create the expected return handle here, since dummy values would be rejected.
 		h0, _, err := mx.NewChannel(0)
 		if err != nil {
@@ -169,7 +166,7 @@ func checkIoctl(client *rio.RemoteIO, opIndex int) {
 	}
 }
 
-func checkClose(client *rio.RemoteIO) {
+func checkClose(client *RemoteIO) {
 	if err := client.Close(); err != nil {
 		panic(err)
 	}
@@ -182,12 +179,12 @@ func TestRIO(t *testing.T) {
 	// This function will be called on the "fake" server. Check that everything is plumbed through
 	// correctly. In a realistic use of RIO, this function might exist in another process
 	// completely.
-	serverCb := func(msg *rio.Msg, rh mx.Handle, cookie int64) mx.Status {
+	serverCb := func(msg *Msg, rh mx.Handle, cookie int64) mx.Status {
 		// Check incoming message
 		if cookie != testCookie {
 			t.Fatalf("%d: unexpected cookie", opIndex)
 		}
-		if rh != 0 && msg.Magic != rio.MessageMagic {
+		if rh != 0 && msg.Magic != MessageMagic {
 			// The 'magic' value should only be checked if the message was actually sent from the
 			// remote side, and not sent as a 'close' notification.
 			t.Fatalf("%d: unexpected magic", opIndex)
@@ -224,19 +221,19 @@ func TestRIO(t *testing.T) {
 	client := CreateRIOClient(d, serverCb, testCookie)
 	for range testData {
 		switch testData[opIndex].inOp {
-		case rio.OpOpen:
+		case OpOpen:
 			checkOpen(client, opIndex)
-		case rio.OpClone:
+		case OpClone:
 			checkClone(client, opIndex)
-		case rio.OpRead:
+		case OpRead:
 			checkRead(client, opIndex)
-		case rio.OpWrite:
+		case OpWrite:
 			checkWrite(client, opIndex)
-		case rio.OpSeek:
+		case OpSeek:
 			checkSeek(client, opIndex)
-		case rio.OpIoctl:
+		case OpIoctl:
 			checkIoctl(client, opIndex)
-		case rio.OpClose:
+		case OpClose:
 			checkClose(client)
 		default:
 			t.Fatalf("%d: unexpected test op: %v", opIndex, testData[opIndex].inOp)

@@ -4,18 +4,17 @@
 
 // +build fuchsia
 
-package pipe
+package mxio
 
 import (
 	"syscall/mx"
-	"syscall/mx/mxio"
 )
 
 type Pipe struct {
 	s mx.Socket
 }
 
-func NewPipe() (*Pipe, *Pipe, error) {
+func NewPipes() (*Pipe, *Pipe, error) {
 	s0, s1, err := mx.NewSocket(0)
 	if err != nil {
 		return nil, nil, err
@@ -23,7 +22,7 @@ func NewPipe() (*Pipe, *Pipe, error) {
 	return &Pipe{s0}, &Pipe{s1}, nil
 }
 
-func New(h []mx.Handle) (*Pipe, error) {
+func NewPipe(h []mx.Handle) (*Pipe, error) {
 	return &Pipe{mx.Socket(h[0])}, nil
 }
 
@@ -110,7 +109,7 @@ func (f *Pipe) Close() error {
 	return nil
 }
 
-func (f *Pipe) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
+func (f *Pipe) Open(path string, flags int32, mode uint32) (MXIO, error) {
 	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
 }
 

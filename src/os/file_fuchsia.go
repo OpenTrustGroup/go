@@ -7,9 +7,8 @@ package os
 import (
 	"errors"
 	"syscall"
+	"syscall/mx/mxio"
 	"time"
-
-	"syscall/mx/mxio/pipe"
 )
 
 func (f *File) Chmod(mode FileMode) error {
@@ -65,7 +64,7 @@ func Readlink(name string) (string, error) {
 }
 
 func Pipe() (r *File, w *File, err error) {
-	p0, p1, err := pipe.NewPipe()
+	p0, p1, err := mxio.NewPipes()
 	if err != nil {
 		return nil, nil, err
 	}

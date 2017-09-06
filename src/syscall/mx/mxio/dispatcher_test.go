@@ -4,14 +4,13 @@
 
 // +build fuchsia
 
-package dispatcher_test
+package mxio
 
 import (
 	"testing"
 	"unsafe"
 
 	"syscall/mx"
-	"syscall/mx/mxio/dispatcher"
 )
 
 // Test creating a dispatcher which both sums integers.
@@ -50,7 +49,7 @@ func TestDispatcher(t *testing.T) {
 			if err != nil {
 				if err == mx.ErrBadState {
 					// This error implies there are no messages currently in the pipe
-					return dispatcher.ErrNoWork
+					return ErrNoWork
 				}
 				return err
 			} else if numBytes != 8 || numHandles != 0 {
@@ -62,7 +61,7 @@ func TestDispatcher(t *testing.T) {
 		return nil
 	}
 
-	d, err := dispatcher.New(dispatcherCb)
+	d, err := NewDispatcher(dispatcherCb)
 	if err != nil {
 		panic(err)
 	}

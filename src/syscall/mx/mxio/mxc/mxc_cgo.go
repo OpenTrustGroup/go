@@ -17,8 +17,6 @@ import (
 	"errors"
 	"syscall/mx"
 	"syscall/mx/mxio"
-	"syscall/mx/mxio/pipe"
-	"syscall/mx/mxio/rio"
 )
 
 func transferMXIOFromCFD(fd int) (mxio.MXIO, error) {
@@ -36,9 +34,9 @@ func transferMXIOFromCFD(fd int) (mxio.MXIO, error) {
 	}
 	switch mx.HandleInfo(typesC[0]).Type() {
 	case mxio.HandleTypeRemote:
-		return rio.New(handles)
+		return mxio.NewRIO(handles)
 	case mxio.HandleTypePipe:
-		return pipe.New(handles)
+		return mxio.NewPipe(handles)
 	default:
 		return nil, errors.New("Unexpected C handle type")
 	}

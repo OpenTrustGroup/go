@@ -4,14 +4,11 @@
 
 // +build fuchsia
 
-// Package rio implements the Remote IO protocol, providing the MXIO interface remotely
-package rio
+package mxio
 
 import (
 	"sync/atomic"
 	"syscall/mx"
-	"syscall/mx/mxio"
-	"syscall/mx/mxio/pipe"
 	"unsafe"
 )
 
@@ -24,7 +21,7 @@ type RemoteIO struct {
 }
 
 // New returns a new RemoteIO object
-func New(handle []mx.Handle) (*RemoteIO, error) {
+func NewRIO(handle []mx.Handle) (*RemoteIO, error) {
 	r := &RemoteIO{}
 	if len(handle) > 0 {
 		r.h = &mx.Channel{handle[0]}
@@ -262,7 +259,7 @@ func (r *RemoteIO) replyChannelCall(msg *Msg) (*RioObject, error) {
 }
 
 func connect(svc mx.Handle, cnxn mx.Handle, op uint32, name string) error {
-	if len(name) >= mxio.PathMax {
+	if len(name) >= PathMax {
 		return mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO.connect"}
 	}
 
@@ -307,28 +304,28 @@ func closeAll(handles []mx.Handle) {
 }
 
 // Consumes handles, wrapping them in mxio object or closing them on error.
-func createFromHandles(protocol mxio.Protocol, handles []mx.Handle, extra []byte) (mxio.MXIO, error) {
+func createFromHandles(protocol Protocol, handles []mx.Handle, extra []byte) (MXIO, error) {
 	switch protocol {
-	case mxio.ProtocolPipe:
+	case ProtocolPipe:
 		if len(handles) != 1 {
 			closeAll(handles)
 			return nil, mx.Error{Status: mx.ErrInvalidArgs, Text: "createFromHandles: Pipe"}
 		}
-		return pipe.New(handles)
-	case mxio.ProtocolRemote:
+		return NewPipe(handles)
+	case ProtocolRemote:
 		if len(handles) == 0 || len(handles) > 2 {
 			closeAll(handles)
 			return nil, mx.Error{Status: mx.ErrInvalidArgs, Text: "createFromHandles: RemoteIO"}
 		}
-		return New(handles)
-	case mxio.ProtocolVMOFile:
+		return NewRIO(handles)
+	case ProtocolVMOFile:
 		if len(handles) != 2 || len(extra) != 16 {
 			closeAll(handles)
 			return nil, mx.Error{Status: mx.ErrInvalidArgs, Text: "createFromHandles: VMOFile"}
 		}
 		handles[0].Close()
 		return NewVMOFile(handles[1], extra)
-	case mxio.ProtocolSocket:
+	case ProtocolSocket:
 		return NewSocket(handles)
 	default:
 		println("Unknown mxio protocol, ", protocol)
@@ -338,12 +335,12 @@ func createFromHandles(protocol mxio.Protocol, handles []mx.Handle, extra []byte
 	}
 }
 
-func (r *RemoteIO) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
+func (r *RemoteIO) Open(path string, flags int32, mode uint32) (MXIO, error) {
 	ro, err := r.getObject(OpOpen, path, flags, mode)
 	if err != nil {
 		return nil, err
 	}
-	return createFromHandles(mxio.Protocol(ro.Type), ro.Handle[:ro.Hcount], ro.Extra[:ro.Esize])
+	return createFromHandles(Protocol(ro.Type), ro.Handle[:ro.Hcount], ro.Extra[:ro.Esize])
 }
 
 func (r *RemoteIO) Clone() ([]mx.Handle, error) {
@@ -358,7 +355,7 @@ const handleSize = uint32(unsafe.Sizeof(mx.Handle(0)))
 
 // TODO(smklein): Remove; this function is a subset of "Ioctl".
 func (r *RemoteIO) IoctlSetHandle(op uint32, in mx.Handle) error {
-	if mxio.IoctlKind(op) != mxio.IoctlKindSetHandle {
+	if IoctlKind(op) != IoctlKindSetHandle {
 		return mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO"}
 	}
 	var msg Msg
@@ -376,19 +373,19 @@ func (r *RemoteIO) IoctlSetHandle(op uint32, in mx.Handle) error {
 
 func (r *RemoteIO) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
 	var msg Msg
-	if len(in) > mxio.IoctlMaxInput {
+	if len(in) > IoctlMaxInput {
 		return nil, mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO"}
 	}
 	msg.SetOp(OpIoctl)
 	msg.Datalen = uint32(len(in))
-	switch mxio.IoctlKind(op) {
-	case mxio.IoctlKindGetHandle:
+	switch IoctlKind(op) {
+	case IoctlKindGetHandle:
 		msg.Arg = int32(handleSize)
-	case mxio.IoctlKindGetTwoHandles:
+	case IoctlKindGetTwoHandles:
 		msg.Arg = int32(2 * handleSize)
-	case mxio.IoctlKindGetThreeHandles:
+	case IoctlKindGetThreeHandles:
 		msg.Arg = int32(3 * handleSize)
-	case mxio.IoctlKindSetHandle:
+	case IoctlKindSetHandle:
 		msg.SetOp(OpIoctlOneHandle)
 		if len(in) < int(handleSize) {
 			return nil, mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO"}
@@ -405,8 +402,8 @@ func (r *RemoteIO) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
 		return nil, err
 	}
 
-	switch mxio.IoctlKind(op) {
-	case mxio.IoctlKindGetHandle:
+	switch IoctlKind(op) {
+	case IoctlKindGetHandle:
 		if msg.Hcount < 1 {
 			return nil, mx.Error{Status: mx.ErrIO, Text: "RemoteIO.Ioctl too few handles"}
 		}
@@ -417,7 +414,7 @@ func (r *RemoteIO) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
 			copy(out, msg.Data[handleSize:msg.Datalen])
 		}
 		return outh, nil
-	case mxio.IoctlKindGetTwoHandles:
+	case IoctlKindGetTwoHandles:
 		if msg.Hcount < 2 {
 			msg.DiscardHandles()
 			return nil, mx.Error{Status: mx.ErrIO, Text: "RemoteIO.Ioctl too few handles"}
@@ -430,7 +427,7 @@ func (r *RemoteIO) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
 			copy(out, msg.Data[2*handleSize:msg.Datalen])
 		}
 		return outh, nil
-	case mxio.IoctlKindGetThreeHandles:
+	case IoctlKindGetThreeHandles:
 		if msg.Hcount < 3 {
 			msg.DiscardHandles()
 			return nil, mx.Error{Status: mx.ErrIO, Text: "RemoteIO.Ioctl too few handles"}
@@ -479,15 +476,15 @@ func (r *RemoteIO) Misc(op uint32, off int64, in, out []byte, handles []mx.Handl
 	return n, nil
 }
 
-func Stat(f mxio.MXIO) (attr mxio.Vnattr, err error) {
+func Stat(f MXIO) (attr Vnattr, err error) {
 	b := (*[unsafe.Sizeof(attr)]byte)(unsafe.Pointer(&attr))
 	if _, err := f.Misc(OpStat, 0, nil, (*b)[:], nil); err != nil {
-		return mxio.Vnattr{}, err
+		return Vnattr{}, err
 	}
 	return attr, nil
 }
 
-func UnlinkAt(dir mxio.MXIO, name string) error {
+func UnlinkAt(dir MXIO, name string) error {
 	_, err := dir.Misc(OpUnlink, 0, []byte(name), nil, nil)
 	if err != nil {
 		return err

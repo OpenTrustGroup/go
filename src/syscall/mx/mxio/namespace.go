@@ -4,7 +4,7 @@
 
 // +build fuchsia
 
-package rio
+package mxio
 
 import (
 	"path"
@@ -13,7 +13,7 @@ import (
 )
 
 type NS struct {
-	m  map[string]mx.Handle
+	m map[string]mx.Handle
 }
 
 func NewNS() *NS {

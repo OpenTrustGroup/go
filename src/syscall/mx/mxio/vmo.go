@@ -4,13 +4,12 @@
 
 // +build fuchsia
 
-package rio
+package mxio
 
 import (
 	"unsafe"
 
 	"syscall/mx"
-	"syscall/mx/mxio"
 )
 
 type VMOFile struct {
@@ -84,7 +83,7 @@ func (f *VMOFile) Close() error {
 	return nil
 }
 
-func (f *VMOFile) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
+func (f *VMOFile) Open(path string, flags int32, mode uint32) (MXIO, error) {
 	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "rio.VMOFile"}
 }
 func (f *VMOFile) Clone() ([]mx.Handle, error) {
@@ -104,14 +103,14 @@ func (f *VMOFile) Misc(op uint32, off int64, in, out []byte, handles []mx.Handle
 
 	switch op {
 	case OpStat:
-		attr := mxio.Vnattr{
+		attr := Vnattr{
 			Size: uint64(f.end - f.off),
-			Mode: mxio.VtypeFile | mxio.VtypeIRUSR,
+			Mode: VtypeFile | VtypeIRUSR,
 		}
 		if unsafe.Sizeof(attr) > uintptr(len(out)) {
 			return 0, mx.Error{Status: mx.ErrInvalidArgs, Text: "rio.VMOFile"}
 		}
-		*(*mxio.Vnattr)(unsafe.Pointer(&out[0])) = attr
+		*(*Vnattr)(unsafe.Pointer(&out[0])) = attr
 		return int(unsafe.Sizeof(attr)), nil
 	default:
 		return 0, mx.Error{Status: mx.ErrInvalidArgs, Text: "rio.VMOFile"}

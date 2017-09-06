@@ -4,13 +4,12 @@
 
 // +build fuchsia
 
-package rio
+package mxio
 
 import (
 	"errors"
 	"io"
 	"syscall/mx"
-	"syscall/mx/mxio"
 	"syscall/mx/mxnet"
 )
 
@@ -28,7 +27,7 @@ type Socket struct {
 
 // NewSocket creates a new MXIO Socket.
 func NewSocket(handles []mx.Handle) (*Socket, error) {
-	r, err := New(handles)
+	r, err := NewRIO(handles)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +172,7 @@ func (s *Socket) Close() error {
 	return nil
 }
 
-func (s *Socket) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
+func (s *Socket) Open(path string, flags int32, mode uint32) (MXIO, error) {
 	return s.r.Open(path, flags, mode)
 }
 func (*Socket) Clone() ([]mx.Handle, error) {
@@ -191,7 +190,7 @@ func (s *Socket) Misc(op uint32, off int64, in, out []byte, handles []mx.Handle)
 
 // SetDgram marks a *Socket as a datagram (UDP) socket.
 // A different protocol is used internally.
-func SetDgram(m mxio.MXIO) error {
+func SetDgram(m MXIO) error {
 	if m == nil {
 		return errors.New("rio.SetDgram: nil argument")
 	}
@@ -204,7 +203,7 @@ func SetDgram(m mxio.MXIO) error {
 }
 
 // Bind is BSD Sockets bind on a *Socket.
-func Bind(m mxio.MXIO, addr mxnet.Addr, port uint16) error {
+func Bind(m MXIO, addr mxnet.Addr, port uint16) error {
 	if m == nil {
 		return errors.New("rio.Bind: nil argument")
 	}
@@ -224,7 +223,7 @@ func Bind(m mxio.MXIO, addr mxnet.Addr, port uint16) error {
 }
 
 // Connect is BSD Sockets connect on a *Socket.
-func Connect(m mxio.MXIO, addr mxnet.Addr, port uint16) error {
+func Connect(m MXIO, addr mxnet.Addr, port uint16) error {
 	if m == nil {
 		return errors.New("rio.Connect: nil argument")
 	}
@@ -250,7 +249,7 @@ func Connect(m mxio.MXIO, addr mxnet.Addr, port uint16) error {
 	return nil
 }
 
-func ListenStream(m mxio.MXIO, backlog int) error {
+func ListenStream(m MXIO, backlog int) error {
 	if m == nil {
 		return errors.New("rio.ListenStream: nil argument")
 	}
@@ -267,7 +266,7 @@ func ListenStream(m mxio.MXIO, backlog int) error {
 	return err
 }
 
-func Accept(m mxio.MXIO) (newm mxio.MXIO, err error) {
+func Accept(m MXIO) (newm MXIO, err error) {
 	if m == nil {
 		return nil, errors.New("rio.Accept: nil argument")
 	}
@@ -295,7 +294,7 @@ func Accept(m mxio.MXIO) (newm mxio.MXIO, err error) {
 	return newm, nil
 }
 
-func getName(m mxio.MXIO, op uint32, debug string) (addr mxnet.Addr, port uint16, err error) {
+func getName(m MXIO, op uint32, debug string) (addr mxnet.Addr, port uint16, err error) {
 	if m == nil {
 		return "", 0, errors.New("rio." + debug + ": nil argument")
 	}
@@ -316,11 +315,11 @@ func getName(m mxio.MXIO, op uint32, debug string) (addr mxnet.Addr, port uint16
 	return addr, port, nil
 }
 
-func GetSockName(m mxio.MXIO) (addr mxnet.Addr, port uint16, err error) {
+func GetSockName(m MXIO) (addr mxnet.Addr, port uint16, err error) {
 	return getName(m, OpGetSockname, "GetSockName")
 }
 
-func GetPeerName(m mxio.MXIO) (addr mxnet.Addr, port uint16, err error) {
+func GetPeerName(m MXIO) (addr mxnet.Addr, port uint16, err error) {
 	return getName(m, OpGetPeerName, "GetPeerName")
 }
 

@@ -10,7 +10,6 @@ import (
 	"os"
 	"strconv"
 	"syscall"
-	"syscall/mx/mxio/rio"
 	"syscall/mx/mxnet"
 	"time"
 )
@@ -83,7 +82,7 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 	}
 	m := syscall.MXIOForFD(int(f.Fd()))
 	if sotype == syscall.SOCK_DGRAM {
-		rio.SetDgram(m)
+		mxio.SetDgram(m)
 	}
 
 	fd = &netFD{
@@ -99,14 +98,14 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 			return nil, err
 		}
 		if addr != "" || port != 0 {
-			if err := rio.Bind(fd.m, addr, port); err != nil {
+			if err := mxio.Bind(fd.m, addr, port); err != nil {
 				return nil, err
 			}
 		}
 		if raddr == nil {
 			switch sotype {
 			case syscall.SOCK_STREAM:
-				if err := rio.ListenStream(m, listenerBacklog); err != nil {
+				if err := mxio.ListenStream(m, listenerBacklog); err != nil {
 					return nil, err
 				}
 			case syscall.SOCK_DGRAM:
@@ -119,7 +118,7 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 		if err != nil {
 			return nil, err
 		}
-		if err := rio.Connect(fd.m, addr, port); err != nil {
+		if err := mxio.Connect(fd.m, addr, port); err != nil {
 			return nil, err
 		}
 		fd.isConnected = true

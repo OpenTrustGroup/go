@@ -13,9 +13,6 @@ import (
 
 	"syscall/mx"
 	"syscall/mx/mxio"
-	"syscall/mx/mxio/logger"
-	"syscall/mx/mxio/pipe"
-	"syscall/mx/mxio/rio"
 )
 
 var (
@@ -164,7 +161,7 @@ func Unlink(path string) (err error) {
 	if err != nil {
 		return err
 	}
-	err = rio.UnlinkAt(f, file)
+	err = mxio.UnlinkAt(f, file)
 	f.Close()
 	return err
 }
@@ -180,11 +177,11 @@ func splitpath(path string) (dir, file string) {
 }
 
 func Rename(oldpath, newpath string) error {
-	return twoPathOp(oldpath, newpath, rio.OpRename)
+	return twoPathOp(oldpath, newpath, mxio.OpRename)
 }
 
 func Link(oldpath, newpath string) error {
-	return twoPathOp(oldpath, newpath, rio.OpLink)
+	return twoPathOp(oldpath, newpath, mxio.OpLink)
 }
 
 func twoPathOp(oldpath, newpath string, op uint32) (err error) {
@@ -222,7 +219,7 @@ func Fsync(fd int) (err error) {
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
 
-	_, err = f.Misc(rio.OpSync, 0, nil, nil, nil)
+	_, err = f.Misc(mxio.OpSync, 0, nil, nil, nil)
 	return err
 }
 
@@ -288,14 +285,14 @@ func init() {
 	var err error
 
 	rootMu.Lock()
-	root, err = rio.New([]mx.Handle{mx.RootHandle})
+	root, err = mxio.NewRIO([]mx.Handle{mx.RootHandle})
 	rootMu.Unlock()
 	if err != nil {
 		println("syscall: failed to create mxio root: ", err.Error())
 	}
 
 	cwdMu.Lock()
-	cwd, err = rio.New([]mx.Handle{mx.CwdHandle})
+	cwd, err = mxio.NewRIO([]mx.Handle{mx.CwdHandle})
 	cwdMu.Unlock()
 	if err != nil {
 		println("syscall: failed to create mxio cwd: ", err.Error())
@@ -306,11 +303,11 @@ func init() {
 		case 0:
 			return nil, EINVAL
 		case mxio.HandleTypeRemote:
-			return rio.New(mx.StdioHandles[i][:])
+			return mxio.NewRIO(mx.StdioHandles[i][:])
 		case mxio.HandleTypePipe:
-			return pipe.New([]mx.Handle{mx.StdioHandles[i][0]})
+			return mxio.NewPipe([]mx.Handle{mx.StdioHandles[i][0]})
 		case mxio.HandleTypeLogger:
-			return logger.New(mx.StdioHandles[i][0])
+			return mxio.NewLogger(mx.StdioHandles[i][0])
 		default:
 			println("syscall: unknown handle type for stdio: " + itoa(mx.StdioHandleTypes[i]))
 			return nil, EINVAL
@@ -477,7 +474,7 @@ func Fstat(fd int, stat *Stat_t) (err error) {
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
 
-	attr, err := rio.Stat(f)
+	attr, err := mxio.Stat(f)
 	if err != nil {
 		return err
 	}
@@ -541,7 +538,7 @@ func Ftruncate(fd int, length int64) (err error) {
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
 
-	_, err = f.Misc(rio.OpTruncate, length, nil, nil, nil)
+	_, err = f.Misc(mxio.OpTruncate, length, nil, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -573,7 +570,7 @@ func UtimesNano(path string, ts []Timespec) (err error) {
 		Valid:      mxio.AttrMtime,
 		ModifyTime: uint64(TimespecToNsec(ts[1])),
 	}
-	_, err = f.Misc(rio.OpSetAttr, 0, (*[unsafe.Sizeof(mxio.Vnattr{})]byte)(unsafe.Pointer(vn))[:], nil, nil)
+	_, err = f.Misc(mxio.OpSetAttr, 0, (*[unsafe.Sizeof(mxio.Vnattr{})]byte)(unsafe.Pointer(vn))[:], nil, nil)
 	return err
 }
 
@@ -591,7 +588,7 @@ func ReadDirent(fd int, buf []byte) (n int, err error) {
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
 
-	return f.Misc(rio.OpReaddir, 0, nil, buf, nil)
+	return f.Misc(mxio.OpReaddir, 0, nil, buf, nil)
 }
 
 func direntIno(buf []byte) (uint64, bool) {

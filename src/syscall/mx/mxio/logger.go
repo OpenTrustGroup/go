@@ -4,11 +4,10 @@
 
 // +build fuchsia
 
-package logger
+package mxio
 
 import (
 	"syscall/mx"
-	"syscall/mx/mxio"
 )
 
 type Logger struct {
@@ -17,7 +16,7 @@ type Logger struct {
 	logBufferN     int
 }
 
-func New(h mx.Handle) (*Logger, error) {
+func NewLogger(h mx.Handle) (*Logger, error) {
 	return &Logger{
 		log: mx.Log{Handle: h},
 	}, nil
@@ -62,7 +61,7 @@ func (f *Logger) Close() error {
 	return nil
 }
 
-func (f *Logger) Open(path string, flags int32, mode uint32) (mxio.MXIO, error) {
+func (f *Logger) Open(path string, flags int32, mode uint32) (MXIO, error) {
 	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "mx.Logger"}
 }
 

@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"syscall/mx"
 	"syscall/mx/mxio"
-	"syscall/mx/mxio/rio"
 	"syscall/mx/mxnet"
 	"time"
 )
@@ -63,13 +62,13 @@ func (fd *netFD) Write(b []byte) (n int, err error) {
 }
 
 func (fd *netFD) recvMsg(b []byte) (n, flags int, addr string, port uint16, err error) {
-	data, flags, addr, port, err := fd.m.(*rio.Socket).RecvMsg(len(b))
+	data, flags, addr, port, err := fd.m.(*mxio.Socket).RecvMsg(len(b))
 	n = copy(b, data)
 	return n, flags, addr, port, err
 }
 
 func (fd *netFD) sendMsg(b []byte, addr string, port uint16) (n int, err error) {
-	return fd.m.(*rio.Socket).SendMsg(b, addr, port)
+	return fd.m.(*mxio.Socket).SendMsg(b, addr, port)
 }
 
 func (fd *netFD) closeRead() error {
@@ -106,7 +105,7 @@ func (fd *netFD) accept() (netfd *netFD, err error) {
 	}
 	defer fd.readUnlock()
 
-	m, err := rio.Accept(fd.m)
+	m, err := mxio.Accept(fd.m)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +138,7 @@ func (fd *netFD) asAddr(ipAddr mxnet.Addr, port uint16, err error) sockaddr {
 }
 
 func (fd *netFD) setAddr() {
-	fd.laddr = fd.asAddr(rio.GetSockName(fd.m))
-	fd.raddr = fd.asAddr(rio.GetPeerName(fd.m))
+	fd.laddr = fd.asAddr(mxio.GetSockName(fd.m))
+	fd.raddr = fd.asAddr(mxio.GetPeerName(fd.m))
 	runtime.SetFinalizer(fd, (*netFD).Close)
 }

@@ -4,11 +4,10 @@
 
 // +build fuchsia
 
-package rio
+package mxio
 
 import (
 	"syscall/mx"
-	"syscall/mx/mxio/dispatcher"
 )
 
 // ServerHandler is the type of the callback which contains the remoteio "server". It is called from
@@ -36,7 +35,7 @@ func Handler(h mx.Handle, cb interface{}, cookie int64) error {
 	numBytes, _, err := msg.ReadMsg(&mx.Channel{h}) // TODO: take *mx.Channel as arugment
 	if err != nil {
 		if mxerr, hasStatus := err.(mx.Error); hasStatus && mxerr.Status == mx.ErrBadState {
-			return dispatcher.ErrNoWork
+			return ErrNoWork
 		}
 		return err
 	}
@@ -48,7 +47,7 @@ func Handler(h mx.Handle, cb interface{}, cookie int64) error {
 	isClose := (msg.Op() == OpClose)
 	status := serverCb(&msg, h, cookie)
 	msg.Arg = int32(status)
-	if mx.Status(msg.Arg) == dispatcher.ErrIndirect.Status {
+	if mx.Status(msg.Arg) == ErrIndirect.Status {
 		// The callback is handling the reply itself
 		return nil
 	} else if status < 0 || !msg.IsValid() {
@@ -69,7 +68,7 @@ func Handler(h mx.Handle, cb interface{}, cookie int64) error {
 	}
 	if isClose {
 		// Signals that a close callback is not necessary -- the op has already completed
-		return dispatcher.ErrDisconnectNoCallback
+		return ErrDisconnectNoCallback
 	}
 	return err
 }

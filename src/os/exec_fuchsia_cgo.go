@@ -20,8 +20,6 @@ import (
 	"syscall"
 	"syscall/mx"
 	"syscall/mx/mxio"
-	"syscall/mx/mxio/pipe"
-	"syscall/mx/mxio/rio"
 	"unsafe"
 )
 
@@ -62,9 +60,9 @@ func cloneHandleToCHandleArray(m mxio.MXIO) (int, []C.mx_handle_t, []C.uint32_t,
 	typesC := make([]C.uint32_t, mxio.MaxHandles)
 	mxioType := 0
 	switch m.(type) {
-	case *rio.RemoteIO:
+	case *mxio.RemoteIO:
 		mxioType = mxio.HandleTypeRemote
-	case *pipe.Pipe:
+	case *mxio.Pipe:
 		mxioType = mxio.HandleTypePipe
 	default:
 		for _, h := range handles {

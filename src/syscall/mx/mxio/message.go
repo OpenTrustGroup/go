@@ -4,14 +4,12 @@
 
 // +build fuchsia
 
-package rio
+package mxio
 
 import (
 	"unsafe"
 
 	"syscall/mx"
-	"syscall/mx/mxio"
-	"syscall/mx/mxio/dispatcher"
 )
 
 const (
@@ -177,7 +175,7 @@ func IndirectError(h mx.Handle, status mx.Status) mx.Status {
 	}
 	ro.Write(h, 0)
 	h.Close()
-	return dispatcher.ErrIndirect.Status
+	return ErrIndirect.Status
 }
 
 type MsgHeader struct {
@@ -250,10 +248,10 @@ func (m *Msg) Mode() uint32 {
 func (m *Msg) SetMode(v uint32) {
 	m.arg2 = int64(v)
 }
-func (m *Msg) Protocol() mxio.Protocol {
-	return mxio.Protocol(m.arg2)
+func (m *Msg) Protocol() Protocol {
+	return Protocol(m.arg2)
 }
-func (m *Msg) SetProtocol(p mxio.Protocol) {
+func (m *Msg) SetProtocol(p Protocol) {
 	m.arg2 = int64(p)
 }
 func (m *Msg) IoctlOp() uint32 {
