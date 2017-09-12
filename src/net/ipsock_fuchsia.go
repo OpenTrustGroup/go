@@ -9,7 +9,9 @@ import (
 	"errors"
 	"os"
 	"strconv"
+	"sync"
 	"syscall"
+	"syscall/mx"
 	"syscall/mx/mxio"
 	"syscall/mx/mxnet"
 	"time"
@@ -58,6 +60,28 @@ func favoriteAddrFamily(net string, laddr, raddr sockaddr, mode string) (family 
 	return syscall.AF_INET6, false
 }
 
+type netstackInfo struct {
+	mu sync.Mutex
+	h  mx.Handle
+}
+
+var netstack netstackInfo
+
+func getNetstack() mx.Handle {
+	netstack.mu.Lock()
+	defer netstack.mu.Unlock()
+	if netstack.h == mx.HANDLE_INVALID {
+		c0, c1, err := mx.NewChannel(0)
+		if err == nil {
+			err = mxio.ServiceConnect("/svc/net.Netstack", c0.Handle)
+			if err == nil {
+				netstack.h = c1.Handle
+			}
+		}
+	}
+	return netstack.h
+}
+
 func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *netFD, err error) {
 	family, _ := favoriteAddrFamily(net, laddr, raddr, "dial")
 
@@ -67,27 +91,31 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 	}
 	proto := syscall.IPPROTO_IP
 
-	var f *os.File
+	path := "socket/" + strconv.Itoa(family) + "/" + strconv.Itoa(sotype) + "/" + strconv.Itoa(proto)
+
+	var m mxio.MXIO
 	// Wait for the network stack to publish the socket device.
 	// See similar logic in magenta/system/ulib/mxio/bsdsocket.c.
 	for i := 0; i < 40; i++ {
-		path := "/dev/socket/socket/" + strconv.Itoa(family) + "/" + strconv.Itoa(sotype) + "/" + strconv.Itoa(proto)
-		f, err = os.Open(path)
-		if !os.IsNotExist(err) {
-			break
+		var r *mxio.RemoteIO
+		r, err = mxio.NewRIO([]mx.Handle{getNetstack()})
+		if err == nil {
+			m, err = r.Open(path, 0, 0644)
+			if err == nil {
+				break
+			}
 		}
 		time.Sleep(250 * time.Millisecond)
 	}
 	if err != nil {
 		return nil, err
 	}
-	m := syscall.MXIOForFD(int(f.Fd()))
 	if sotype == syscall.SOCK_DGRAM {
 		mxio.SetDgram(m)
 	}
 
 	fd = &netFD{
-		hsrc:   f,
+		hsrc:   os.NewFile(uintptr(syscall.OpenMXIO(m)), "socket"),
 		m:      m,
 		family: family,
 		sotype: sotype,
