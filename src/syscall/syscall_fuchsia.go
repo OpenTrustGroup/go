@@ -242,6 +242,11 @@ var (
 )
 
 var (
+	nsMu   sync.Mutex
+	ns     *fdio.NS
+)
+
+var (
 	stdioMu sync.Mutex
 	stdin   fdio.FDIO
 	stdout  fdio.FDIO
@@ -296,6 +301,13 @@ func init() {
 	cwdMu.Unlock()
 	if err != nil {
 		println("syscall: failed to create fdio cwd: ", err.Error())
+	}
+
+	nsMu.Lock()
+	ns, err = fdio.NewNSFromMap(mx.RootNSMap)
+	nsMu.Unlock()
+	if err != nil {
+		println("syscall: failed to create namespace: ", err.Error())
 	}
 
 	initStdio := func(i int) (fdio.FDIO, error) {
@@ -372,6 +384,26 @@ func Close(fd int) (err error) {
 	return f.Close()
 }
 
+func nsConnect(path string) (f fdio.FDIO, err error) {
+	c0, c1, err := mx.NewChannel(0)
+	if err != nil {
+		return nil, err
+	}
+	nsMu.Lock()
+	err = ns.Connect(path, c0.Handle)
+	nsMu.Unlock()
+	if err != nil {
+		c1.Handle.Close()
+		return nil, err
+	}
+	f, err = fdio.NewRIO([]mx.Handle{c1.Handle})
+	if err != nil {
+		c1.Handle.Close()
+		return nil, err
+	}
+	return f, nil
+}
+
 func OpenPath(path string, mode int, perm uint32) (f fdio.FDIO, err error) {
 	if path == "" {
 		path = "."
@@ -384,6 +416,9 @@ func OpenPath(path string, mode int, perm uint32) (f fdio.FDIO, err error) {
 		c := cwd
 		cwdMu.Unlock()
 		f, err = c.Open(path, int32(mode), perm)
+	} else if strings.HasPrefix(path, "/dev/") || strings.HasPrefix(path, "/svc/") {
+		// TODO: look up the nodes in namespace instead of hardcoding the prefixes
+		f, err = nsConnect(path)
 	} else {
 		rootMu.Lock()
 		r := root
