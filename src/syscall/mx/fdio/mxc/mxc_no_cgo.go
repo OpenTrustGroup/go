@@ -9,9 +9,9 @@ package mxc
 
 import (
 	"syscall/mx"
-	"syscall/mx/mxio"
+	"syscall/mx/fdio"
 )
 
-func transferMXIOFromCFD(fd int) (mxio.MXIO, error) {
+func transferFDIOFromCFD(fd int) (fdio.FDIO, error) {
 	return nil, mx.ErrNotSupported
 }

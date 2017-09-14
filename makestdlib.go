@@ -119,8 +119,8 @@ func main() {
 			"GOROOT=" + *flagBootstrapPath,
 			"CGO_ENABLED=1",
 			"CC=" + filepath.Join(*flagBootstrapPath, "misc/fuchsia/gccwrap.sh"),
-			"MAGENTA=" + filepath.Join(*flagFuchsiaRoot, "magenta"), // used by gccwrap.sh
-			"MAGENTA_BUILD_DIR=" + os.Getenv("MAGENTA_BUILD_DIR"), // used by gccwrap.sh
+			"ZIRCON=" + filepath.Join(*flagFuchsiaRoot, "zircon"), // used by gccwrap.sh
+			"ZIRCON_BUILD_DIR=" + os.Getenv("ZIRCON_BUILD_DIR"), // used by gccwrap.sh
 		}
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr

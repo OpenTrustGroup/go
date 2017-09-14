@@ -4,22 +4,22 @@
 
 // +build fuchsia
 
-// Package mxio provides unix-style IO, implementing Magenta's "system/ulib/mxio"
-package mxio
+// Package fdio provides unix-style IO, implementing Magenta's "system/ulib/fdio"
+package fdio
 
 import (
 	"syscall/mx"
 )
 
-// MXIO provides classic unix-style IO over various transports
-type MXIO interface {
+// FDIO provides classic unix-style IO over various transports
+type FDIO interface {
 	Read(data []byte) (int, error)
 	ReadAt(data []byte, off int64) (int, error)
 	Write(data []byte) (int, error)
 	WriteAt(data []byte, off int64) (int, error)
 	Seek(offset int64, whence int) (int64, error)
 	Close() error
-	Open(path string, flags int32, mode uint32) (MXIO, error)
+	Open(path string, flags int32, mode uint32) (FDIO, error)
 	Clone() ([]mx.Handle, error) // TODO(smklein): Pass type back from Clone
 	Ioctl(op uint32, in, out []byte) ([]mx.Handle, error)
 	IoctlSetHandle(op uint32, in mx.Handle) error
@@ -28,7 +28,7 @@ type MXIO interface {
 }
 
 const (
-	// MaxHandles is the maximum number of handles which can be transferred in an mxio op.
+	// MaxHandles is the maximum number of handles which can be transferred in an fdio op.
 	MaxHandles = 3
 	// ChunkSize is the largest number of bytes which can be used in a single low-level op.
 	ChunkSize = 8192
@@ -40,7 +40,7 @@ const (
 
 type Protocol uint32
 
-// All available MXIO protocols
+// All available FDIO protocols
 const (
 	ProtocolUndefined = Protocol(iota)
 	// The PIPE protocol uses message ports as simple, no-flow-control io pipes.
@@ -56,7 +56,7 @@ const (
 	ProtocolService
 )
 
-// MXIO Ioctls
+// FDIO Ioctls
 func IoctlNum(kind, family, number uint32) uint32 {
 	return ((kind & 0xF) << 20) | ((family & 0xFF) << 8) | (number & 0xFF)
 }

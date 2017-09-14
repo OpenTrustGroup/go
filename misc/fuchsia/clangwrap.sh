@@ -1,5 +1,5 @@
 #!/bin/bash
-# This uses the Fuchsia clang and Magenta sysroot.
+# This uses the Fuchsia clang and Zircon sysroot.
 set -eu
 
 if [ "$GOHOSTARCH" == "amd64" ]; then

@@ -46,7 +46,7 @@ func main() {
 	}
 	_ = sdkArch
 
-	syscallsFile := filepath.Join(*fuchsiaRoot, "/magenta/system/public/magenta/syscalls.sysgen")
+	syscallsFile := filepath.Join(*fuchsiaRoot, "/zircon/system/public/zircon/syscalls.sysgen")
 	if args := flag.Args(); len(args) != 0 {
 		syscallsFile = args[0]
 	}
@@ -70,15 +70,15 @@ func main() {
 	if *stubs {
 		fmt.Fprint(buf, stubsHeader[1:])
 		for _, call := range syscalls {
-			fmt.Fprintf(buf, "//go:cgo_import_dynamic vdso_mx_%s mx_%s \"libmagenta.so\"\n", call.name, call.name)
+			fmt.Fprintf(buf, "//go:cgo_import_dynamic vdso_zx_%s zx_%s \"libmagenta.so\"\n", call.name, call.name)
 		}
 		fmt.Fprint(buf, "\n")
 		for _, call := range syscalls {
-			fmt.Fprintf(buf, "//go:linkname vdso_mx_%s vdso_mx_%s\n", call.name, call.name)
+			fmt.Fprintf(buf, "//go:linkname vdso_zx_%s vdso_zx_%s\n", call.name, call.name)
 		}
 		fmt.Fprint(buf, "\nvar (\n")
 		for _, call := range syscalls {
-			fmt.Fprintf(buf, "\tvdso_mx_%s uintptr\n", call.name)
+			fmt.Fprintf(buf, "\tvdso_zx_%s uintptr\n", call.name)
 		}
 		fmt.Fprint(buf, ")\n\n")
 		for _, call := range syscalls {
@@ -242,7 +242,7 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 			}
 			fmt.Fprintf(buf, "\tPUSHQ R12\n")
 		}
-		fmt.Fprintf(buf, "\tMOVQ vdso_mx_%s(SB), AX\n", call.name)
+		fmt.Fprintf(buf, "\tMOVQ vdso_zx_%s(SB), AX\n", call.name)
 		fmt.Fprintf(buf, "\tCALL AX\n")
 		if len(call.args) >= 7 {
 			fmt.Fprintf(buf, "\tPOPQ R12\n")
@@ -252,7 +252,7 @@ func printAsm(buf *bytes.Buffer, call magentaSyscallDef) {
 			fmt.Fprintf(buf, "\tMOVQ BP, SP\n")
 		}
 	case "arm64":
-		fmt.Fprintf(buf, "\tBL vdso_mx_%s(SB)\n", call.name)
+		fmt.Fprintf(buf, "\tBL vdso_zx_%s(SB)\n", call.name)
 	}
 	if retSize := typeSize(call.ret); retSize > 0 {
 		suffix := suffix8
@@ -276,43 +276,43 @@ func typeSize(t magentaType) int {
 		return regSize
 	}
 	switch t.named {
-	case mx_function_pointer:
+	case zx_function_pointer:
 		return regSize
-	case mx_void:
+	case zx_void:
 		return 0
-	case mx_any:
+	case zx_any:
 		return 0
-	case mx_bool:
+	case zx_bool:
 		return 1
-	case mx_int, mx_uint, mx_uintptr_t, mx_size_t:
+	case zx_int, zx_uint, zx_uintptr_t, zx_size_t:
 		return regSize
-	case mx_char:
+	case zx_char:
 		return 1
-	case mx_int16_t, mx_uint16_t:
+	case zx_int16_t, zx_uint16_t:
 		return 2
-	case mx_int32_t, mx_uint32_t:
+	case zx_int32_t, zx_uint32_t:
 		return 4
-	case mx_int64_t, mx_uint64_t:
+	case zx_int64_t, zx_uint64_t:
 		return 8
-	case mx_status_t:
+	case zx_status_t:
 		return 4
-	case mx_time_t:
+	case zx_time_t:
 		return 8
-	case mx_duration_t:
+	case zx_duration_t:
 		return 8
-	case mx_koid_t:
+	case zx_koid_t:
 		return 8
-	case mx_handle_t:
+	case zx_handle_t:
 		return 4
-	case mx_signals_t:
+	case zx_signals_t:
 		return 4
-	case mx_rights_t:
+	case zx_rights_t:
 		return 4
-	case mx_vaddr_t, mx_paddr_t:
+	case zx_vaddr_t, zx_paddr_t:
 		return regSize
-	case mx_process_info_t:
-		panic("cannot pass mx_process_info_t")
-	case mx_exception_status_t, mx_exception_behaviour_t:
+	case zx_process_info_t:
+		panic("cannot pass zx_process_info_t")
+	case zx_exception_status_t, zx_exception_behaviour_t:
 		return 4
 	default:
 		panic(fmt.Sprintf("UNKNOWN(%s)", t.named))
@@ -321,72 +321,72 @@ func typeSize(t magentaType) int {
 
 func printGoType(buf *bytes.Buffer, t magentaType) {
 	if t.isArray {
-		if t.named == mx_any {
+		if t.named == zx_any {
 			fmt.Fprint(buf, "unsafe.Pointer")
 			return
 		}
 		fmt.Fprint(buf, "*")
 	}
 	switch t.named {
-	case mx_void:
+	case zx_void:
 		fmt.Fprint(buf, "BAD(void)")
-	case mx_any:
+	case zx_any:
 		fmt.Fprint(buf, "BAD(any)")
-	case mx_bool:
+	case zx_bool:
 		fmt.Fprint(buf, "bool")
-	case mx_uint:
+	case zx_uint:
 		fmt.Fprint(buf, "uint")
-	case mx_int:
+	case zx_int:
 		fmt.Fprint(buf, "int")
-	case mx_char:
+	case zx_char:
 		fmt.Fprint(buf, "uint8")
-	case mx_int16_t:
+	case zx_int16_t:
 		fmt.Fprint(buf, "int16")
-	case mx_uint16_t:
+	case zx_uint16_t:
 		fmt.Fprint(buf, "uint16")
-	case mx_int32_t:
+	case zx_int32_t:
 		fmt.Fprint(buf, "int32")
-	case mx_uint32_t:
+	case zx_uint32_t:
 		fmt.Fprint(buf, "uint32")
-	case mx_int64_t:
+	case zx_int64_t:
 		fmt.Fprint(buf, "int64")
-	case mx_uint64_t:
+	case zx_uint64_t:
 		fmt.Fprint(buf, "uint64")
-	case mx_uintptr_t:
+	case zx_uintptr_t:
 		fmt.Fprint(buf, "uintptr")
-	case mx_status_t:
+	case zx_status_t:
 		fmt.Fprint(buf, "Status")
-	case mx_time_t:
+	case zx_time_t:
 		fmt.Fprint(buf, "Time")
-	case mx_duration_t:
+	case zx_duration_t:
 		fmt.Fprint(buf, "Duration")
-	case mx_koid_t:
+	case zx_koid_t:
 		fmt.Fprint(buf, "Koid")
-	case mx_handle_t:
+	case zx_handle_t:
 		fmt.Fprint(buf, "Handle")
-	case mx_signals_t:
+	case zx_signals_t:
 		fmt.Fprint(buf, "Signals")
-	case mx_wait_item_t:
+	case zx_wait_item_t:
 		fmt.Fprint(buf, "WaitItem")
-	case mx_rights_t:
+	case zx_rights_t:
 		fmt.Fprint(buf, "Rights")
-	case mx_vaddr_t:
+	case zx_vaddr_t:
 		fmt.Fprint(buf, "Vaddr")
-	case mx_paddr_t:
+	case zx_paddr_t:
 		fmt.Fprint(buf, "Paddr")
-	case mx_size_t:
+	case zx_size_t:
 		fmt.Fprint(buf, "uint")
-	case mx_process_info_t:
+	case zx_process_info_t:
 		fmt.Fprint(buf, "ProcessInfo")
-	case mx_exception_status_t:
+	case zx_exception_status_t:
 		fmt.Fprint(buf, "ExceptionStatus")
-	case mx_exception_behaviour_t:
+	case zx_exception_behaviour_t:
 		fmt.Fprint(buf, "ExceptionBehaviour")
-	case mx_rrec_t:
+	case zx_rrec_t:
 		fmt.Fprint(buf, "Rrec")
-	case mx_channel_call_args_t:
+	case zx_channel_call_args_t:
 		fmt.Fprint(buf, "ChannelCallArgs")
-	case mx_fifo_state_t:
+	case zx_fifo_state_t:
 		fmt.Fprint(buf, "FIFOState")
 	default:
 		panic(fmt.Sprintf("UNKNOWN type: %s", t.named))
@@ -747,78 +747,78 @@ type magentaType struct {
 type magentaTypeNamed int
 
 const (
-	mx_void magentaTypeNamed = iota
-	mx_any
-	mx_bool
-	mx_uint
-	mx_int
-	mx_char
-	mx_int16_t
-	mx_uint16_t
-	mx_int32_t
-	mx_uint32_t
-	mx_int64_t
-	mx_uint64_t
-	mx_uintptr_t
-	mx_size_t
-	mx_status_t
-	mx_time_t
-	mx_duration_t
-	mx_koid_t
-	mx_handle_t
-	mx_signals_t
-	mx_signals_state_t
-	mx_wait_item_t
-	mx_rights_t
-	mx_vaddr_t
-	mx_paddr_t
-	mx_process_info_t
-	mx_exception_status_t
-	mx_exception_behaviour_t
-	mx_function_pointer
-	mx_rrec_t
-	mx_channel_call_args_t
-	mx_fifo_state_t
+	zx_void magentaTypeNamed = iota
+	zx_any
+	zx_bool
+	zx_uint
+	zx_int
+	zx_char
+	zx_int16_t
+	zx_uint16_t
+	zx_int32_t
+	zx_uint32_t
+	zx_int64_t
+	zx_uint64_t
+	zx_uintptr_t
+	zx_size_t
+	zx_status_t
+	zx_time_t
+	zx_duration_t
+	zx_koid_t
+	zx_handle_t
+	zx_signals_t
+	zx_signals_state_t
+	zx_wait_item_t
+	zx_rights_t
+	zx_vaddr_t
+	zx_paddr_t
+	zx_process_info_t
+	zx_exception_status_t
+	zx_exception_behaviour_t
+	zx_function_pointer
+	zx_rrec_t
+	zx_channel_call_args_t
+	zx_fifo_state_t
 )
 
 var magentaTypeNamedStr = map[string]magentaTypeNamed{
-	"any":                      mx_any,
-	"void":                     mx_void,
-	"bool":                     mx_bool,
-	"unsigned int":             mx_uint,
-	"int":                      mx_int,
-	"char":                     mx_char,
-	"int16_t":                  mx_int16_t,
-	"int32_t":                  mx_int32_t,
-	"int64_t":                  mx_int64_t,
-	"uint16_t":                 mx_uint16_t,
-	"uint32_t":                 mx_uint32_t,
-	"uint64_t":                 mx_uint64_t,
-	"uintptr_t":                mx_uintptr_t,
-	"size_t":                   mx_size_t,
-	"mx_status_t":              mx_status_t,   // int32_t
-	"mx_time_t":                mx_time_t,     // uint64_t monotonic time
-	"mx_duration_t":            mx_duration_t, // uint64_t nanoseconds
-	"mx_koid_t":                mx_koid_t,
-	"mx_handle_t":              mx_handle_t, // int32_t
-	"mx_futex_t":               mx_int,
-	"mx_signals_t":             mx_signals_t,
-	"mx_signals_state_t":       mx_signals_state_t,
-	"mx_wait_item_t":           mx_wait_item_t,
-	"mx_rights_t":              mx_rights_t,
-	"mx_vaddr_t":               mx_vaddr_t,
-	"mx_paddr_t":               mx_paddr_t,
-	"mx_process_info_t":        mx_process_info_t,
-	"mx_exception_status_t":    mx_exception_status_t,
-	"mx_exception_behaviour_t": mx_exception_behaviour_t,
-	"mx_function_pointer":      mx_function_pointer,
-	"mx_rrec_t":                mx_rrec_t,
-	"mx_channel_call_args_t":   mx_channel_call_args_t,
-	"mx_fifo_state_t":          mx_fifo_state_t,
+	"any":                      zx_any,
+	"void":                     zx_void,
+	"bool":                     zx_bool,
+	"unsigned int":             zx_uint,
+	"int":                      zx_int,
+	"char":                     zx_char,
+	"int16_t":                  zx_int16_t,
+	"int32_t":                  zx_int32_t,
+	"int64_t":                  zx_int64_t,
+	"uint16_t":                 zx_uint16_t,
+	"uint32_t":                 zx_uint32_t,
+	"uint64_t":                 zx_uint64_t,
+	"uintptr_t":                zx_uintptr_t,
+	"size_t":                   zx_size_t,
+	"zx_status_t":              zx_status_t,   // int32_t
+	"zx_time_t":                zx_time_t,     // uint64_t monotonic time
+	"zx_duration_t":            zx_duration_t, // uint64_t nanoseconds
+	"zx_koid_t":                zx_koid_t,
+	"zx_handle_t":              zx_handle_t, // int32_t
+	"zx_futex_t":               zx_int,
+	"zx_signals_t":             zx_signals_t,
+	"zx_signals_state_t":       zx_signals_state_t,
+	"zx_wait_item_t":           zx_wait_item_t,
+	"zx_rights_t":              zx_rights_t,
+	"zx_vaddr_t":               zx_vaddr_t,
+	"zx_paddr_t":               zx_paddr_t,
+	"zx_process_info_t":        zx_process_info_t,
+	"zx_exception_status_t":    zx_exception_status_t,
+	"zx_exception_behaviour_t": zx_exception_behaviour_t,
+	"zx_function_pointer":      zx_function_pointer,
+	"zx_rrec_t":                zx_rrec_t,
+	"zx_channel_call_args_t":   zx_channel_call_args_t,
+	"zx_fifo_state_t":          zx_fifo_state_t,
 	// TODO(smklein): Remove the following temporary types. They could be blacklisted, but this is
 	// easier.
-	"mx_pcie_get_nth_info_t": mx_int,
-	"mx_cache_policy_t":      mx_int,
-	"mx_pci_irq_mode_t":      mx_int,
-	"mx_pci_init_arg_t":      mx_int,
+	"zx_pcie_get_nth_info_t": zx_int,
+	"zx_cache_policy_t":      zx_int,
+	"zx_pci_irq_mode_t":      zx_int,
+	"zx_pci_init_arg_t":      zx_int,
 }

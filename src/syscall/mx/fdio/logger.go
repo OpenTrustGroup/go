@@ -4,7 +4,7 @@
 
 // +build fuchsia
 
-package mxio
+package fdio
 
 import (
 	"syscall/mx"
@@ -61,7 +61,7 @@ func (f *Logger) Close() error {
 	return nil
 }
 
-func (f *Logger) Open(path string, flags int32, mode uint32) (MXIO, error) {
+func (f *Logger) Open(path string, flags int32, mode uint32) (FDIO, error) {
 	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "mx.Logger"}
 }
 

@@ -63,7 +63,7 @@ func findProcess(pid int) (p *Process, err error) {
 }
 
 func startProcess(name string, argv []string, attr *ProcAttr) (p *Process, err error) {
-	h, err := launchpadLaunchMxio(name, argv, attr)
+	h, err := launchpadLaunchFdio(name, argv, attr)
 	if err != nil {
 		return nil, err
 	}

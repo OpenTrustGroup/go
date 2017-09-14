@@ -4,7 +4,7 @@
 
 // +build fuchsia
 
-package mxio
+package fdio
 
 import (
 	"unsafe"
@@ -16,7 +16,7 @@ const (
 	// MessageChunkSize is the largest size of 'data' in an RIO message
 	MessageChunkSize = 8192
 
-	// MessageSizeMax is the largest size of an MXIO message
+	// MessageSizeMax is the largest size of an FDIO message
 	MessageSizeMax = uint32(unsafe.Sizeof(Msg{}))
 
 	// MessageHeaderSize is the size of a RIO message without 'data'

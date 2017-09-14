@@ -4,7 +4,7 @@
 
 // +build fuchsia
 
-package mxio
+package fdio
 
 import (
 	"syscall/mx"

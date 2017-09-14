@@ -33,15 +33,15 @@ Then,
   ```
   echo bin/junk=junk > junk.manifest
   fuchsia/buildtools/mkbootfs -o junk.bootfs junk.manifest
-  ./scripts/run-magenta-x86-64 -x path/to/fuchsia/third_party/go/src/junk.bootfs
+  ./scripts/run-zircon-x86-64 -x path/to/fuchsia/third_party/go/src/junk.bootfs
   ```
   A cgo variant can be build by adding CGO_ENABLED=1 to both
   the make.bash command and the go build command.
 
-* To build a program using just the magenta prebuild toolchain
+* To build a program using just the zircon prebuild toolchain
   (useful for debugging if the fuchsia sysroot is out of sync
-  with your magenta) set the environment variable MAGENTA to
-  the location of your magenta and build with the gccwrap.sh
+  with your zircon) set the environment variable ZIRCON to
+  the location of your zircon and build with the gccwrap.sh
   script:
   ```
-  MAGENTA=$HOME/magenta CGO_ENABLED=1 CC_FOR_TARGET=$(pwd)/../misc/fuchsia/gccwrap.sh GOOS=fuchsia ./make.bash
+  ZIRCON=$HOME/zircon CGO_ENABLED=1 CC_FOR_TARGET=$(pwd)/../misc/fuchsia/gccwrap.sh GOOS=fuchsia ./make.bash

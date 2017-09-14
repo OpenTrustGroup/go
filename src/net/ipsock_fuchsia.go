@@ -12,7 +12,7 @@ import (
 	"sync"
 	"syscall"
 	"syscall/mx"
-	"syscall/mx/mxio"
+	"syscall/mx/fdio"
 	"syscall/mx/mxnet"
 	"time"
 )
@@ -26,7 +26,7 @@ func probeIPv6Stack() (supportsIPv6, supportsIPv4map bool) {
 }
 
 // A sockaddr represents a TCP, UDP, IP or Unix network endpoint
-// address that can be converted into an mxio sockaddr message.
+// address that can be converted into an fdio sockaddr message.
 type sockaddr interface {
 	Addr
 
@@ -73,7 +73,7 @@ func getNetstack() mx.Handle {
 	if netstack.h == mx.HANDLE_INVALID {
 		c0, c1, err := mx.NewChannel(0)
 		if err == nil {
-			err = mxio.ServiceConnect("/svc/net.Netstack", c0.Handle)
+			err = fdio.ServiceConnect("/svc/net.Netstack", c0.Handle)
 			if err == nil {
 				netstack.h = c1.Handle
 			}
@@ -93,12 +93,12 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 
 	path := "socket/" + strconv.Itoa(family) + "/" + strconv.Itoa(sotype) + "/" + strconv.Itoa(proto)
 
-	var m mxio.MXIO
+	var m fdio.FDIO
 	// Wait for the network stack to publish the socket device.
-	// See similar logic in magenta/system/ulib/mxio/bsdsocket.c.
+	// See similar logic in zircon/system/ulib/fdio/bsdsocket.c.
 	for i := 0; i < 40; i++ {
-		var r *mxio.RemoteIO
-		r, err = mxio.NewRIO([]mx.Handle{getNetstack()})
+		var r *fdio.RemoteIO
+		r, err = fdio.NewRIO([]mx.Handle{getNetstack()})
 		if err == nil {
 			m, err = r.Open(path, 0, 0644)
 			if err == nil {
@@ -111,11 +111,11 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 		return nil, err
 	}
 	if sotype == syscall.SOCK_DGRAM {
-		mxio.SetDgram(m)
+		fdio.SetDgram(m)
 	}
 
 	fd = &netFD{
-		hsrc:   os.NewFile(uintptr(syscall.OpenMXIO(m)), "socket"),
+		hsrc:   os.NewFile(uintptr(syscall.OpenFDIO(m)), "socket"),
 		m:      m,
 		family: family,
 		sotype: sotype,
@@ -127,14 +127,14 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 			return nil, err
 		}
 		if addr != "" || port != 0 {
-			if err := mxio.Bind(fd.m, addr, port); err != nil {
+			if err := fdio.Bind(fd.m, addr, port); err != nil {
 				return nil, err
 			}
 		}
 		if raddr == nil {
 			switch sotype {
 			case syscall.SOCK_STREAM:
-				if err := mxio.ListenStream(m, listenerBacklog); err != nil {
+				if err := fdio.ListenStream(m, listenerBacklog); err != nil {
 					return nil, err
 				}
 			case syscall.SOCK_DGRAM:
@@ -147,7 +147,7 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 		if err != nil {
 			return nil, err
 		}
-		if err := mxio.Connect(fd.m, addr, port); err != nil {
+		if err := fdio.Connect(fd.m, addr, port); err != nil {
 			return nil, err
 		}
 		fd.isConnected = true

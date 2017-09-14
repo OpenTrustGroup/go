@@ -4,7 +4,7 @@
 
 // +build fuchsia
 
-package mxio
+package fdio
 
 import (
 	"syscall/mx"
@@ -51,7 +51,7 @@ func (f *Pipe) Read(data []byte) (n int, err error) {
 				return 0, mx.EOF
 			}
 			// impossible
-			return 0, mx.Error{Status: mx.ErrInternal, Text: "mxio.Pipe"}
+			return 0, mx.Error{Status: mx.ErrInternal, Text: "fdio.Pipe"}
 		}
 		return 0, err
 	}
@@ -83,22 +83,22 @@ func (f *Pipe) Write(data []byte) (n int, err error) {
 				return 0, mx.EPIPE
 			}
 			// impossible
-			return 0, mx.Error{Status: mx.ErrInternal, Text: "mxio.Pipe"}
+			return 0, mx.Error{Status: mx.ErrInternal, Text: "fdio.Pipe"}
 		}
 		return 0, err
 	}
 }
 
 func (f *Pipe) ReadAt(data []byte, off int64) (int, error) {
-	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "fdio.Pipe"}
 }
 
 func (f *Pipe) WriteAt(data []byte, off int64) (int, error) {
-	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "fdio.Pipe"}
 }
 
 func (f *Pipe) Seek(offset int64, whence int) (int64, error) {
-	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "fdio.Pipe"}
 }
 
 func (f *Pipe) Close() error {
@@ -109,8 +109,8 @@ func (f *Pipe) Close() error {
 	return nil
 }
 
-func (f *Pipe) Open(path string, flags int32, mode uint32) (MXIO, error) {
-	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
+func (f *Pipe) Open(path string, flags int32, mode uint32) (FDIO, error) {
+	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "fdio.Pipe"}
 }
 
 func (f *Pipe) Clone() ([]mx.Handle, error) {
@@ -122,12 +122,12 @@ func (f *Pipe) Clone() ([]mx.Handle, error) {
 }
 
 func (f *Pipe) Ioctl(op uint32, in, out []byte) ([]mx.Handle, error) {
-	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
+	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "fdio.Pipe"}
 }
 func (f *Pipe) IoctlSetHandle(op uint32, in mx.Handle) error {
-	return mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
+	return mx.Error{Status: mx.ErrNotSupported, Text: "fdio.Pipe"}
 }
 
 func (f *Pipe) Misc(op uint32, off int64, in, out []byte, handles []mx.Handle) (n int, err error) {
-	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "mxio.Pipe"}
+	return 0, mx.Error{Status: mx.ErrNotSupported, Text: "fdio.Pipe"}
 }

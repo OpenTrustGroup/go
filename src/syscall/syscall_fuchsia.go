@@ -12,7 +12,7 @@ import (
 	"unsafe"
 
 	"syscall/mx"
-	"syscall/mx/mxio"
+	"syscall/mx/fdio"
 )
 
 var (
@@ -161,7 +161,7 @@ func Unlink(path string) (err error) {
 	if err != nil {
 		return err
 	}
-	err = mxio.UnlinkAt(f, file)
+	err = fdio.UnlinkAt(f, file)
 	f.Close()
 	return err
 }
@@ -177,11 +177,11 @@ func splitpath(path string) (dir, file string) {
 }
 
 func Rename(oldpath, newpath string) error {
-	return twoPathOp(oldpath, newpath, mxio.OpRename)
+	return twoPathOp(oldpath, newpath, fdio.OpRename)
 }
 
 func Link(oldpath, newpath string) error {
-	return twoPathOp(oldpath, newpath, mxio.OpLink)
+	return twoPathOp(oldpath, newpath, fdio.OpLink)
 }
 
 func twoPathOp(oldpath, newpath string, op uint32) (err error) {
@@ -203,7 +203,7 @@ func twoPathOp(oldpath, newpath string, op uint32) (err error) {
 	}
 	defer new.Close()
 
-	token, err := new.Ioctl(mxio.IoctlVFSGetTokenFS, nil, nil)
+	token, err := new.Ioctl(fdio.IoctlVFSGetTokenFS, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -219,7 +219,7 @@ func Fsync(fd int) (err error) {
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
 
-	_, err = f.Misc(mxio.OpSync, 0, nil, nil, nil)
+	_, err = f.Misc(fdio.OpSync, 0, nil, nil, nil)
 	return err
 }
 
@@ -233,26 +233,26 @@ func CloseOnExec(r int) {
 
 var (
 	rootMu sync.Mutex
-	root   mxio.MXIO
+	root   fdio.FDIO
 )
 
 var (
 	cwdMu sync.Mutex
-	cwd   mxio.MXIO
+	cwd   fdio.FDIO
 )
 
 var (
 	stdioMu sync.Mutex
-	stdin   mxio.MXIO
-	stdout  mxio.MXIO
-	stderr  mxio.MXIO
+	stdin   fdio.FDIO
+	stdout  fdio.FDIO
+	stderr  fdio.FDIO
 )
 
-const fdsOff = 1e6 // move outside the fd range of unistd.c  MXIO
+const fdsOff = 1e6 // move outside the fd range of unistd.c  FDIO
 
 var (
 	fdsMu sync.Mutex
-	fds   []mxio.MXIO
+	fds   []fdio.FDIO
 )
 
 func Read(fd int, p []byte) (n int, err error) {
@@ -285,29 +285,29 @@ func init() {
 	var err error
 
 	rootMu.Lock()
-	root, err = mxio.NewRIO([]mx.Handle{mx.RootHandle})
+	root, err = fdio.NewRIO([]mx.Handle{mx.RootHandle})
 	rootMu.Unlock()
 	if err != nil {
-		println("syscall: failed to create mxio root: ", err.Error())
+		println("syscall: failed to create fdio root: ", err.Error())
 	}
 
 	cwdMu.Lock()
-	cwd, err = mxio.NewRIO([]mx.Handle{mx.CwdHandle})
+	cwd, err = fdio.NewRIO([]mx.Handle{mx.CwdHandle})
 	cwdMu.Unlock()
 	if err != nil {
-		println("syscall: failed to create mxio cwd: ", err.Error())
+		println("syscall: failed to create fdio cwd: ", err.Error())
 	}
 
-	initStdio := func(i int) (mxio.MXIO, error) {
+	initStdio := func(i int) (fdio.FDIO, error) {
 		switch mx.StdioHandleTypes[i] {
 		case 0:
 			return nil, EINVAL
-		case mxio.HandleTypeRemote:
-			return mxio.NewRIO(mx.StdioHandles[i][:])
-		case mxio.HandleTypePipe:
-			return mxio.NewPipe([]mx.Handle{mx.StdioHandles[i][0]})
-		case mxio.HandleTypeLogger:
-			return mxio.NewLogger(mx.StdioHandles[i][0])
+		case fdio.HandleTypeRemote:
+			return fdio.NewRIO(mx.StdioHandles[i][:])
+		case fdio.HandleTypePipe:
+			return fdio.NewPipe([]mx.Handle{mx.StdioHandles[i][0]})
+		case fdio.HandleTypeLogger:
+			return fdio.NewLogger(mx.StdioHandles[i][0])
 		default:
 			println("syscall: unknown handle type for stdio: " + itoa(mx.StdioHandleTypes[i]))
 			return nil, EINVAL
@@ -316,15 +316,15 @@ func init() {
 	stdioMu.Lock()
 	stdin, err = initStdio(0)
 	if err != nil {
-		println("syscall: failed to create mxio stdin: ", err.Error())
+		println("syscall: failed to create fdio stdin: ", err.Error())
 	}
 	stdout, err = initStdio(1)
 	if err != nil {
-		println("syscall: failed to create mxio stdiout: ", err.Error())
+		println("syscall: failed to create fdio stdiout: ", err.Error())
 	}
 	stderr, err = initStdio(2)
 	if err != nil {
-		println("syscall: failed to create mxio stderr: ", err.Error())
+		println("syscall: failed to create fdio stderr: ", err.Error())
 	}
 	stdioMu.Unlock()
 }
@@ -372,7 +372,7 @@ func Close(fd int) (err error) {
 	return f.Close()
 }
 
-func OpenPath(path string, mode int, perm uint32) (f mxio.MXIO, err error) {
+func OpenPath(path string, mode int, perm uint32) (f fdio.FDIO, err error) {
 	if path == "" {
 		path = "."
 	}
@@ -401,11 +401,11 @@ func Open(path string, mode int, perm uint32) (fd int, err error) {
 	if err != nil {
 		return -1, err
 	}
-	return OpenMXIO(f), nil
+	return OpenFDIO(f), nil
 }
 
 func OpenAt(fdParent int, path string, mode int, perm uint32) (fd int, err error) {
-	parent := MXIOForFD(fdParent)
+	parent := FDIOForFD(fdParent)
 	if parent == nil {
 		return -1, EBADF
 	}
@@ -413,10 +413,10 @@ func OpenAt(fdParent int, path string, mode int, perm uint32) (fd int, err error
 	if err != nil {
 		return -1, err
 	}
-	return OpenMXIO(f), nil
+	return OpenFDIO(f), nil
 }
 
-func MXIOForFD(fd int) mxio.MXIO {
+func FDIOForFD(fd int) fdio.FDIO {
 	switch fd {
 	case Stdin:
 		return stdin
@@ -438,7 +438,7 @@ func MXIOForFD(fd int) mxio.MXIO {
 	return f
 }
 
-func OpenMXIO(f mxio.MXIO) (fd int) {
+func OpenFDIO(f fdio.FDIO) (fd int) {
 	fdsMu.Lock()
 	i := -1
 	for i = 0; i < len(fds); i++ {
@@ -474,7 +474,7 @@ func Fstat(fd int, stat *Stat_t) (err error) {
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
 
-	attr, err := mxio.Stat(f)
+	attr, err := fdio.Stat(f)
 	if err != nil {
 		return err
 	}
@@ -538,7 +538,7 @@ func Ftruncate(fd int, length int64) (err error) {
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
 
-	_, err = f.Misc(mxio.OpTruncate, length, nil, nil, nil)
+	_, err = f.Misc(fdio.OpTruncate, length, nil, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -566,11 +566,11 @@ func UtimesNano(path string, ts []Timespec) (err error) {
 	if err != nil {
 		return err
 	}
-	vn := &mxio.Vnattr{
-		Valid:      mxio.AttrMtime,
+	vn := &fdio.Vnattr{
+		Valid:      fdio.AttrMtime,
 		ModifyTime: uint64(TimespecToNsec(ts[1])),
 	}
-	_, err = f.Misc(mxio.OpSetAttr, 0, (*[unsafe.Sizeof(mxio.Vnattr{})]byte)(unsafe.Pointer(vn))[:], nil, nil)
+	_, err = f.Misc(fdio.OpSetAttr, 0, (*[unsafe.Sizeof(fdio.Vnattr{})]byte)(unsafe.Pointer(vn))[:], nil, nil)
 	return err
 }
 
@@ -588,7 +588,7 @@ func ReadDirent(fd int, buf []byte) (n int, err error) {
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
 
-	return f.Misc(mxio.OpReaddir, 0, nil, buf, nil)
+	return f.Misc(fdio.OpReaddir, 0, nil, buf, nil)
 }
 
 func direntIno(buf []byte) (uint64, bool) {

@@ -4,7 +4,7 @@
 
 // +build fuchsia
 
-package mxio
+package fdio
 
 import (
 	"unsafe"
@@ -21,7 +21,7 @@ type VMOFile struct {
 }
 
 func NewVMOFile(handle mx.Handle, extra []byte) (*VMOFile, error) {
-	// mxio_vmofile_create
+	// fdio_vmofile_create
 	f := &VMOFile{
 		h:   mx.VMO(handle),
 		off: *(*int64)(unsafe.Pointer(&extra[0:8][0])),
@@ -83,7 +83,7 @@ func (f *VMOFile) Close() error {
 	return nil
 }
 
-func (f *VMOFile) Open(path string, flags int32, mode uint32) (MXIO, error) {
+func (f *VMOFile) Open(path string, flags int32, mode uint32) (FDIO, error) {
 	return nil, mx.Error{Status: mx.ErrNotSupported, Text: "rio.VMOFile"}
 }
 func (f *VMOFile) Clone() ([]mx.Handle, error) {

@@ -9,25 +9,25 @@ package os
 // #cgo fuchsia LDFLAGS: -llaunchpad
 // #include <launchpad/launchpad.h>
 // #include <launchpad/vmo.h>
-// #include <magenta/process.h>
-// #include <magenta/syscalls.h>
-// #include <magenta/syscalls/object.h>
-// #include <magenta/types.h>
+// #include <zircon/process.h>
+// #include <zircon/syscalls.h>
+// #include <zircon/syscalls/object.h>
+// #include <zircon/types.h>
 // #include <stdlib.h>
 import "C"
 import (
 	"errors"
 	"syscall"
 	"syscall/mx"
-	"syscall/mx/mxio"
+	"syscall/mx/fdio"
 	"unsafe"
 )
 
 const (
-	LaunchpadCloneMxioNamespace = 1
-	LaunchpadCloneMxioCwd       = 2
-	LaunchpadCloneMxioStdio     = 4
-	LaunchpadCloneMxioAll       = 0xff
+	LaunchpadCloneFdioNamespace = 1
+	LaunchpadCloneFdioCwd       = 2
+	LaunchpadCloneFdioStdio     = 4
+	LaunchpadCloneFdioAll       = 0xff
 	LaunchpadCloneEnviron       = 0x100
 	LaunchpadCloneDefaultJob    = 0x200
 	LaunchpadCloneAll           = 0xffff
@@ -50,20 +50,20 @@ func freeCStringArray(a []*C.char) {
 	}
 }
 
-// Clone an mxio to a C array of handle values and types.
-func cloneHandleToCHandleArray(m mxio.MXIO) (int, []C.mx_handle_t, []C.uint32_t, error) {
+// Clone an fdio to a C array of handle values and types.
+func cloneHandleToCHandleArray(m fdio.FDIO) (int, []C.zx_handle_t, []C.uint32_t, error) {
 	handles, err := m.Clone()
 	if err != nil {
 		return 0, nil, nil, ErrInvalid
 	}
-	handlesC := make([]C.mx_handle_t, mxio.MaxHandles)
-	typesC := make([]C.uint32_t, mxio.MaxHandles)
-	mxioType := 0
+	handlesC := make([]C.zx_handle_t, fdio.MaxHandles)
+	typesC := make([]C.uint32_t, fdio.MaxHandles)
+	fdioType := 0
 	switch m.(type) {
-	case *mxio.RemoteIO:
-		mxioType = mxio.HandleTypeRemote
-	case *mxio.Pipe:
-		mxioType = mxio.HandleTypePipe
+	case *fdio.RemoteIO:
+		fdioType = fdio.HandleTypeRemote
+	case *fdio.Pipe:
+		fdioType = fdio.HandleTypePipe
 	default:
 		for _, h := range handles {
 			h.Close()
@@ -71,13 +71,13 @@ func cloneHandleToCHandleArray(m mxio.MXIO) (int, []C.mx_handle_t, []C.uint32_t,
 		return 0, nil, nil, ErrInvalid
 	}
 	for i, h := range handles {
-		handlesC[i] = C.mx_handle_t(h)
-		typesC[i] = C.uint32_t(mxioType)
+		handlesC[i] = C.zx_handle_t(h)
+		typesC[i] = C.uint32_t(fdioType)
 	}
 	return len(handles), handlesC, typesC, nil
 }
 
-func closeAll(handles []C.mx_handle_t) {
+func closeAll(handles []C.zx_handle_t) {
 	for _, h := range handles {
 		if h != 0 {
 			mx.Handle(h).Close()
@@ -89,7 +89,7 @@ func launchpadTransferFileToTargetFd(lp *C.launchpad_t, f *File, target int) err
 	if f == nil {
 		return nil
 	}
-	m := syscall.MXIOForFD(int(f.Fd()))
+	m := syscall.FDIOForFD(int(f.Fd()))
 	if m == nil {
 		return ErrInvalid
 	}
@@ -114,7 +114,7 @@ func launchpadSetWd(lp *C.launchpad_t, dir string) error {
 	if err != nil {
 		return err
 	}
-	m := syscall.MXIOForFD(int(f.Fd()))
+	m := syscall.FDIOForFD(int(f.Fd()))
 	if m == nil {
 		return ErrNotExist
 	}
@@ -122,7 +122,7 @@ func launchpadSetWd(lp *C.launchpad_t, dir string) error {
 	if err != nil {
 		return err
 	}
-	typesC[0] = mxio.HandleTypeCWD
+	typesC[0] = fdio.HandleTypeCWD
 	status := mx.Status(C.launchpad_add_handles(lp, C.size_t(numHandles), &(handlesC[0]), &(typesC[0])))
 	if status != mx.ErrOk {
 		closeAll(handlesC)
@@ -131,7 +131,7 @@ func launchpadSetWd(lp *C.launchpad_t, dir string) error {
 	return nil
 }
 
-func launchpadLaunchMxio(name string, argv []string, attr *ProcAttr) (mx.Handle, error) {
+func launchpadLaunchFdio(name string, argv []string, attr *ProcAttr) (mx.Handle, error) {
 	nameC := C.CString(name)
 	defer C.free(unsafe.Pointer(nameC))
 	argvC := makeCStringArray(argv)
@@ -143,7 +143,7 @@ func launchpadLaunchMxio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 	envC := makeCStringArray(env)
 	defer freeCStringArray(envC)
 	jobToChild := mx.Handle(0)
-	job := mx.Handle(C.mx_job_default())
+	job := mx.Handle(C.zx_job_default())
 	if job > 0 {
 		err := error(nil)
 		jobToChild, err = job.Duplicate(mx.RightSameRights)
@@ -152,7 +152,7 @@ func launchpadLaunchMxio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 		}
 	}
 	lp := &C.launchpad_t{}
-	status := mx.Status(C.launchpad_create(C.mx_handle_t(jobToChild), nameC, &lp))
+	status := mx.Status(C.launchpad_create(C.zx_handle_t(jobToChild), nameC, &lp))
 	if status != mx.ErrOk {
 		return 0, errors.New("launchpad_create")
 	}
@@ -169,7 +169,7 @@ func launchpadLaunchMxio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 	if status != mx.ErrOk {
 		return 0, errors.New("environ")
 	}
-	status = mx.Status(C.launchpad_clone(lp, C.uint32_t(LaunchpadCloneMxioNamespace)))
+	status = mx.Status(C.launchpad_clone(lp, C.uint32_t(LaunchpadCloneFdioNamespace)))
 	if status != mx.ErrOk {
 		return 0, errors.New("launchpad_clone")
 	}
@@ -179,9 +179,9 @@ func launchpadLaunchMxio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 			return 0, err
 		}
 	} else {
-		status = mx.Status(C.launchpad_clone(lp, C.uint32_t(LaunchpadCloneMxioCwd))) // TODO: Go to Attr.Dir
+		status = mx.Status(C.launchpad_clone(lp, C.uint32_t(LaunchpadCloneFdioCwd))) // TODO: Go to Attr.Dir
 		if status != mx.ErrOk {
-			return 0, errors.New("clone_mxio_cwd")
+			return 0, errors.New("clone_fdio_cwd")
 		}
 	}
 	for i, f := range attr.Files {
@@ -211,8 +211,8 @@ func (p *Process) wait() (ps *ProcessState, err error) {
 	if err != nil {
 		return nil, err
 	}
-	procInfo := C.mx_info_process_t{}
-	status := mx.Sys_object_get_info(procHandle, mx.ObjectInfoProcess, unsafe.Pointer(&procInfo), C.sizeof_mx_info_process_t, nil, nil)
+	procInfo := C.zx_info_process_t{}
+	status := mx.Sys_object_get_info(procHandle, mx.ObjectInfoProcess, unsafe.Pointer(&procInfo), C.sizeof_zx_info_process_t, nil, nil)
 	if status != mx.ErrOk {
 		return nil, errors.New("error retreiving process info: " + itoa(int(status)))
 	}

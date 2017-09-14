@@ -1,17 +1,17 @@
 #!/bin/bash
-# This uses the magenta prebuild C++ toolchain
+# This uses the zircon prebuild C++ toolchain
 
-if [ "$MAGENTA" == "" ]; then
-	echo "gccwrap.sh: missing MAGENTA env variable" >&2
+if [ "$ZIRCON" == "" ]; then
+	echo "gccwrap.sh: missing ZIRCON env variable" >&2
 	exit 1
 fi
 
 if [ "$GOARCH" == "amd64" ]; then
-	gccbin="$MAGENTA/prebuilt/downloads/x86_64-elf-6.3.0-$(uname)-x86_64/bin/x86_64-elf-gcc"
-	magentabuild="$MAGENTA/../out/build-magenta/build-magenta-pc-x86-64"
+	gccbin="$ZIRCON/prebuilt/downloads/x86_64-elf-6.3.0-$(uname)-x86_64/bin/x86_64-elf-gcc"
+	zirconbuild="$ZIRCON/../out/build-zircon/build-zircon-pc-x86-64"
 elif [ "$GOARCH" == "arm64" ]; then
-	gccbin="$MAGENTA/prebuilt/downloads/aarch64-elf-6.3.0-$(uname)-x86_64/bin/aarch64-elf-gcc"
-	magentabuild="${MAGENTA_BUILD_DIR:-"$MAGENTA/../out/build-magenta/build-magenta-qemu-arm64"}"
+	gccbin="$ZIRCON/prebuilt/downloads/aarch64-elf-6.3.0-$(uname)-x86_64/bin/aarch64-elf-gcc"
+	zirconbuild="${ZIRCON_BUILD_DIR:-"$ZIRCON/../out/build-zircon/build-zircon-qemu-arm64"}"
 else
 	echo "gccwrap.sh: unsupported GOARCH: $GOARCH" >&2
 	exit 1
@@ -28,13 +28,13 @@ do
 done
 
 if ! $compiler; then
-	extra_args="-lc $magentabuild/system/ulib/crt1.o $magentabuild/system/ulib/magenta/libmagenta.so.abi"
+	extra_args="-lc $zirconbuild/system/ulib/crt1.o $zirconbuild/system/ulib/zircon/libzircon.so.abi"
 fi
 
 exec $gccbin \
-	--sysroot=$magentabuild/sysroot \
-	-I$magentabuild/sysroot/include \
-	-L$magentabuild/sysroot/lib \
+	--sysroot=$zirconbuild/sysroot \
+	-I$zirconbuild/sysroot/include \
+	-L$zirconbuild/sysroot/lib \
 	-nostdlib \
 	-fuse-ld=gold \
 	-fno-use-linker-plugin \

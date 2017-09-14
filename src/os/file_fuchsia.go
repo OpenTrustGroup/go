@@ -7,7 +7,7 @@ package os
 import (
 	"errors"
 	"syscall"
-	"syscall/mx/mxio"
+	"syscall/mx/fdio"
 	"time"
 )
 
@@ -64,12 +64,12 @@ func Readlink(name string) (string, error) {
 }
 
 func Pipe() (r *File, w *File, err error) {
-	p0, p1, err := mxio.NewPipes()
+	p0, p1, err := fdio.NewPipes()
 	if err != nil {
 		return nil, nil, err
 	}
-	r = NewFile(uintptr(syscall.OpenMXIO(p0)), "|0")
-	w = NewFile(uintptr(syscall.OpenMXIO(p1)), "|1")
+	r = NewFile(uintptr(syscall.OpenFDIO(p0)), "|0")
+	w = NewFile(uintptr(syscall.OpenFDIO(p1)), "|1")
 	// TODO CloseOnExec equivalent
 	return r, w, nil
 }
@@ -101,6 +101,6 @@ func fillFileStatFromSys(fs *fileStat, name string) {
 }
 
 func atime(fi FileInfo) time.Time {
-	// TODO: mxio doesn't have atime yet
+	// TODO: fdio doesn't have atime yet
 	return time.Time{}
 }

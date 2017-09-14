@@ -9,375 +9,375 @@ package mx
 
 import "unsafe"
 
-//go:cgo_import_dynamic vdso_mx_time_get mx_time_get "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_nanosleep mx_nanosleep "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_ticks_get mx_ticks_get "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_ticks_per_second mx_ticks_per_second "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_deadline_after mx_deadline_after "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_system_get_num_cpus mx_system_get_num_cpus "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_system_get_version mx_system_get_version "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_system_get_physmem mx_system_get_physmem "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_cache_flush mx_cache_flush "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_handle_close mx_handle_close "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_handle_duplicate mx_handle_duplicate "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_handle_replace mx_handle_replace "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_object_wait_one mx_object_wait_one "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_object_wait_many mx_object_wait_many "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_object_wait_async mx_object_wait_async "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_object_signal mx_object_signal "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_object_signal_peer mx_object_signal_peer "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_object_get_property mx_object_get_property "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_object_set_property mx_object_set_property "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_object_set_cookie mx_object_set_cookie "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_object_get_cookie mx_object_get_cookie "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_object_get_info mx_object_get_info "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_object_get_child mx_object_get_child "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_channel_create mx_channel_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_channel_read mx_channel_read "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_channel_write mx_channel_write "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_channel_call mx_channel_call "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_socket_create mx_socket_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_socket_write mx_socket_write "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_socket_read mx_socket_read "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_thread_exit mx_thread_exit "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_thread_create mx_thread_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_thread_start mx_thread_start "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_thread_read_state mx_thread_read_state "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_thread_write_state mx_thread_write_state "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_process_exit mx_process_exit "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_process_create mx_process_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_process_start mx_process_start "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_process_read_memory mx_process_read_memory "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_process_write_memory mx_process_write_memory "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_job_create mx_job_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_job_set_policy mx_job_set_policy "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_task_bind_exception_port mx_task_bind_exception_port "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_task_suspend mx_task_suspend "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_task_resume mx_task_resume "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_task_kill mx_task_kill "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_event_create mx_event_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_eventpair_create mx_eventpair_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_futex_wait mx_futex_wait "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_futex_wake mx_futex_wake "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_futex_requeue mx_futex_requeue "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_port_create mx_port_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_port_queue mx_port_queue "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_port_wait mx_port_wait "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_port_bind mx_port_bind "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_port_cancel mx_port_cancel "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmo_create mx_vmo_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmo_read mx_vmo_read "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmo_write mx_vmo_write "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmo_get_size mx_vmo_get_size "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmo_set_size mx_vmo_set_size "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmo_op_range mx_vmo_op_range "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmo_clone mx_vmo_clone "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmar_allocate mx_vmar_allocate "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmar_destroy mx_vmar_destroy "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmar_map mx_vmar_map "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmar_unmap mx_vmar_unmap "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmar_protect mx_vmar_protect "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_cprng_draw mx_cprng_draw "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_cprng_add_entropy mx_cprng_add_entropy "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_fifo_create mx_fifo_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_fifo_read mx_fifo_read "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_fifo_write mx_fifo_write "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmar_unmap_handle_close_thread_exit mx_vmar_unmap_handle_close_thread_exit "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_futex_wake_handle_close_thread_exit mx_futex_wake_handle_close_thread_exit "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_log_create mx_log_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_log_write mx_log_write "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_log_read mx_log_read "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_ktrace_read mx_ktrace_read "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_ktrace_control mx_ktrace_control "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_ktrace_write mx_ktrace_write "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_mtrace_control mx_mtrace_control "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_debug_transfer_handle mx_debug_transfer_handle "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_debug_read mx_debug_read "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_debug_write mx_debug_write "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_debug_send_command mx_debug_send_command "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_interrupt_create mx_interrupt_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_interrupt_complete mx_interrupt_complete "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_interrupt_wait mx_interrupt_wait "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_interrupt_signal mx_interrupt_signal "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_mmap_device_io mx_mmap_device_io "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_mmap_device_memory mx_mmap_device_memory "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_io_mapping_get_info mx_io_mapping_get_info "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_vmo_create_contiguous mx_vmo_create_contiguous "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_bootloader_fb_get_info mx_bootloader_fb_get_info "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_set_framebuffer mx_set_framebuffer "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_set_framebuffer_vmo mx_set_framebuffer_vmo "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_clock_adjust mx_clock_adjust "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_get_nth_device mx_pci_get_nth_device "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_claim_device mx_pci_claim_device "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_enable_bus_master mx_pci_enable_bus_master "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_enable_pio mx_pci_enable_pio "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_reset_device mx_pci_reset_device "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_map_mmio mx_pci_map_mmio "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_io_write mx_pci_io_write "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_io_read mx_pci_io_read "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_map_interrupt mx_pci_map_interrupt "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_map_config mx_pci_map_config "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_query_irq_mode_caps mx_pci_query_irq_mode_caps "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_set_irq_mode mx_pci_set_irq_mode "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_init mx_pci_init "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_pci_add_subtract_io_range mx_pci_add_subtract_io_range "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_acpi_uefi_rsdp mx_acpi_uefi_rsdp "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_acpi_cache_flush mx_acpi_cache_flush "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_resource_create mx_resource_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_resource_destroy mx_resource_destroy "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_resource_get_handle mx_resource_get_handle "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_resource_do_action mx_resource_do_action "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_resource_connect mx_resource_connect "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_resource_accept mx_resource_accept "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_hypervisor_create mx_hypervisor_create "libmagenta.so"
-//go:cgo_import_dynamic vdso_mx_hypervisor_op mx_hypervisor_op "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_time_get zx_time_get "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_nanosleep zx_nanosleep "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_ticks_get zx_ticks_get "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_ticks_per_second zx_ticks_per_second "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_deadline_after zx_deadline_after "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_system_get_num_cpus zx_system_get_num_cpus "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_system_get_version zx_system_get_version "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_system_get_physmem zx_system_get_physmem "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_cache_flush zx_cache_flush "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_handle_close zx_handle_close "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_handle_duplicate zx_handle_duplicate "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_handle_replace zx_handle_replace "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_object_wait_one zx_object_wait_one "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_object_wait_many zx_object_wait_many "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_object_wait_async zx_object_wait_async "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_object_signal zx_object_signal "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_object_signal_peer zx_object_signal_peer "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_object_get_property zx_object_get_property "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_object_set_property zx_object_set_property "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_object_set_cookie zx_object_set_cookie "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_object_get_cookie zx_object_get_cookie "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_object_get_info zx_object_get_info "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_object_get_child zx_object_get_child "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_channel_create zx_channel_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_channel_read zx_channel_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_channel_write zx_channel_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_channel_call zx_channel_call "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_socket_create zx_socket_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_socket_write zx_socket_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_socket_read zx_socket_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_thread_exit zx_thread_exit "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_thread_create zx_thread_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_thread_start zx_thread_start "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_thread_read_state zx_thread_read_state "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_thread_write_state zx_thread_write_state "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_process_exit zx_process_exit "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_process_create zx_process_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_process_start zx_process_start "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_process_read_memory zx_process_read_memory "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_process_write_memory zx_process_write_memory "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_job_create zx_job_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_job_set_policy zx_job_set_policy "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_task_bind_exception_port zx_task_bind_exception_port "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_task_suspend zx_task_suspend "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_task_resume zx_task_resume "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_task_kill zx_task_kill "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_event_create zx_event_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_eventpair_create zx_eventpair_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_futex_wait zx_futex_wait "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_futex_wake zx_futex_wake "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_futex_requeue zx_futex_requeue "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_port_create zx_port_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_port_queue zx_port_queue "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_port_wait zx_port_wait "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_port_bind zx_port_bind "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_port_cancel zx_port_cancel "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmo_create zx_vmo_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmo_read zx_vmo_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmo_write zx_vmo_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmo_get_size zx_vmo_get_size "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmo_set_size zx_vmo_set_size "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmo_op_range zx_vmo_op_range "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmo_clone zx_vmo_clone "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmar_allocate zx_vmar_allocate "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmar_destroy zx_vmar_destroy "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmar_map zx_vmar_map "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmar_unmap zx_vmar_unmap "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmar_protect zx_vmar_protect "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_cprng_draw zx_cprng_draw "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_cprng_add_entropy zx_cprng_add_entropy "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_fifo_create zx_fifo_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_fifo_read zx_fifo_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_fifo_write zx_fifo_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmar_unmap_handle_close_thread_exit zx_vmar_unmap_handle_close_thread_exit "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_futex_wake_handle_close_thread_exit zx_futex_wake_handle_close_thread_exit "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_log_create zx_log_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_log_write zx_log_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_log_read zx_log_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_ktrace_read zx_ktrace_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_ktrace_control zx_ktrace_control "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_ktrace_write zx_ktrace_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_mtrace_control zx_mtrace_control "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_debug_transfer_handle zx_debug_transfer_handle "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_debug_read zx_debug_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_debug_write zx_debug_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_debug_send_command zx_debug_send_command "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_interrupt_create zx_interrupt_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_interrupt_complete zx_interrupt_complete "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_interrupt_wait zx_interrupt_wait "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_interrupt_signal zx_interrupt_signal "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_mmap_device_io zx_mmap_device_io "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_mmap_device_memory zx_mmap_device_memory "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_io_mapping_get_info zx_io_mapping_get_info "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_vmo_create_contiguous zx_vmo_create_contiguous "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_bootloader_fb_get_info zx_bootloader_fb_get_info "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_set_framebuffer zx_set_framebuffer "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_set_framebuffer_vmo zx_set_framebuffer_vmo "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_clock_adjust zx_clock_adjust "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_get_nth_device zx_pci_get_nth_device "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_claim_device zx_pci_claim_device "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_enable_bus_master zx_pci_enable_bus_master "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_enable_pio zx_pci_enable_pio "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_reset_device zx_pci_reset_device "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_map_mmio zx_pci_map_mmio "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_io_write zx_pci_io_write "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_io_read zx_pci_io_read "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_map_interrupt zx_pci_map_interrupt "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_map_config zx_pci_map_config "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_query_irq_mode_caps zx_pci_query_irq_mode_caps "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_set_irq_mode zx_pci_set_irq_mode "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_init zx_pci_init "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_pci_add_subtract_io_range zx_pci_add_subtract_io_range "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_acpi_uefi_rsdp zx_acpi_uefi_rsdp "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_acpi_cache_flush zx_acpi_cache_flush "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_resource_create zx_resource_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_resource_destroy zx_resource_destroy "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_resource_get_handle zx_resource_get_handle "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_resource_do_action zx_resource_do_action "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_resource_connect zx_resource_connect "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_resource_accept zx_resource_accept "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_hypervisor_create zx_hypervisor_create "libmagenta.so"
+//go:cgo_import_dynamic vdso_zx_hypervisor_op zx_hypervisor_op "libmagenta.so"
 
-//go:linkname vdso_mx_time_get vdso_mx_time_get
-//go:linkname vdso_mx_nanosleep vdso_mx_nanosleep
-//go:linkname vdso_mx_ticks_get vdso_mx_ticks_get
-//go:linkname vdso_mx_ticks_per_second vdso_mx_ticks_per_second
-//go:linkname vdso_mx_deadline_after vdso_mx_deadline_after
-//go:linkname vdso_mx_system_get_num_cpus vdso_mx_system_get_num_cpus
-//go:linkname vdso_mx_system_get_version vdso_mx_system_get_version
-//go:linkname vdso_mx_system_get_physmem vdso_mx_system_get_physmem
-//go:linkname vdso_mx_cache_flush vdso_mx_cache_flush
-//go:linkname vdso_mx_handle_close vdso_mx_handle_close
-//go:linkname vdso_mx_handle_duplicate vdso_mx_handle_duplicate
-//go:linkname vdso_mx_handle_replace vdso_mx_handle_replace
-//go:linkname vdso_mx_object_wait_one vdso_mx_object_wait_one
-//go:linkname vdso_mx_object_wait_many vdso_mx_object_wait_many
-//go:linkname vdso_mx_object_wait_async vdso_mx_object_wait_async
-//go:linkname vdso_mx_object_signal vdso_mx_object_signal
-//go:linkname vdso_mx_object_signal_peer vdso_mx_object_signal_peer
-//go:linkname vdso_mx_object_get_property vdso_mx_object_get_property
-//go:linkname vdso_mx_object_set_property vdso_mx_object_set_property
-//go:linkname vdso_mx_object_set_cookie vdso_mx_object_set_cookie
-//go:linkname vdso_mx_object_get_cookie vdso_mx_object_get_cookie
-//go:linkname vdso_mx_object_get_info vdso_mx_object_get_info
-//go:linkname vdso_mx_object_get_child vdso_mx_object_get_child
-//go:linkname vdso_mx_channel_create vdso_mx_channel_create
-//go:linkname vdso_mx_channel_read vdso_mx_channel_read
-//go:linkname vdso_mx_channel_write vdso_mx_channel_write
-//go:linkname vdso_mx_channel_call vdso_mx_channel_call
-//go:linkname vdso_mx_socket_create vdso_mx_socket_create
-//go:linkname vdso_mx_socket_write vdso_mx_socket_write
-//go:linkname vdso_mx_socket_read vdso_mx_socket_read
-//go:linkname vdso_mx_thread_exit vdso_mx_thread_exit
-//go:linkname vdso_mx_thread_create vdso_mx_thread_create
-//go:linkname vdso_mx_thread_start vdso_mx_thread_start
-//go:linkname vdso_mx_thread_read_state vdso_mx_thread_read_state
-//go:linkname vdso_mx_thread_write_state vdso_mx_thread_write_state
-//go:linkname vdso_mx_process_exit vdso_mx_process_exit
-//go:linkname vdso_mx_process_create vdso_mx_process_create
-//go:linkname vdso_mx_process_start vdso_mx_process_start
-//go:linkname vdso_mx_process_read_memory vdso_mx_process_read_memory
-//go:linkname vdso_mx_process_write_memory vdso_mx_process_write_memory
-//go:linkname vdso_mx_job_create vdso_mx_job_create
-//go:linkname vdso_mx_job_set_policy vdso_mx_job_set_policy
-//go:linkname vdso_mx_task_bind_exception_port vdso_mx_task_bind_exception_port
-//go:linkname vdso_mx_task_suspend vdso_mx_task_suspend
-//go:linkname vdso_mx_task_resume vdso_mx_task_resume
-//go:linkname vdso_mx_task_kill vdso_mx_task_kill
-//go:linkname vdso_mx_event_create vdso_mx_event_create
-//go:linkname vdso_mx_eventpair_create vdso_mx_eventpair_create
-//go:linkname vdso_mx_futex_wait vdso_mx_futex_wait
-//go:linkname vdso_mx_futex_wake vdso_mx_futex_wake
-//go:linkname vdso_mx_futex_requeue vdso_mx_futex_requeue
-//go:linkname vdso_mx_port_create vdso_mx_port_create
-//go:linkname vdso_mx_port_queue vdso_mx_port_queue
-//go:linkname vdso_mx_port_wait vdso_mx_port_wait
-//go:linkname vdso_mx_port_bind vdso_mx_port_bind
-//go:linkname vdso_mx_port_cancel vdso_mx_port_cancel
-//go:linkname vdso_mx_vmo_create vdso_mx_vmo_create
-//go:linkname vdso_mx_vmo_read vdso_mx_vmo_read
-//go:linkname vdso_mx_vmo_write vdso_mx_vmo_write
-//go:linkname vdso_mx_vmo_get_size vdso_mx_vmo_get_size
-//go:linkname vdso_mx_vmo_set_size vdso_mx_vmo_set_size
-//go:linkname vdso_mx_vmo_op_range vdso_mx_vmo_op_range
-//go:linkname vdso_mx_vmo_clone vdso_mx_vmo_clone
-//go:linkname vdso_mx_vmar_allocate vdso_mx_vmar_allocate
-//go:linkname vdso_mx_vmar_destroy vdso_mx_vmar_destroy
-//go:linkname vdso_mx_vmar_map vdso_mx_vmar_map
-//go:linkname vdso_mx_vmar_unmap vdso_mx_vmar_unmap
-//go:linkname vdso_mx_vmar_protect vdso_mx_vmar_protect
-//go:linkname vdso_mx_cprng_draw vdso_mx_cprng_draw
-//go:linkname vdso_mx_cprng_add_entropy vdso_mx_cprng_add_entropy
-//go:linkname vdso_mx_fifo_create vdso_mx_fifo_create
-//go:linkname vdso_mx_fifo_read vdso_mx_fifo_read
-//go:linkname vdso_mx_fifo_write vdso_mx_fifo_write
-//go:linkname vdso_mx_vmar_unmap_handle_close_thread_exit vdso_mx_vmar_unmap_handle_close_thread_exit
-//go:linkname vdso_mx_futex_wake_handle_close_thread_exit vdso_mx_futex_wake_handle_close_thread_exit
-//go:linkname vdso_mx_log_create vdso_mx_log_create
-//go:linkname vdso_mx_log_write vdso_mx_log_write
-//go:linkname vdso_mx_log_read vdso_mx_log_read
-//go:linkname vdso_mx_ktrace_read vdso_mx_ktrace_read
-//go:linkname vdso_mx_ktrace_control vdso_mx_ktrace_control
-//go:linkname vdso_mx_ktrace_write vdso_mx_ktrace_write
-//go:linkname vdso_mx_mtrace_control vdso_mx_mtrace_control
-//go:linkname vdso_mx_debug_transfer_handle vdso_mx_debug_transfer_handle
-//go:linkname vdso_mx_debug_read vdso_mx_debug_read
-//go:linkname vdso_mx_debug_write vdso_mx_debug_write
-//go:linkname vdso_mx_debug_send_command vdso_mx_debug_send_command
-//go:linkname vdso_mx_interrupt_create vdso_mx_interrupt_create
-//go:linkname vdso_mx_interrupt_complete vdso_mx_interrupt_complete
-//go:linkname vdso_mx_interrupt_wait vdso_mx_interrupt_wait
-//go:linkname vdso_mx_interrupt_signal vdso_mx_interrupt_signal
-//go:linkname vdso_mx_mmap_device_io vdso_mx_mmap_device_io
-//go:linkname vdso_mx_mmap_device_memory vdso_mx_mmap_device_memory
-//go:linkname vdso_mx_io_mapping_get_info vdso_mx_io_mapping_get_info
-//go:linkname vdso_mx_vmo_create_contiguous vdso_mx_vmo_create_contiguous
-//go:linkname vdso_mx_bootloader_fb_get_info vdso_mx_bootloader_fb_get_info
-//go:linkname vdso_mx_set_framebuffer vdso_mx_set_framebuffer
-//go:linkname vdso_mx_set_framebuffer_vmo vdso_mx_set_framebuffer_vmo
-//go:linkname vdso_mx_clock_adjust vdso_mx_clock_adjust
-//go:linkname vdso_mx_pci_get_nth_device vdso_mx_pci_get_nth_device
-//go:linkname vdso_mx_pci_claim_device vdso_mx_pci_claim_device
-//go:linkname vdso_mx_pci_enable_bus_master vdso_mx_pci_enable_bus_master
-//go:linkname vdso_mx_pci_enable_pio vdso_mx_pci_enable_pio
-//go:linkname vdso_mx_pci_reset_device vdso_mx_pci_reset_device
-//go:linkname vdso_mx_pci_map_mmio vdso_mx_pci_map_mmio
-//go:linkname vdso_mx_pci_io_write vdso_mx_pci_io_write
-//go:linkname vdso_mx_pci_io_read vdso_mx_pci_io_read
-//go:linkname vdso_mx_pci_map_interrupt vdso_mx_pci_map_interrupt
-//go:linkname vdso_mx_pci_map_config vdso_mx_pci_map_config
-//go:linkname vdso_mx_pci_query_irq_mode_caps vdso_mx_pci_query_irq_mode_caps
-//go:linkname vdso_mx_pci_set_irq_mode vdso_mx_pci_set_irq_mode
-//go:linkname vdso_mx_pci_init vdso_mx_pci_init
-//go:linkname vdso_mx_pci_add_subtract_io_range vdso_mx_pci_add_subtract_io_range
-//go:linkname vdso_mx_acpi_uefi_rsdp vdso_mx_acpi_uefi_rsdp
-//go:linkname vdso_mx_acpi_cache_flush vdso_mx_acpi_cache_flush
-//go:linkname vdso_mx_resource_create vdso_mx_resource_create
-//go:linkname vdso_mx_resource_destroy vdso_mx_resource_destroy
-//go:linkname vdso_mx_resource_get_handle vdso_mx_resource_get_handle
-//go:linkname vdso_mx_resource_do_action vdso_mx_resource_do_action
-//go:linkname vdso_mx_resource_connect vdso_mx_resource_connect
-//go:linkname vdso_mx_resource_accept vdso_mx_resource_accept
-//go:linkname vdso_mx_hypervisor_create vdso_mx_hypervisor_create
-//go:linkname vdso_mx_hypervisor_op vdso_mx_hypervisor_op
+//go:linkname vdso_zx_time_get vdso_zx_time_get
+//go:linkname vdso_zx_nanosleep vdso_zx_nanosleep
+//go:linkname vdso_zx_ticks_get vdso_zx_ticks_get
+//go:linkname vdso_zx_ticks_per_second vdso_zx_ticks_per_second
+//go:linkname vdso_zx_deadline_after vdso_zx_deadline_after
+//go:linkname vdso_zx_system_get_num_cpus vdso_zx_system_get_num_cpus
+//go:linkname vdso_zx_system_get_version vdso_zx_system_get_version
+//go:linkname vdso_zx_system_get_physmem vdso_zx_system_get_physmem
+//go:linkname vdso_zx_cache_flush vdso_zx_cache_flush
+//go:linkname vdso_zx_handle_close vdso_zx_handle_close
+//go:linkname vdso_zx_handle_duplicate vdso_zx_handle_duplicate
+//go:linkname vdso_zx_handle_replace vdso_zx_handle_replace
+//go:linkname vdso_zx_object_wait_one vdso_zx_object_wait_one
+//go:linkname vdso_zx_object_wait_many vdso_zx_object_wait_many
+//go:linkname vdso_zx_object_wait_async vdso_zx_object_wait_async
+//go:linkname vdso_zx_object_signal vdso_zx_object_signal
+//go:linkname vdso_zx_object_signal_peer vdso_zx_object_signal_peer
+//go:linkname vdso_zx_object_get_property vdso_zx_object_get_property
+//go:linkname vdso_zx_object_set_property vdso_zx_object_set_property
+//go:linkname vdso_zx_object_set_cookie vdso_zx_object_set_cookie
+//go:linkname vdso_zx_object_get_cookie vdso_zx_object_get_cookie
+//go:linkname vdso_zx_object_get_info vdso_zx_object_get_info
+//go:linkname vdso_zx_object_get_child vdso_zx_object_get_child
+//go:linkname vdso_zx_channel_create vdso_zx_channel_create
+//go:linkname vdso_zx_channel_read vdso_zx_channel_read
+//go:linkname vdso_zx_channel_write vdso_zx_channel_write
+//go:linkname vdso_zx_channel_call vdso_zx_channel_call
+//go:linkname vdso_zx_socket_create vdso_zx_socket_create
+//go:linkname vdso_zx_socket_write vdso_zx_socket_write
+//go:linkname vdso_zx_socket_read vdso_zx_socket_read
+//go:linkname vdso_zx_thread_exit vdso_zx_thread_exit
+//go:linkname vdso_zx_thread_create vdso_zx_thread_create
+//go:linkname vdso_zx_thread_start vdso_zx_thread_start
+//go:linkname vdso_zx_thread_read_state vdso_zx_thread_read_state
+//go:linkname vdso_zx_thread_write_state vdso_zx_thread_write_state
+//go:linkname vdso_zx_process_exit vdso_zx_process_exit
+//go:linkname vdso_zx_process_create vdso_zx_process_create
+//go:linkname vdso_zx_process_start vdso_zx_process_start
+//go:linkname vdso_zx_process_read_memory vdso_zx_process_read_memory
+//go:linkname vdso_zx_process_write_memory vdso_zx_process_write_memory
+//go:linkname vdso_zx_job_create vdso_zx_job_create
+//go:linkname vdso_zx_job_set_policy vdso_zx_job_set_policy
+//go:linkname vdso_zx_task_bind_exception_port vdso_zx_task_bind_exception_port
+//go:linkname vdso_zx_task_suspend vdso_zx_task_suspend
+//go:linkname vdso_zx_task_resume vdso_zx_task_resume
+//go:linkname vdso_zx_task_kill vdso_zx_task_kill
+//go:linkname vdso_zx_event_create vdso_zx_event_create
+//go:linkname vdso_zx_eventpair_create vdso_zx_eventpair_create
+//go:linkname vdso_zx_futex_wait vdso_zx_futex_wait
+//go:linkname vdso_zx_futex_wake vdso_zx_futex_wake
+//go:linkname vdso_zx_futex_requeue vdso_zx_futex_requeue
+//go:linkname vdso_zx_port_create vdso_zx_port_create
+//go:linkname vdso_zx_port_queue vdso_zx_port_queue
+//go:linkname vdso_zx_port_wait vdso_zx_port_wait
+//go:linkname vdso_zx_port_bind vdso_zx_port_bind
+//go:linkname vdso_zx_port_cancel vdso_zx_port_cancel
+//go:linkname vdso_zx_vmo_create vdso_zx_vmo_create
+//go:linkname vdso_zx_vmo_read vdso_zx_vmo_read
+//go:linkname vdso_zx_vmo_write vdso_zx_vmo_write
+//go:linkname vdso_zx_vmo_get_size vdso_zx_vmo_get_size
+//go:linkname vdso_zx_vmo_set_size vdso_zx_vmo_set_size
+//go:linkname vdso_zx_vmo_op_range vdso_zx_vmo_op_range
+//go:linkname vdso_zx_vmo_clone vdso_zx_vmo_clone
+//go:linkname vdso_zx_vmar_allocate vdso_zx_vmar_allocate
+//go:linkname vdso_zx_vmar_destroy vdso_zx_vmar_destroy
+//go:linkname vdso_zx_vmar_map vdso_zx_vmar_map
+//go:linkname vdso_zx_vmar_unmap vdso_zx_vmar_unmap
+//go:linkname vdso_zx_vmar_protect vdso_zx_vmar_protect
+//go:linkname vdso_zx_cprng_draw vdso_zx_cprng_draw
+//go:linkname vdso_zx_cprng_add_entropy vdso_zx_cprng_add_entropy
+//go:linkname vdso_zx_fifo_create vdso_zx_fifo_create
+//go:linkname vdso_zx_fifo_read vdso_zx_fifo_read
+//go:linkname vdso_zx_fifo_write vdso_zx_fifo_write
+//go:linkname vdso_zx_vmar_unmap_handle_close_thread_exit vdso_zx_vmar_unmap_handle_close_thread_exit
+//go:linkname vdso_zx_futex_wake_handle_close_thread_exit vdso_zx_futex_wake_handle_close_thread_exit
+//go:linkname vdso_zx_log_create vdso_zx_log_create
+//go:linkname vdso_zx_log_write vdso_zx_log_write
+//go:linkname vdso_zx_log_read vdso_zx_log_read
+//go:linkname vdso_zx_ktrace_read vdso_zx_ktrace_read
+//go:linkname vdso_zx_ktrace_control vdso_zx_ktrace_control
+//go:linkname vdso_zx_ktrace_write vdso_zx_ktrace_write
+//go:linkname vdso_zx_mtrace_control vdso_zx_mtrace_control
+//go:linkname vdso_zx_debug_transfer_handle vdso_zx_debug_transfer_handle
+//go:linkname vdso_zx_debug_read vdso_zx_debug_read
+//go:linkname vdso_zx_debug_write vdso_zx_debug_write
+//go:linkname vdso_zx_debug_send_command vdso_zx_debug_send_command
+//go:linkname vdso_zx_interrupt_create vdso_zx_interrupt_create
+//go:linkname vdso_zx_interrupt_complete vdso_zx_interrupt_complete
+//go:linkname vdso_zx_interrupt_wait vdso_zx_interrupt_wait
+//go:linkname vdso_zx_interrupt_signal vdso_zx_interrupt_signal
+//go:linkname vdso_zx_mmap_device_io vdso_zx_mmap_device_io
+//go:linkname vdso_zx_mmap_device_memory vdso_zx_mmap_device_memory
+//go:linkname vdso_zx_io_mapping_get_info vdso_zx_io_mapping_get_info
+//go:linkname vdso_zx_vmo_create_contiguous vdso_zx_vmo_create_contiguous
+//go:linkname vdso_zx_bootloader_fb_get_info vdso_zx_bootloader_fb_get_info
+//go:linkname vdso_zx_set_framebuffer vdso_zx_set_framebuffer
+//go:linkname vdso_zx_set_framebuffer_vmo vdso_zx_set_framebuffer_vmo
+//go:linkname vdso_zx_clock_adjust vdso_zx_clock_adjust
+//go:linkname vdso_zx_pci_get_nth_device vdso_zx_pci_get_nth_device
+//go:linkname vdso_zx_pci_claim_device vdso_zx_pci_claim_device
+//go:linkname vdso_zx_pci_enable_bus_master vdso_zx_pci_enable_bus_master
+//go:linkname vdso_zx_pci_enable_pio vdso_zx_pci_enable_pio
+//go:linkname vdso_zx_pci_reset_device vdso_zx_pci_reset_device
+//go:linkname vdso_zx_pci_map_mmio vdso_zx_pci_map_mmio
+//go:linkname vdso_zx_pci_io_write vdso_zx_pci_io_write
+//go:linkname vdso_zx_pci_io_read vdso_zx_pci_io_read
+//go:linkname vdso_zx_pci_map_interrupt vdso_zx_pci_map_interrupt
+//go:linkname vdso_zx_pci_map_config vdso_zx_pci_map_config
+//go:linkname vdso_zx_pci_query_irq_mode_caps vdso_zx_pci_query_irq_mode_caps
+//go:linkname vdso_zx_pci_set_irq_mode vdso_zx_pci_set_irq_mode
+//go:linkname vdso_zx_pci_init vdso_zx_pci_init
+//go:linkname vdso_zx_pci_add_subtract_io_range vdso_zx_pci_add_subtract_io_range
+//go:linkname vdso_zx_acpi_uefi_rsdp vdso_zx_acpi_uefi_rsdp
+//go:linkname vdso_zx_acpi_cache_flush vdso_zx_acpi_cache_flush
+//go:linkname vdso_zx_resource_create vdso_zx_resource_create
+//go:linkname vdso_zx_resource_destroy vdso_zx_resource_destroy
+//go:linkname vdso_zx_resource_get_handle vdso_zx_resource_get_handle
+//go:linkname vdso_zx_resource_do_action vdso_zx_resource_do_action
+//go:linkname vdso_zx_resource_connect vdso_zx_resource_connect
+//go:linkname vdso_zx_resource_accept vdso_zx_resource_accept
+//go:linkname vdso_zx_hypervisor_create vdso_zx_hypervisor_create
+//go:linkname vdso_zx_hypervisor_op vdso_zx_hypervisor_op
 
 var (
-	vdso_mx_time_get                            uintptr
-	vdso_mx_nanosleep                           uintptr
-	vdso_mx_ticks_get                           uintptr
-	vdso_mx_ticks_per_second                    uintptr
-	vdso_mx_deadline_after                      uintptr
-	vdso_mx_system_get_num_cpus                 uintptr
-	vdso_mx_system_get_version                  uintptr
-	vdso_mx_system_get_physmem                  uintptr
-	vdso_mx_cache_flush                         uintptr
-	vdso_mx_handle_close                        uintptr
-	vdso_mx_handle_duplicate                    uintptr
-	vdso_mx_handle_replace                      uintptr
-	vdso_mx_object_wait_one                     uintptr
-	vdso_mx_object_wait_many                    uintptr
-	vdso_mx_object_wait_async                   uintptr
-	vdso_mx_object_signal                       uintptr
-	vdso_mx_object_signal_peer                  uintptr
-	vdso_mx_object_get_property                 uintptr
-	vdso_mx_object_set_property                 uintptr
-	vdso_mx_object_set_cookie                   uintptr
-	vdso_mx_object_get_cookie                   uintptr
-	vdso_mx_object_get_info                     uintptr
-	vdso_mx_object_get_child                    uintptr
-	vdso_mx_channel_create                      uintptr
-	vdso_mx_channel_read                        uintptr
-	vdso_mx_channel_write                       uintptr
-	vdso_mx_channel_call                        uintptr
-	vdso_mx_socket_create                       uintptr
-	vdso_mx_socket_write                        uintptr
-	vdso_mx_socket_read                         uintptr
-	vdso_mx_thread_exit                         uintptr
-	vdso_mx_thread_create                       uintptr
-	vdso_mx_thread_start                        uintptr
-	vdso_mx_thread_read_state                   uintptr
-	vdso_mx_thread_write_state                  uintptr
-	vdso_mx_process_exit                        uintptr
-	vdso_mx_process_create                      uintptr
-	vdso_mx_process_start                       uintptr
-	vdso_mx_process_read_memory                 uintptr
-	vdso_mx_process_write_memory                uintptr
-	vdso_mx_job_create                          uintptr
-	vdso_mx_job_set_policy                      uintptr
-	vdso_mx_task_bind_exception_port            uintptr
-	vdso_mx_task_suspend                        uintptr
-	vdso_mx_task_resume                         uintptr
-	vdso_mx_task_kill                           uintptr
-	vdso_mx_event_create                        uintptr
-	vdso_mx_eventpair_create                    uintptr
-	vdso_mx_futex_wait                          uintptr
-	vdso_mx_futex_wake                          uintptr
-	vdso_mx_futex_requeue                       uintptr
-	vdso_mx_port_create                         uintptr
-	vdso_mx_port_queue                          uintptr
-	vdso_mx_port_wait                           uintptr
-	vdso_mx_port_bind                           uintptr
-	vdso_mx_port_cancel                         uintptr
-	vdso_mx_vmo_create                          uintptr
-	vdso_mx_vmo_read                            uintptr
-	vdso_mx_vmo_write                           uintptr
-	vdso_mx_vmo_get_size                        uintptr
-	vdso_mx_vmo_set_size                        uintptr
-	vdso_mx_vmo_op_range                        uintptr
-	vdso_mx_vmo_clone                           uintptr
-	vdso_mx_vmar_allocate                       uintptr
-	vdso_mx_vmar_destroy                        uintptr
-	vdso_mx_vmar_map                            uintptr
-	vdso_mx_vmar_unmap                          uintptr
-	vdso_mx_vmar_protect                        uintptr
-	vdso_mx_cprng_draw                          uintptr
-	vdso_mx_cprng_add_entropy                   uintptr
-	vdso_mx_fifo_create                         uintptr
-	vdso_mx_fifo_read                           uintptr
-	vdso_mx_fifo_write                          uintptr
-	vdso_mx_vmar_unmap_handle_close_thread_exit uintptr
-	vdso_mx_futex_wake_handle_close_thread_exit uintptr
-	vdso_mx_log_create                          uintptr
-	vdso_mx_log_write                           uintptr
-	vdso_mx_log_read                            uintptr
-	vdso_mx_ktrace_read                         uintptr
-	vdso_mx_ktrace_control                      uintptr
-	vdso_mx_ktrace_write                        uintptr
-	vdso_mx_mtrace_control                      uintptr
-	vdso_mx_debug_transfer_handle               uintptr
-	vdso_mx_debug_read                          uintptr
-	vdso_mx_debug_write                         uintptr
-	vdso_mx_debug_send_command                  uintptr
-	vdso_mx_interrupt_create                    uintptr
-	vdso_mx_interrupt_complete                  uintptr
-	vdso_mx_interrupt_wait                      uintptr
-	vdso_mx_interrupt_signal                    uintptr
-	vdso_mx_mmap_device_io                      uintptr
-	vdso_mx_mmap_device_memory                  uintptr
-	vdso_mx_io_mapping_get_info                 uintptr
-	vdso_mx_vmo_create_contiguous               uintptr
-	vdso_mx_bootloader_fb_get_info              uintptr
-	vdso_mx_set_framebuffer                     uintptr
-	vdso_mx_set_framebuffer_vmo                 uintptr
-	vdso_mx_clock_adjust                        uintptr
-	vdso_mx_pci_get_nth_device                  uintptr
-	vdso_mx_pci_claim_device                    uintptr
-	vdso_mx_pci_enable_bus_master               uintptr
-	vdso_mx_pci_enable_pio                      uintptr
-	vdso_mx_pci_reset_device                    uintptr
-	vdso_mx_pci_map_mmio                        uintptr
-	vdso_mx_pci_io_write                        uintptr
-	vdso_mx_pci_io_read                         uintptr
-	vdso_mx_pci_map_interrupt                   uintptr
-	vdso_mx_pci_map_config                      uintptr
-	vdso_mx_pci_query_irq_mode_caps             uintptr
-	vdso_mx_pci_set_irq_mode                    uintptr
-	vdso_mx_pci_init                            uintptr
-	vdso_mx_pci_add_subtract_io_range           uintptr
-	vdso_mx_acpi_uefi_rsdp                      uintptr
-	vdso_mx_acpi_cache_flush                    uintptr
-	vdso_mx_resource_create                     uintptr
-	vdso_mx_resource_destroy                    uintptr
-	vdso_mx_resource_get_handle                 uintptr
-	vdso_mx_resource_do_action                  uintptr
-	vdso_mx_resource_connect                    uintptr
-	vdso_mx_resource_accept                     uintptr
-	vdso_mx_hypervisor_create                   uintptr
-	vdso_mx_hypervisor_op                       uintptr
+	vdso_zx_time_get                            uintptr
+	vdso_zx_nanosleep                           uintptr
+	vdso_zx_ticks_get                           uintptr
+	vdso_zx_ticks_per_second                    uintptr
+	vdso_zx_deadline_after                      uintptr
+	vdso_zx_system_get_num_cpus                 uintptr
+	vdso_zx_system_get_version                  uintptr
+	vdso_zx_system_get_physmem                  uintptr
+	vdso_zx_cache_flush                         uintptr
+	vdso_zx_handle_close                        uintptr
+	vdso_zx_handle_duplicate                    uintptr
+	vdso_zx_handle_replace                      uintptr
+	vdso_zx_object_wait_one                     uintptr
+	vdso_zx_object_wait_many                    uintptr
+	vdso_zx_object_wait_async                   uintptr
+	vdso_zx_object_signal                       uintptr
+	vdso_zx_object_signal_peer                  uintptr
+	vdso_zx_object_get_property                 uintptr
+	vdso_zx_object_set_property                 uintptr
+	vdso_zx_object_set_cookie                   uintptr
+	vdso_zx_object_get_cookie                   uintptr
+	vdso_zx_object_get_info                     uintptr
+	vdso_zx_object_get_child                    uintptr
+	vdso_zx_channel_create                      uintptr
+	vdso_zx_channel_read                        uintptr
+	vdso_zx_channel_write                       uintptr
+	vdso_zx_channel_call                        uintptr
+	vdso_zx_socket_create                       uintptr
+	vdso_zx_socket_write                        uintptr
+	vdso_zx_socket_read                         uintptr
+	vdso_zx_thread_exit                         uintptr
+	vdso_zx_thread_create                       uintptr
+	vdso_zx_thread_start                        uintptr
+	vdso_zx_thread_read_state                   uintptr
+	vdso_zx_thread_write_state                  uintptr
+	vdso_zx_process_exit                        uintptr
+	vdso_zx_process_create                      uintptr
+	vdso_zx_process_start                       uintptr
+	vdso_zx_process_read_memory                 uintptr
+	vdso_zx_process_write_memory                uintptr
+	vdso_zx_job_create                          uintptr
+	vdso_zx_job_set_policy                      uintptr
+	vdso_zx_task_bind_exception_port            uintptr
+	vdso_zx_task_suspend                        uintptr
+	vdso_zx_task_resume                         uintptr
+	vdso_zx_task_kill                           uintptr
+	vdso_zx_event_create                        uintptr
+	vdso_zx_eventpair_create                    uintptr
+	vdso_zx_futex_wait                          uintptr
+	vdso_zx_futex_wake                          uintptr
+	vdso_zx_futex_requeue                       uintptr
+	vdso_zx_port_create                         uintptr
+	vdso_zx_port_queue                          uintptr
+	vdso_zx_port_wait                           uintptr
+	vdso_zx_port_bind                           uintptr
+	vdso_zx_port_cancel                         uintptr
+	vdso_zx_vmo_create                          uintptr
+	vdso_zx_vmo_read                            uintptr
+	vdso_zx_vmo_write                           uintptr
+	vdso_zx_vmo_get_size                        uintptr
+	vdso_zx_vmo_set_size                        uintptr
+	vdso_zx_vmo_op_range                        uintptr
+	vdso_zx_vmo_clone                           uintptr
+	vdso_zx_vmar_allocate                       uintptr
+	vdso_zx_vmar_destroy                        uintptr
+	vdso_zx_vmar_map                            uintptr
+	vdso_zx_vmar_unmap                          uintptr
+	vdso_zx_vmar_protect                        uintptr
+	vdso_zx_cprng_draw                          uintptr
+	vdso_zx_cprng_add_entropy                   uintptr
+	vdso_zx_fifo_create                         uintptr
+	vdso_zx_fifo_read                           uintptr
+	vdso_zx_fifo_write                          uintptr
+	vdso_zx_vmar_unmap_handle_close_thread_exit uintptr
+	vdso_zx_futex_wake_handle_close_thread_exit uintptr
+	vdso_zx_log_create                          uintptr
+	vdso_zx_log_write                           uintptr
+	vdso_zx_log_read                            uintptr
+	vdso_zx_ktrace_read                         uintptr
+	vdso_zx_ktrace_control                      uintptr
+	vdso_zx_ktrace_write                        uintptr
+	vdso_zx_mtrace_control                      uintptr
+	vdso_zx_debug_transfer_handle               uintptr
+	vdso_zx_debug_read                          uintptr
+	vdso_zx_debug_write                         uintptr
+	vdso_zx_debug_send_command                  uintptr
+	vdso_zx_interrupt_create                    uintptr
+	vdso_zx_interrupt_complete                  uintptr
+	vdso_zx_interrupt_wait                      uintptr
+	vdso_zx_interrupt_signal                    uintptr
+	vdso_zx_mmap_device_io                      uintptr
+	vdso_zx_mmap_device_memory                  uintptr
+	vdso_zx_io_mapping_get_info                 uintptr
+	vdso_zx_vmo_create_contiguous               uintptr
+	vdso_zx_bootloader_fb_get_info              uintptr
+	vdso_zx_set_framebuffer                     uintptr
+	vdso_zx_set_framebuffer_vmo                 uintptr
+	vdso_zx_clock_adjust                        uintptr
+	vdso_zx_pci_get_nth_device                  uintptr
+	vdso_zx_pci_claim_device                    uintptr
+	vdso_zx_pci_enable_bus_master               uintptr
+	vdso_zx_pci_enable_pio                      uintptr
+	vdso_zx_pci_reset_device                    uintptr
+	vdso_zx_pci_map_mmio                        uintptr
+	vdso_zx_pci_io_write                        uintptr
+	vdso_zx_pci_io_read                         uintptr
+	vdso_zx_pci_map_interrupt                   uintptr
+	vdso_zx_pci_map_config                      uintptr
+	vdso_zx_pci_query_irq_mode_caps             uintptr
+	vdso_zx_pci_set_irq_mode                    uintptr
+	vdso_zx_pci_init                            uintptr
+	vdso_zx_pci_add_subtract_io_range           uintptr
+	vdso_zx_acpi_uefi_rsdp                      uintptr
+	vdso_zx_acpi_cache_flush                    uintptr
+	vdso_zx_resource_create                     uintptr
+	vdso_zx_resource_destroy                    uintptr
+	vdso_zx_resource_get_handle                 uintptr
+	vdso_zx_resource_do_action                  uintptr
+	vdso_zx_resource_connect                    uintptr
+	vdso_zx_resource_accept                     uintptr
+	vdso_zx_hypervisor_create                   uintptr
+	vdso_zx_hypervisor_op                       uintptr
 )
 
 //go:noescape

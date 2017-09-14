@@ -75,7 +75,7 @@ var sysdir = func() *sysDir {
 		return &sysDir{
 			"/boot/lib",
 			[]string{
-				"libmxio.so",
+				"libfdio.so",
 				"ld.so.1",
 			},
 		}

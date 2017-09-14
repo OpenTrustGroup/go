@@ -4,7 +4,7 @@
 
 // +build fuchsia
 
-package mxio
+package fdio
 
 import (
 	"sync"
@@ -41,12 +41,12 @@ type Dispatcher struct {
 var (
 	// If returned from dispatcher callback, indicates that the dispatcher should immediately
 	// disconnect with no additional callbacks.
-	ErrDisconnectNoCallback = mx.Error{Status: 1, Text: "mxio.Dispatcher"}
+	ErrDisconnectNoCallback = mx.Error{Status: 1, Text: "fdio.Dispatcher"}
 	// If returned from dispatcher callback, indicates that there are no more messages to read.
-	ErrNoWork = mx.Error{Status: -9999, Text: "mxio.Dispatcher.NoWork"}
+	ErrNoWork = mx.Error{Status: -9999, Text: "fdio.Dispatcher.NoWork"}
 	// If returned from dispatcher callback, indicates that the message was handed to another
 	// server.
-	ErrIndirect = mx.Error{Status: -9998, Text: "mxio.Dispatcher.Indirect"}
+	ErrIndirect = mx.Error{Status: -9998, Text: "fdio.Dispatcher.Indirect"}
 )
 
 // New creates a new dispatcher.

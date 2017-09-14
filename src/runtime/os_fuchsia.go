@@ -46,18 +46,18 @@ func osyield() {
 func cgocallm0(fn, arg unsafe.Pointer)
 
 func osinit() {
-	if _cgo_get_mxio_root != nil {
-		cgocallm0(_cgo_get_mxio_root, unsafe.Pointer(&mxioHandles))
-		mx.RootHandle = mx.Handle(mxioHandles.rootClone)
+	if _cgo_get_fdio_root != nil {
+		cgocallm0(_cgo_get_fdio_root, unsafe.Pointer(&fdioHandles))
+		mx.RootHandle = mx.Handle(fdioHandles.rootClone)
 		for i := 0; i < 3; i = i + 1 {
-			for j := 0; j < int(mxioHandles.stdioCloneNumHandles[i]); j = j + 1 {
-				mx.StdioHandles[i][j] = mxioHandles.stdioClones[i*3+j]
+			for j := 0; j < int(fdioHandles.stdioCloneNumHandles[i]); j = j + 1 {
+				mx.StdioHandles[i][j] = fdioHandles.stdioClones[i*3+j]
 			}
-			mx.StdioHandleTypes[i] = int(mxioHandles.stdioCloneTypes[i])
+			mx.StdioHandleTypes[i] = int(fdioHandles.stdioCloneTypes[i])
 		}
-		mx.CwdHandle = mx.Handle(mxioHandles.cwd)
-		mx.ProcHandle = mx.Handle(mxioHandles.processSelf)
-		mx.VMARRoot = mx.VMAR(mxioHandles.vmarRootSelf)
+		mx.CwdHandle = mx.Handle(fdioHandles.cwd)
+		mx.ProcHandle = mx.Handle(fdioHandles.processSelf)
+		mx.VMARRoot = mx.VMAR(fdioHandles.vmarRootSelf)
 	} else {
 		// TODO: implement cgo-less init
 		println("runtime: no fuchsia process handle without cgo yet")
@@ -69,10 +69,10 @@ func osinit() {
 }
 
 func parseRootNS() {
-	if mxioHandles.rootNSNumHandles > 0 {
+	if fdioHandles.rootNSNumHandles > 0 {
 		const maxHandleCount = 1 << 20 // arbitrary
-		paths := (*(*[maxHandleCount]*byte)(unsafe.Pointer(mxioHandles.rootNSPaths)))[:mxioHandles.rootNSNumHandles]
-		handles := (*(*[maxHandleCount]mx.Handle)(unsafe.Pointer(mxioHandles.rootNSHandles)))[:mxioHandles.rootNSNumHandles]
+		paths := (*(*[maxHandleCount]*byte)(unsafe.Pointer(fdioHandles.rootNSPaths)))[:fdioHandles.rootNSNumHandles]
+		handles := (*(*[maxHandleCount]mx.Handle)(unsafe.Pointer(fdioHandles.rootNSHandles)))[:fdioHandles.rootNSNumHandles]
 		mx.RootNSMap = make(map[string]mx.Handle)
 		for i, p := range paths {
 			mx.RootNSMap[gostring(p)] = handles[i]
@@ -81,7 +81,7 @@ func parseRootNS() {
 }
 
 // Filled in by runtime/cgo when linked into binary.
-var _cgo_get_mxio_root unsafe.Pointer // pointer to C function
+var _cgo_get_fdio_root unsafe.Pointer // pointer to C function
 
 func minit() {
 }
@@ -155,7 +155,7 @@ func newosproc(mp *m, stk unsafe.Pointer) {
 	}
 }
 
-type mx_proc_args struct {
+type zx_proc_args struct {
 	protocol        uint32
 	version         uint32
 	handle_info_off uint32
@@ -163,11 +163,11 @@ type mx_proc_args struct {
 	args_num        uint32
 }
 
-type mx_proc_info struct {
+type zx_proc_info struct {
 	magic         uint32
 	version       uint32
 	next_tls_slot uint32
-	proc_args     *mx_proc_args
+	proc_args     *zx_proc_args
 	handle        *mx.Handle
 	handle_info   *uint32
 	handle_count  int32
@@ -175,9 +175,9 @@ type mx_proc_info struct {
 	argc          int32
 }
 
-type mx_tls_root struct {
-	self     *mx_tls_root
-	proc     *mx_proc_info
+type zx_tls_root struct {
+	self     *zx_tls_root
+	proc     *zx_proc_info
 	magic    uint32
 	flags    uint16
 	maxslots uint16
@@ -188,10 +188,10 @@ func resetcpuprofiler(hz int32) {
 	// TODO
 }
 
-// mxio_init matches a Go struct of the same name in gcc_mxio.c.
-type mxio_init struct {
+// fdio_init matches a Go struct of the same name in gcc_fdio.c.
+type fdio_init struct {
 	rootClone            mx.Handle
-	stdioClones          [9]mx.Handle // 3 * mxio.MaxHandles
+	stdioClones          [9]mx.Handle // 3 * fdio.MaxHandles
 	stdioCloneNumHandles [3]uint32
 	stdioCloneTypes      [3]uint32
 	cwd                  mx.Handle
@@ -206,12 +206,12 @@ type mxio_init struct {
 	rootNSPaths          **byte
 }
 
-var mxioHandles mxio_init
+var fdioHandles fdio_init
 
 func goenvs() {
-	if _cgo_get_mxio_root != nil {
+	if _cgo_get_fdio_root != nil {
 		const maxEnvSize = 1 << 20 // arbitrary
-		envp := (*(*[maxEnvSize]*byte)(unsafe.Pointer(mxioHandles.environ)))[:mxioHandles.envlen]
+		envp := (*(*[maxEnvSize]*byte)(unsafe.Pointer(fdioHandles.environ)))[:fdioHandles.envlen]
 		envs = make([]string, len(envp))
 		for i, e := range envp {
 			envs[i] = gostring(e)
@@ -299,7 +299,7 @@ func magenta_mktls() {
 
 //go:nosplit
 func magenta_settls(val uintptr) {
-	// TODO: should call mx_set_object_property with property MX_PROP_REGISTER_FS in amd64 or
+	// TODO: should call zx_set_object_property with property MX_PROP_REGISTER_FS in amd64 or
 	// MX_PROP_REGISTER_CP15 on arm.
 }
 

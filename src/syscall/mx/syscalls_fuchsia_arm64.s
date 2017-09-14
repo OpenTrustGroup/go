@@ -10,39 +10,39 @@
 // func Sys_time_get(clock_id uint32) Time
 TEXT ·Sys_time_get(SB),NOSPLIT,$0-16
 	MOVW clock_id+0(FP), R0
-	BL vdso_mx_time_get(SB)
+	BL vdso_zx_time_get(SB)
 	MOVD R0, ret+8(FP)
 	RET
 
 // func Sys_nanosleep(deadline Time) Status
 TEXT ·Sys_nanosleep(SB),NOSPLIT,$0-12
 	MOVD deadline+0(FP), R0
-	BL vdso_mx_nanosleep(SB)
+	BL vdso_zx_nanosleep(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
 // func Sys_ticks_get() uint64
 TEXT ·Sys_ticks_get(SB),NOSPLIT,$0-8
-	BL vdso_mx_ticks_get(SB)
+	BL vdso_zx_ticks_get(SB)
 	MOVD R0, ret+0(FP)
 	RET
 
 // func Sys_ticks_per_second() uint64
 TEXT ·Sys_ticks_per_second(SB),NOSPLIT,$0-8
-	BL vdso_mx_ticks_per_second(SB)
+	BL vdso_zx_ticks_per_second(SB)
 	MOVD R0, ret+0(FP)
 	RET
 
 // func Sys_deadline_after(nanoseconds Duration) Time
 TEXT ·Sys_deadline_after(SB),NOSPLIT,$0-16
 	MOVD nanoseconds+0(FP), R0
-	BL vdso_mx_deadline_after(SB)
+	BL vdso_zx_deadline_after(SB)
 	MOVD R0, ret+8(FP)
 	RET
 
 // func Sys_system_get_num_cpus() uint32
 TEXT ·Sys_system_get_num_cpus(SB),NOSPLIT,$0-4
-	BL vdso_mx_system_get_num_cpus(SB)
+	BL vdso_zx_system_get_num_cpus(SB)
 	MOVW R0, ret+0(FP)
 	RET
 
@@ -50,13 +50,13 @@ TEXT ·Sys_system_get_num_cpus(SB),NOSPLIT,$0-4
 TEXT ·Sys_system_get_version(SB),NOSPLIT,$0-20
 	MOVD version+0(FP), R0
 	MOVW version_len+8(FP), R1
-	BL vdso_mx_system_get_version(SB)
+	BL vdso_zx_system_get_version(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
 // func Sys_system_get_physmem() uint64
 TEXT ·Sys_system_get_physmem(SB),NOSPLIT,$0-8
-	BL vdso_mx_system_get_physmem(SB)
+	BL vdso_zx_system_get_physmem(SB)
 	MOVD R0, ret+0(FP)
 	RET
 
@@ -65,14 +65,14 @@ TEXT ·Sys_cache_flush(SB),NOSPLIT,$0-28
 	MOVD addr+0(FP), R0
 	MOVD len+8(FP), R1
 	MOVW options+16(FP), R2
-	BL vdso_mx_cache_flush(SB)
+	BL vdso_zx_cache_flush(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
 // func sys_handle_close(handle Handle) Status
 TEXT ·sys_handle_close(SB),NOSPLIT,$0-12
 	MOVW handle+0(FP), R0
-	BL vdso_mx_handle_close(SB)
+	BL vdso_zx_handle_close(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
@@ -81,7 +81,7 @@ TEXT ·sys_handle_duplicate(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW rights+4(FP), R1
 	MOVD out+8(FP), R2
-	BL vdso_mx_handle_duplicate(SB)
+	BL vdso_zx_handle_duplicate(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -90,7 +90,7 @@ TEXT ·Sys_handle_replace(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW rights+4(FP), R1
 	MOVD out+8(FP), R2
-	BL vdso_mx_handle_replace(SB)
+	BL vdso_zx_handle_replace(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -101,7 +101,7 @@ TEXT ·sys_object_wait_one(SB),NOSPLIT,$0-28
 	MOVW waitfor+4(FP), R1
 	MOVD deadline+8(FP), R2
 	MOVD observed+16(FP), R3
-	BL vdso_mx_object_wait_one(SB)
+	BL vdso_zx_object_wait_one(SB)
 	MOVW R0, ret+24(FP)
 	BL runtime·exitsyscall(SB)
 	RET
@@ -112,7 +112,7 @@ TEXT ·sys_object_wait_many(SB),NOSPLIT,$0-28
 	MOVD items+0(FP), R0
 	MOVW count+8(FP), R1
 	MOVD deadline+16(FP), R2
-	BL vdso_mx_object_wait_many(SB)
+	BL vdso_zx_object_wait_many(SB)
 	MOVW R0, ret+24(FP)
 	BL runtime·exitsyscall(SB)
 	RET
@@ -124,7 +124,7 @@ TEXT ·Sys_object_wait_async(SB),NOSPLIT,$0-28
 	MOVD key+8(FP), R2
 	MOVW signals+16(FP), R3
 	MOVW options+20(FP), R4
-	BL vdso_mx_object_wait_async(SB)
+	BL vdso_zx_object_wait_async(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -133,7 +133,7 @@ TEXT ·Sys_object_signal(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW clear_mask+4(FP), R1
 	MOVW set_mask+8(FP), R2
-	BL vdso_mx_object_signal(SB)
+	BL vdso_zx_object_signal(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -142,7 +142,7 @@ TEXT ·Sys_object_signal_peer(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW clear_mask+4(FP), R1
 	MOVW set_mask+8(FP), R2
-	BL vdso_mx_object_signal_peer(SB)
+	BL vdso_zx_object_signal_peer(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -152,7 +152,7 @@ TEXT ·Sys_object_get_property(SB),NOSPLIT,$0-28
 	MOVW property+4(FP), R1
 	MOVD value+8(FP), R2
 	MOVD size+16(FP), R3
-	BL vdso_mx_object_get_property(SB)
+	BL vdso_zx_object_get_property(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -162,7 +162,7 @@ TEXT ·Sys_object_set_property(SB),NOSPLIT,$0-28
 	MOVW property+4(FP), R1
 	MOVD value+8(FP), R2
 	MOVD size+16(FP), R3
-	BL vdso_mx_object_set_property(SB)
+	BL vdso_zx_object_set_property(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -171,7 +171,7 @@ TEXT ·Sys_object_set_cookie(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW scope+4(FP), R1
 	MOVD cookie+8(FP), R2
-	BL vdso_mx_object_set_cookie(SB)
+	BL vdso_zx_object_set_cookie(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -180,7 +180,7 @@ TEXT ·Sys_object_get_cookie(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW scope+4(FP), R1
 	MOVD cookie+8(FP), R2
-	BL vdso_mx_object_get_cookie(SB)
+	BL vdso_zx_object_get_cookie(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -192,7 +192,7 @@ TEXT ·Sys_object_get_info(SB),NOSPLIT,$0-44
 	MOVD buffer_size+16(FP), R3
 	MOVD actual_count+24(FP), R4
 	MOVD avail_count+32(FP), R5
-	BL vdso_mx_object_get_info(SB)
+	BL vdso_zx_object_get_info(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
@@ -202,7 +202,7 @@ TEXT ·Sys_object_get_child(SB),NOSPLIT,$0-36
 	MOVD koid+8(FP), R1
 	MOVW rights+16(FP), R2
 	MOVD out+24(FP), R3
-	BL vdso_mx_object_get_child(SB)
+	BL vdso_zx_object_get_child(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -211,7 +211,7 @@ TEXT ·sys_channel_create(SB),NOSPLIT,$0-28
 	MOVW options+0(FP), R0
 	MOVD out0+8(FP), R1
 	MOVD out1+16(FP), R2
-	BL vdso_mx_channel_create(SB)
+	BL vdso_zx_channel_create(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -225,7 +225,7 @@ TEXT ·sys_channel_read(SB),NOSPLIT,$0-52
 	MOVW num_handles+28(FP), R5
 	MOVD actual_bytes+32(FP), R6
 	MOVD actual_handles+40(FP), R7
-	BL vdso_mx_channel_read(SB)
+	BL vdso_zx_channel_read(SB)
 	MOVW R0, ret+48(FP)
 	RET
 
@@ -237,7 +237,7 @@ TEXT ·sys_channel_write(SB),NOSPLIT,$0-44
 	MOVW num_bytes+16(FP), R3
 	MOVD handles+24(FP), R4
 	MOVW num_handles+32(FP), R5
-	BL vdso_mx_channel_write(SB)
+	BL vdso_zx_channel_write(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
@@ -250,7 +250,7 @@ TEXT ·Sys_channel_call(SB),NOSPLIT,$0-52
 	MOVD actual_bytes+24(FP), R4
 	MOVD actual_handles+32(FP), R5
 	MOVD read_status+40(FP), R6
-	BL vdso_mx_channel_call(SB)
+	BL vdso_zx_channel_call(SB)
 	MOVW R0, ret+48(FP)
 	RET
 
@@ -259,7 +259,7 @@ TEXT ·sys_socket_create(SB),NOSPLIT,$0-28
 	MOVW options+0(FP), R0
 	MOVD out0+8(FP), R1
 	MOVD out1+16(FP), R2
-	BL vdso_mx_socket_create(SB)
+	BL vdso_zx_socket_create(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -270,7 +270,7 @@ TEXT ·sys_socket_write(SB),NOSPLIT,$0-36
 	MOVD buffer+8(FP), R2
 	MOVD size+16(FP), R3
 	MOVD actual+24(FP), R4
-	BL vdso_mx_socket_write(SB)
+	BL vdso_zx_socket_write(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -281,13 +281,13 @@ TEXT ·sys_socket_read(SB),NOSPLIT,$0-36
 	MOVD buffer+8(FP), R2
 	MOVD size+16(FP), R3
 	MOVD actual+24(FP), R4
-	BL vdso_mx_socket_read(SB)
+	BL vdso_zx_socket_read(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
 // func Sys_thread_exit()
 TEXT ·Sys_thread_exit(SB),NOSPLIT,$0-0
-	BL vdso_mx_thread_exit(SB)
+	BL vdso_zx_thread_exit(SB)
 	RET
 
 // func Sys_thread_create(process Handle, name *uint8, name_len uint32, options uint32, out *Handle) Status
@@ -297,7 +297,7 @@ TEXT ·Sys_thread_create(SB),NOSPLIT,$0-36
 	MOVW name_len+16(FP), R2
 	MOVW options+20(FP), R3
 	MOVD out+24(FP), R4
-	BL vdso_mx_thread_create(SB)
+	BL vdso_zx_thread_create(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -308,7 +308,7 @@ TEXT ·Sys_thread_start(SB),NOSPLIT,$0-44
 	MOVD stack+16(FP), R2
 	MOVD arg1+24(FP), R3
 	MOVD arg2+32(FP), R4
-	BL vdso_mx_thread_start(SB)
+	BL vdso_zx_thread_start(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
@@ -319,7 +319,7 @@ TEXT ·Sys_thread_read_state(SB),NOSPLIT,$0-36
 	MOVD buffer+8(FP), R2
 	MOVW len+16(FP), R3
 	MOVD actual+24(FP), R4
-	BL vdso_mx_thread_read_state(SB)
+	BL vdso_zx_thread_read_state(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -329,14 +329,14 @@ TEXT ·Sys_thread_write_state(SB),NOSPLIT,$0-28
 	MOVW kind+4(FP), R1
 	MOVD buffer+8(FP), R2
 	MOVW buffer_len+16(FP), R3
-	BL vdso_mx_thread_write_state(SB)
+	BL vdso_zx_thread_write_state(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
 // func Sys_process_exit(retcode int)
 TEXT ·Sys_process_exit(SB),NOSPLIT,$0-8
 	MOVD retcode+0(FP), R0
-	BL vdso_mx_process_exit(SB)
+	BL vdso_zx_process_exit(SB)
 	RET
 
 // func Sys_process_create(job Handle, name *uint8, name_len uint32, options uint32, proc_handle *Handle, vmar_handle *Handle) Status
@@ -347,7 +347,7 @@ TEXT ·Sys_process_create(SB),NOSPLIT,$0-44
 	MOVW options+20(FP), R3
 	MOVD proc_handle+24(FP), R4
 	MOVD vmar_handle+32(FP), R5
-	BL vdso_mx_process_create(SB)
+	BL vdso_zx_process_create(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
@@ -359,7 +359,7 @@ TEXT ·Sys_process_start(SB),NOSPLIT,$0-44
 	MOVD stack+16(FP), R3
 	MOVW arg_handle+24(FP), R4
 	MOVD arg2+32(FP), R5
-	BL vdso_mx_process_start(SB)
+	BL vdso_zx_process_start(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
@@ -370,7 +370,7 @@ TEXT ·Sys_process_read_memory(SB),NOSPLIT,$0-44
 	MOVD buffer+16(FP), R2
 	MOVD len+24(FP), R3
 	MOVD actual+32(FP), R4
-	BL vdso_mx_process_read_memory(SB)
+	BL vdso_zx_process_read_memory(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
@@ -381,7 +381,7 @@ TEXT ·Sys_process_write_memory(SB),NOSPLIT,$0-44
 	MOVD buffer+16(FP), R2
 	MOVD len+24(FP), R3
 	MOVD actual+32(FP), R4
-	BL vdso_mx_process_write_memory(SB)
+	BL vdso_zx_process_write_memory(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
@@ -390,7 +390,7 @@ TEXT ·Sys_job_create(SB),NOSPLIT,$0-20
 	MOVW parent_job+0(FP), R0
 	MOVW options+4(FP), R1
 	MOVD out+8(FP), R2
-	BL vdso_mx_job_create(SB)
+	BL vdso_zx_job_create(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -401,7 +401,7 @@ TEXT ·Sys_job_set_policy(SB),NOSPLIT,$0-36
 	MOVW topic+8(FP), R2
 	MOVD policy+16(FP), R3
 	MOVW count+24(FP), R4
-	BL vdso_mx_job_set_policy(SB)
+	BL vdso_zx_job_set_policy(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -411,14 +411,14 @@ TEXT ·Sys_task_bind_exception_port(SB),NOSPLIT,$0-28
 	MOVW eport+4(FP), R1
 	MOVD key+8(FP), R2
 	MOVW options+16(FP), R3
-	BL vdso_mx_task_bind_exception_port(SB)
+	BL vdso_zx_task_bind_exception_port(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
 // func Sys_task_suspend(task_handle Handle) Status
 TEXT ·Sys_task_suspend(SB),NOSPLIT,$0-12
 	MOVW task_handle+0(FP), R0
-	BL vdso_mx_task_suspend(SB)
+	BL vdso_zx_task_suspend(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
@@ -426,14 +426,14 @@ TEXT ·Sys_task_suspend(SB),NOSPLIT,$0-12
 TEXT ·Sys_task_resume(SB),NOSPLIT,$0-12
 	MOVW task_handle+0(FP), R0
 	MOVW options+4(FP), R1
-	BL vdso_mx_task_resume(SB)
+	BL vdso_zx_task_resume(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
 // func Sys_task_kill(task_handle Handle) Status
 TEXT ·Sys_task_kill(SB),NOSPLIT,$0-12
 	MOVW task_handle+0(FP), R0
-	BL vdso_mx_task_kill(SB)
+	BL vdso_zx_task_kill(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
@@ -441,7 +441,7 @@ TEXT ·Sys_task_kill(SB),NOSPLIT,$0-12
 TEXT ·Sys_event_create(SB),NOSPLIT,$0-20
 	MOVW options+0(FP), R0
 	MOVD out+8(FP), R1
-	BL vdso_mx_event_create(SB)
+	BL vdso_zx_event_create(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -450,7 +450,7 @@ TEXT ·Sys_eventpair_create(SB),NOSPLIT,$0-28
 	MOVW options+0(FP), R0
 	MOVD out0+8(FP), R1
 	MOVD out1+16(FP), R2
-	BL vdso_mx_eventpair_create(SB)
+	BL vdso_zx_eventpair_create(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -459,7 +459,7 @@ TEXT ·Sys_futex_wait(SB),NOSPLIT,$0-28
 	MOVD value_ptr+0(FP), R0
 	MOVD current_value+8(FP), R1
 	MOVD deadline+16(FP), R2
-	BL vdso_mx_futex_wait(SB)
+	BL vdso_zx_futex_wait(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -467,7 +467,7 @@ TEXT ·Sys_futex_wait(SB),NOSPLIT,$0-28
 TEXT ·Sys_futex_wake(SB),NOSPLIT,$0-20
 	MOVD value_ptr+0(FP), R0
 	MOVW count+8(FP), R1
-	BL vdso_mx_futex_wake(SB)
+	BL vdso_zx_futex_wake(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -478,7 +478,7 @@ TEXT ·Sys_futex_requeue(SB),NOSPLIT,$0-44
 	MOVD current_value+16(FP), R2
 	MOVD requeue_ptr+24(FP), R3
 	MOVW requeue_count+32(FP), R4
-	BL vdso_mx_futex_requeue(SB)
+	BL vdso_zx_futex_requeue(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
@@ -486,7 +486,7 @@ TEXT ·Sys_futex_requeue(SB),NOSPLIT,$0-44
 TEXT ·Sys_port_create(SB),NOSPLIT,$0-20
 	MOVW options+0(FP), R0
 	MOVD out+8(FP), R1
-	BL vdso_mx_port_create(SB)
+	BL vdso_zx_port_create(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -495,7 +495,7 @@ TEXT ·Sys_port_queue(SB),NOSPLIT,$0-28
 	MOVW handle+0(FP), R0
 	MOVD packet+8(FP), R1
 	MOVD size+16(FP), R2
-	BL vdso_mx_port_queue(SB)
+	BL vdso_zx_port_queue(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -506,7 +506,7 @@ TEXT ·Sys_port_wait(SB),NOSPLIT,$0-36
 	MOVD deadline+8(FP), R1
 	MOVD packet+16(FP), R2
 	MOVD size+24(FP), R3
-	BL vdso_mx_port_wait(SB)
+	BL vdso_zx_port_wait(SB)
 	MOVW R0, ret+32(FP)
 	BL runtime·exitsyscall(SB)
 	RET
@@ -517,7 +517,7 @@ TEXT ·Sys_port_bind(SB),NOSPLIT,$0-28
 	MOVD key+8(FP), R1
 	MOVW source+16(FP), R2
 	MOVW signals+20(FP), R3
-	BL vdso_mx_port_bind(SB)
+	BL vdso_zx_port_bind(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -526,7 +526,7 @@ TEXT ·Sys_port_cancel(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW source+4(FP), R1
 	MOVD key+8(FP), R2
-	BL vdso_mx_port_cancel(SB)
+	BL vdso_zx_port_cancel(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -535,7 +535,7 @@ TEXT ·sys_vmo_create(SB),NOSPLIT,$0-28
 	MOVD size+0(FP), R0
 	MOVW options+8(FP), R1
 	MOVD out+16(FP), R2
-	BL vdso_mx_vmo_create(SB)
+	BL vdso_zx_vmo_create(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -546,7 +546,7 @@ TEXT ·sys_vmo_read(SB),NOSPLIT,$0-44
 	MOVD offset+16(FP), R2
 	MOVD len+24(FP), R3
 	MOVD actual+32(FP), R4
-	BL vdso_mx_vmo_read(SB)
+	BL vdso_zx_vmo_read(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
@@ -557,7 +557,7 @@ TEXT ·sys_vmo_write(SB),NOSPLIT,$0-44
 	MOVD offset+16(FP), R2
 	MOVD len+24(FP), R3
 	MOVD actual+32(FP), R4
-	BL vdso_mx_vmo_write(SB)
+	BL vdso_zx_vmo_write(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
@@ -565,7 +565,7 @@ TEXT ·sys_vmo_write(SB),NOSPLIT,$0-44
 TEXT ·sys_vmo_get_size(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVD size+8(FP), R1
-	BL vdso_mx_vmo_get_size(SB)
+	BL vdso_zx_vmo_get_size(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -573,7 +573,7 @@ TEXT ·sys_vmo_get_size(SB),NOSPLIT,$0-20
 TEXT ·sys_vmo_set_size(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVD size+8(FP), R1
-	BL vdso_mx_vmo_set_size(SB)
+	BL vdso_zx_vmo_set_size(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -585,7 +585,7 @@ TEXT ·sys_vmo_op_range(SB),NOSPLIT,$0-44
 	MOVD size+16(FP), R3
 	MOVD buffer+24(FP), R4
 	MOVD buffer_size+32(FP), R5
-	BL vdso_mx_vmo_op_range(SB)
+	BL vdso_zx_vmo_op_range(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
@@ -596,7 +596,7 @@ TEXT ·Sys_vmo_clone(SB),NOSPLIT,$0-36
 	MOVD offset+8(FP), R2
 	MOVD size+16(FP), R3
 	MOVD out+24(FP), R4
-	BL vdso_mx_vmo_clone(SB)
+	BL vdso_zx_vmo_clone(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -608,14 +608,14 @@ TEXT ·sys_vmar_allocate(SB),NOSPLIT,$0-52
 	MOVW map_flags+24(FP), R3
 	MOVD child_vmar+32(FP), R4
 	MOVD child_addr+40(FP), R5
-	BL vdso_mx_vmar_allocate(SB)
+	BL vdso_zx_vmar_allocate(SB)
 	MOVW R0, ret+48(FP)
 	RET
 
 // func sys_vmar_destroy(vmar_handle Handle) Status
 TEXT ·sys_vmar_destroy(SB),NOSPLIT,$0-12
 	MOVW vmar_handle+0(FP), R0
-	BL vdso_mx_vmar_destroy(SB)
+	BL vdso_zx_vmar_destroy(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
@@ -628,7 +628,7 @@ TEXT ·sys_vmar_map(SB),NOSPLIT,$0-60
 	MOVD len+32(FP), R4
 	MOVW map_flags+40(FP), R5
 	MOVD mapped_addr+48(FP), R6
-	BL vdso_mx_vmar_map(SB)
+	BL vdso_zx_vmar_map(SB)
 	MOVW R0, ret+56(FP)
 	RET
 
@@ -637,7 +637,7 @@ TEXT ·sys_vmar_unmap(SB),NOSPLIT,$0-28
 	MOVW vmar_handle+0(FP), R0
 	MOVD addr+8(FP), R1
 	MOVD len+16(FP), R2
-	BL vdso_mx_vmar_unmap(SB)
+	BL vdso_zx_vmar_unmap(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -647,7 +647,7 @@ TEXT ·sys_vmar_protect(SB),NOSPLIT,$0-36
 	MOVD addr+8(FP), R1
 	MOVD len+16(FP), R2
 	MOVW prot_flags+24(FP), R3
-	BL vdso_mx_vmar_protect(SB)
+	BL vdso_zx_vmar_protect(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -656,7 +656,7 @@ TEXT ·sys_cprng_draw(SB),NOSPLIT,$0-28
 	MOVD buffer+0(FP), R0
 	MOVD len+8(FP), R1
 	MOVD actual+16(FP), R2
-	BL vdso_mx_cprng_draw(SB)
+	BL vdso_zx_cprng_draw(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -664,7 +664,7 @@ TEXT ·sys_cprng_draw(SB),NOSPLIT,$0-28
 TEXT ·Sys_cprng_add_entropy(SB),NOSPLIT,$0-20
 	MOVD buffer+0(FP), R0
 	MOVD len+8(FP), R1
-	BL vdso_mx_cprng_add_entropy(SB)
+	BL vdso_zx_cprng_add_entropy(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -675,7 +675,7 @@ TEXT ·Sys_fifo_create(SB),NOSPLIT,$0-36
 	MOVW options+8(FP), R2
 	MOVD out0+16(FP), R3
 	MOVD out1+24(FP), R4
-	BL vdso_mx_fifo_create(SB)
+	BL vdso_zx_fifo_create(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -685,7 +685,7 @@ TEXT ·Sys_fifo_read(SB),NOSPLIT,$0-36
 	MOVD data+8(FP), R1
 	MOVD len+16(FP), R2
 	MOVD num_written+24(FP), R3
-	BL vdso_mx_fifo_read(SB)
+	BL vdso_zx_fifo_read(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -695,7 +695,7 @@ TEXT ·Sys_fifo_write(SB),NOSPLIT,$0-36
 	MOVD data+8(FP), R1
 	MOVD len+16(FP), R2
 	MOVD num_written+24(FP), R3
-	BL vdso_mx_fifo_write(SB)
+	BL vdso_zx_fifo_write(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -705,7 +705,7 @@ TEXT ·Sys_vmar_unmap_handle_close_thread_exit(SB),NOSPLIT,$0-36
 	MOVD addr+8(FP), R1
 	MOVD len+16(FP), R2
 	MOVW handle+24(FP), R3
-	BL vdso_mx_vmar_unmap_handle_close_thread_exit(SB)
+	BL vdso_zx_vmar_unmap_handle_close_thread_exit(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -714,7 +714,7 @@ TEXT ·Sys_futex_wake_handle_close_thread_exit(SB),NOSPLIT,$0-20
 	MOVD value_ptr+0(FP), R0
 	MOVW count+8(FP), R1
 	MOVW handle+12(FP), R2
-	BL vdso_mx_futex_wake_handle_close_thread_exit(SB)
+	BL vdso_zx_futex_wake_handle_close_thread_exit(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -722,7 +722,7 @@ TEXT ·Sys_futex_wake_handle_close_thread_exit(SB),NOSPLIT,$0-20
 TEXT ·Sys_log_create(SB),NOSPLIT,$0-20
 	MOVW options+0(FP), R0
 	MOVD out+8(FP), R1
-	BL vdso_mx_log_create(SB)
+	BL vdso_zx_log_create(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -732,7 +732,7 @@ TEXT ·Sys_log_write(SB),NOSPLIT,$0-28
 	MOVW len+4(FP), R1
 	MOVD buffer+8(FP), R2
 	MOVW options+16(FP), R3
-	BL vdso_mx_log_write(SB)
+	BL vdso_zx_log_write(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -742,7 +742,7 @@ TEXT ·Sys_log_read(SB),NOSPLIT,$0-28
 	MOVW len+4(FP), R1
 	MOVD buffer+8(FP), R2
 	MOVW options+16(FP), R3
-	BL vdso_mx_log_read(SB)
+	BL vdso_zx_log_read(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -753,7 +753,7 @@ TEXT ·Sys_ktrace_read(SB),NOSPLIT,$0-36
 	MOVW offset+16(FP), R2
 	MOVW len+20(FP), R3
 	MOVD actual+24(FP), R4
-	BL vdso_mx_ktrace_read(SB)
+	BL vdso_zx_ktrace_read(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -763,7 +763,7 @@ TEXT ·Sys_ktrace_control(SB),NOSPLIT,$0-28
 	MOVW action+4(FP), R1
 	MOVW options+8(FP), R2
 	MOVD ptr+16(FP), R3
-	BL vdso_mx_ktrace_control(SB)
+	BL vdso_zx_ktrace_control(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -773,7 +773,7 @@ TEXT ·Sys_ktrace_write(SB),NOSPLIT,$0-20
 	MOVW id+4(FP), R1
 	MOVW arg0+8(FP), R2
 	MOVW arg1+12(FP), R3
-	BL vdso_mx_ktrace_write(SB)
+	BL vdso_zx_ktrace_write(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -785,7 +785,7 @@ TEXT ·Sys_mtrace_control(SB),NOSPLIT,$0-36
 	MOVW options+12(FP), R3
 	MOVD ptr+16(FP), R4
 	MOVW size+24(FP), R5
-	BL vdso_mx_mtrace_control(SB)
+	BL vdso_zx_mtrace_control(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -793,7 +793,7 @@ TEXT ·Sys_mtrace_control(SB),NOSPLIT,$0-36
 TEXT ·Sys_debug_transfer_handle(SB),NOSPLIT,$0-12
 	MOVW proc+0(FP), R0
 	MOVW handle+4(FP), R1
-	BL vdso_mx_debug_transfer_handle(SB)
+	BL vdso_zx_debug_transfer_handle(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
@@ -802,7 +802,7 @@ TEXT ·Sys_debug_read(SB),NOSPLIT,$0-28
 	MOVW handle+0(FP), R0
 	MOVD buffer+8(FP), R1
 	MOVW length+16(FP), R2
-	BL vdso_mx_debug_read(SB)
+	BL vdso_zx_debug_read(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -810,7 +810,7 @@ TEXT ·Sys_debug_read(SB),NOSPLIT,$0-28
 TEXT ·Sys_debug_write(SB),NOSPLIT,$0-20
 	MOVD buffer+0(FP), R0
 	MOVW length+8(FP), R1
-	BL vdso_mx_debug_write(SB)
+	BL vdso_zx_debug_write(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -819,7 +819,7 @@ TEXT ·Sys_debug_send_command(SB),NOSPLIT,$0-28
 	MOVW resource_handle+0(FP), R0
 	MOVD buffer+8(FP), R1
 	MOVW length+16(FP), R2
-	BL vdso_mx_debug_send_command(SB)
+	BL vdso_zx_debug_send_command(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -828,28 +828,28 @@ TEXT ·Sys_interrupt_create(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW vector+4(FP), R1
 	MOVW options+8(FP), R2
-	BL vdso_mx_interrupt_create(SB)
+	BL vdso_zx_interrupt_create(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
 // func Sys_interrupt_complete(handle Handle) Status
 TEXT ·Sys_interrupt_complete(SB),NOSPLIT,$0-12
 	MOVW handle+0(FP), R0
-	BL vdso_mx_interrupt_complete(SB)
+	BL vdso_zx_interrupt_complete(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
 // func Sys_interrupt_wait(handle Handle) Status
 TEXT ·Sys_interrupt_wait(SB),NOSPLIT,$0-12
 	MOVW handle+0(FP), R0
-	BL vdso_mx_interrupt_wait(SB)
+	BL vdso_zx_interrupt_wait(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
 // func Sys_interrupt_signal(handle Handle) Status
 TEXT ·Sys_interrupt_signal(SB),NOSPLIT,$0-12
 	MOVW handle+0(FP), R0
-	BL vdso_mx_interrupt_signal(SB)
+	BL vdso_zx_interrupt_signal(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
@@ -858,7 +858,7 @@ TEXT ·Sys_mmap_device_io(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW io_addr+4(FP), R1
 	MOVW len+8(FP), R2
-	BL vdso_mx_mmap_device_io(SB)
+	BL vdso_zx_mmap_device_io(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -869,7 +869,7 @@ TEXT ·Sys_mmap_device_memory(SB),NOSPLIT,$0-44
 	MOVW len+16(FP), R2
 	MOVD cache_policy+24(FP), R3
 	MOVD out_vaddr+32(FP), R4
-	BL vdso_mx_mmap_device_memory(SB)
+	BL vdso_zx_mmap_device_memory(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
@@ -878,7 +878,7 @@ TEXT ·Sys_io_mapping_get_info(SB),NOSPLIT,$0-28
 	MOVW handle+0(FP), R0
 	MOVD out_vaddr+8(FP), R1
 	MOVD out_size+16(FP), R2
-	BL vdso_mx_io_mapping_get_info(SB)
+	BL vdso_zx_io_mapping_get_info(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -888,7 +888,7 @@ TEXT ·Sys_vmo_create_contiguous(SB),NOSPLIT,$0-36
 	MOVD size+8(FP), R1
 	MOVW alignment_log2+16(FP), R2
 	MOVD out+24(FP), R3
-	BL vdso_mx_vmo_create_contiguous(SB)
+	BL vdso_zx_vmo_create_contiguous(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -898,7 +898,7 @@ TEXT ·Sys_bootloader_fb_get_info(SB),NOSPLIT,$0-36
 	MOVD width+8(FP), R1
 	MOVD height+16(FP), R2
 	MOVD stride+24(FP), R3
-	BL vdso_mx_bootloader_fb_get_info(SB)
+	BL vdso_zx_bootloader_fb_get_info(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -911,7 +911,7 @@ TEXT ·Sys_set_framebuffer(SB),NOSPLIT,$0-44
 	MOVW width+24(FP), R4
 	MOVW height+28(FP), R5
 	MOVW stride+32(FP), R6
-	BL vdso_mx_set_framebuffer(SB)
+	BL vdso_zx_set_framebuffer(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
@@ -924,7 +924,7 @@ TEXT ·Sys_set_framebuffer_vmo(SB),NOSPLIT,$0-36
 	MOVW width+16(FP), R4
 	MOVW height+20(FP), R5
 	MOVW stride+24(FP), R6
-	BL vdso_mx_set_framebuffer_vmo(SB)
+	BL vdso_zx_set_framebuffer_vmo(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
@@ -933,7 +933,7 @@ TEXT ·Sys_clock_adjust(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW clock_id+4(FP), R1
 	MOVD offset+8(FP), R2
-	BL vdso_mx_clock_adjust(SB)
+	BL vdso_zx_clock_adjust(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -942,14 +942,14 @@ TEXT ·Sys_pci_get_nth_device(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW index+4(FP), R1
 	MOVD out_info+8(FP), R2
-	BL vdso_mx_pci_get_nth_device(SB)
+	BL vdso_zx_pci_get_nth_device(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
 // func Sys_pci_claim_device(handle Handle) Status
 TEXT ·Sys_pci_claim_device(SB),NOSPLIT,$0-12
 	MOVW handle+0(FP), R0
-	BL vdso_mx_pci_claim_device(SB)
+	BL vdso_zx_pci_claim_device(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
@@ -957,7 +957,7 @@ TEXT ·Sys_pci_claim_device(SB),NOSPLIT,$0-12
 TEXT ·Sys_pci_enable_bus_master(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVD enable+8(FP), R1
-	BL vdso_mx_pci_enable_bus_master(SB)
+	BL vdso_zx_pci_enable_bus_master(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -965,14 +965,14 @@ TEXT ·Sys_pci_enable_bus_master(SB),NOSPLIT,$0-20
 TEXT ·Sys_pci_enable_pio(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVD enable+8(FP), R1
-	BL vdso_mx_pci_enable_pio(SB)
+	BL vdso_zx_pci_enable_pio(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
 // func Sys_pci_reset_device(handle Handle) Status
 TEXT ·Sys_pci_reset_device(SB),NOSPLIT,$0-12
 	MOVW handle+0(FP), R0
-	BL vdso_mx_pci_reset_device(SB)
+	BL vdso_zx_pci_reset_device(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
@@ -982,7 +982,7 @@ TEXT ·Sys_pci_map_mmio(SB),NOSPLIT,$0-28
 	MOVW bar_num+4(FP), R1
 	MOVD cache_policy+8(FP), R2
 	MOVD out_handle+16(FP), R3
-	BL vdso_mx_pci_map_mmio(SB)
+	BL vdso_zx_pci_map_mmio(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -993,7 +993,7 @@ TEXT ·Sys_pci_io_write(SB),NOSPLIT,$0-28
 	MOVW offset+8(FP), R2
 	MOVW len+12(FP), R3
 	MOVW value+16(FP), R4
-	BL vdso_mx_pci_io_write(SB)
+	BL vdso_zx_pci_io_write(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -1004,7 +1004,7 @@ TEXT ·Sys_pci_io_read(SB),NOSPLIT,$0-28
 	MOVW offset+8(FP), R2
 	MOVW len+12(FP), R3
 	MOVD out_value+16(FP), R4
-	BL vdso_mx_pci_io_read(SB)
+	BL vdso_zx_pci_io_read(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -1013,7 +1013,7 @@ TEXT ·Sys_pci_map_interrupt(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW which_irq+4(FP), R1
 	MOVD out_handle+8(FP), R2
-	BL vdso_mx_pci_map_interrupt(SB)
+	BL vdso_zx_pci_map_interrupt(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -1021,7 +1021,7 @@ TEXT ·Sys_pci_map_interrupt(SB),NOSPLIT,$0-20
 TEXT ·Sys_pci_map_config(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVD out_handle+8(FP), R1
-	BL vdso_mx_pci_map_config(SB)
+	BL vdso_zx_pci_map_config(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -1030,7 +1030,7 @@ TEXT ·Sys_pci_query_irq_mode_caps(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW mode+4(FP), R1
 	MOVD out_max_irqs+8(FP), R2
-	BL vdso_mx_pci_query_irq_mode_caps(SB)
+	BL vdso_zx_pci_query_irq_mode_caps(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -1039,7 +1039,7 @@ TEXT ·Sys_pci_set_irq_mode(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW mode+4(FP), R1
 	MOVW requested_irq_count+8(FP), R2
-	BL vdso_mx_pci_set_irq_mode(SB)
+	BL vdso_zx_pci_set_irq_mode(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -1048,7 +1048,7 @@ TEXT ·Sys_pci_init(SB),NOSPLIT,$0-28
 	MOVW handle+0(FP), R0
 	MOVD init_buf+8(FP), R1
 	MOVW len+16(FP), R2
-	BL vdso_mx_pci_init(SB)
+	BL vdso_zx_pci_init(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -1059,21 +1059,21 @@ TEXT ·Sys_pci_add_subtract_io_range(SB),NOSPLIT,$0-44
 	MOVD base+16(FP), R2
 	MOVD len+24(FP), R3
 	MOVD add+32(FP), R4
-	BL vdso_mx_pci_add_subtract_io_range(SB)
+	BL vdso_zx_pci_add_subtract_io_range(SB)
 	MOVW R0, ret+40(FP)
 	RET
 
 // func Sys_acpi_uefi_rsdp(handle Handle) uint64
 TEXT ·Sys_acpi_uefi_rsdp(SB),NOSPLIT,$0-16
 	MOVW handle+0(FP), R0
-	BL vdso_mx_acpi_uefi_rsdp(SB)
+	BL vdso_zx_acpi_uefi_rsdp(SB)
 	MOVD R0, ret+8(FP)
 	RET
 
 // func Sys_acpi_cache_flush(handle Handle) Status
 TEXT ·Sys_acpi_cache_flush(SB),NOSPLIT,$0-12
 	MOVW handle+0(FP), R0
-	BL vdso_mx_acpi_cache_flush(SB)
+	BL vdso_zx_acpi_cache_flush(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
@@ -1083,14 +1083,14 @@ TEXT ·Sys_resource_create(SB),NOSPLIT,$0-36
 	MOVD records+8(FP), R1
 	MOVW count+16(FP), R2
 	MOVD resource_out+24(FP), R3
-	BL vdso_mx_resource_create(SB)
+	BL vdso_zx_resource_create(SB)
 	MOVW R0, ret+32(FP)
 	RET
 
 // func Sys_resource_destroy(handle Handle) Status
 TEXT ·Sys_resource_destroy(SB),NOSPLIT,$0-12
 	MOVW handle+0(FP), R0
-	BL vdso_mx_resource_destroy(SB)
+	BL vdso_zx_resource_destroy(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
@@ -1100,7 +1100,7 @@ TEXT ·Sys_resource_get_handle(SB),NOSPLIT,$0-28
 	MOVW index+4(FP), R1
 	MOVW options+8(FP), R2
 	MOVD out+16(FP), R3
-	BL vdso_mx_resource_get_handle(SB)
+	BL vdso_zx_resource_get_handle(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -1111,7 +1111,7 @@ TEXT ·Sys_resource_do_action(SB),NOSPLIT,$0-28
 	MOVW action+8(FP), R2
 	MOVW arg0+12(FP), R3
 	MOVW arg1+16(FP), R4
-	BL vdso_mx_resource_do_action(SB)
+	BL vdso_zx_resource_do_action(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
@@ -1119,7 +1119,7 @@ TEXT ·Sys_resource_do_action(SB),NOSPLIT,$0-28
 TEXT ·Sys_resource_connect(SB),NOSPLIT,$0-12
 	MOVW handle+0(FP), R0
 	MOVW channel+4(FP), R1
-	BL vdso_mx_resource_connect(SB)
+	BL vdso_zx_resource_connect(SB)
 	MOVW R0, ret+8(FP)
 	RET
 
@@ -1127,7 +1127,7 @@ TEXT ·Sys_resource_connect(SB),NOSPLIT,$0-12
 TEXT ·Sys_resource_accept(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVD channel+8(FP), R1
-	BL vdso_mx_resource_accept(SB)
+	BL vdso_zx_resource_accept(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -1136,7 +1136,7 @@ TEXT ·Sys_hypervisor_create(SB),NOSPLIT,$0-20
 	MOVW handle+0(FP), R0
 	MOVW options+4(FP), R1
 	MOVD out+8(FP), R2
-	BL vdso_mx_hypervisor_create(SB)
+	BL vdso_zx_hypervisor_create(SB)
 	MOVW R0, ret+16(FP)
 	RET
 
@@ -1148,7 +1148,7 @@ TEXT ·Sys_hypervisor_op(SB),NOSPLIT,$0-44
 	MOVW args_len+16(FP), R3
 	MOVD result+24(FP), R4
 	MOVW result_len+32(FP), R5
-	BL vdso_mx_hypervisor_op(SB)
+	BL vdso_zx_hypervisor_op(SB)
 	MOVW R0, ret+40(FP)
 	RET
 

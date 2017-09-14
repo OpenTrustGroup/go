@@ -8,12 +8,12 @@ package mxc
 
 import "syscall"
 
-func ExtractCMXIO(fd int) (uintptr, error) {
-	// Extract the 'C' mxio
-	f, err := transferMXIOFromCFD(fd)
+func ExtractCFDIO(fd int) (uintptr, error) {
+	// Extract the 'C' fdio
+	f, err := transferFDIOFromCFD(fd)
 	if err != nil {
 		return 0, err
 	}
-	// Convert it to a 'Go' mxio
-	return uintptr(syscall.OpenMXIO(f)), nil
+	// Convert it to a 'Go' fdio
+	return uintptr(syscall.OpenFDIO(f)), nil
 }

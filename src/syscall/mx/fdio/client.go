@@ -4,7 +4,7 @@
 
 // +build fuchsia
 
-package mxio
+package fdio
 
 import (
 	"sync/atomic"
@@ -215,7 +215,7 @@ func (r *RemoteIO) Close() error {
 	return nil
 }
 
-// getObject requests an MXIO object remotely
+// getObject requests an FDIO object remotely
 func (r *RemoteIO) getObject(op uint32, name string, flags int32, mode uint32) (*RioObject, error) {
 	if len(name) > MessageChunkSize {
 		return nil, mx.Error{Status: mx.ErrInvalidArgs, Text: "RemoteIO"}
@@ -303,8 +303,8 @@ func closeAll(handles []mx.Handle) {
 	}
 }
 
-// Consumes handles, wrapping them in mxio object or closing them on error.
-func createFromHandles(protocol Protocol, handles []mx.Handle, extra []byte) (MXIO, error) {
+// Consumes handles, wrapping them in fdio object or closing them on error.
+func createFromHandles(protocol Protocol, handles []mx.Handle, extra []byte) (FDIO, error) {
 	switch protocol {
 	case ProtocolPipe:
 		if len(handles) != 1 {
@@ -328,14 +328,14 @@ func createFromHandles(protocol Protocol, handles []mx.Handle, extra []byte) (MX
 	case ProtocolSocket:
 		return NewSocket(handles)
 	default:
-		println("Unknown mxio protocol, ", protocol)
+		println("Unknown fdio protocol, ", protocol)
 		// In the error case, the server may have given us handles -- close them
 		closeAll(handles)
 		return nil, mx.Error{Status: mx.ErrNotSupported, Text: "RemoteIO"}
 	}
 }
 
-func (r *RemoteIO) Open(path string, flags int32, mode uint32) (MXIO, error) {
+func (r *RemoteIO) Open(path string, flags int32, mode uint32) (FDIO, error) {
 	ro, err := r.getObject(OpOpen, path, flags, mode)
 	if err != nil {
 		return nil, err
@@ -476,7 +476,7 @@ func (r *RemoteIO) Misc(op uint32, off int64, in, out []byte, handles []mx.Handl
 	return n, nil
 }
 
-func Stat(f MXIO) (attr Vnattr, err error) {
+func Stat(f FDIO) (attr Vnattr, err error) {
 	b := (*[unsafe.Sizeof(attr)]byte)(unsafe.Pointer(&attr))
 	if _, err := f.Misc(OpStat, 0, nil, (*b)[:], nil); err != nil {
 		return Vnattr{}, err
@@ -484,7 +484,7 @@ func Stat(f MXIO) (attr Vnattr, err error) {
 	return attr, nil
 }
 
-func UnlinkAt(dir MXIO, name string) error {
+func UnlinkAt(dir FDIO, name string) error {
 	_, err := dir.Misc(OpUnlink, 0, []byte(name), nil, nil)
 	if err != nil {
 		return err

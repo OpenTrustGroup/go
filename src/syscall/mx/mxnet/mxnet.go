@@ -4,7 +4,7 @@
 
 // +build fuchsia
 
-// Package mxnet contains types for talking to Fuchsia's mxio net interface.
+// Package mxnet contains types for talking to Fuchsia's fdio net interface.
 package mxnet
 
 import (
@@ -34,7 +34,7 @@ type Addr string
 //	}
 
 const SockaddrLen = c_sockaddr_in6_len
-const SockmsgHdrLen = c_mxio_socket_msg_hdr_len
+const SockmsgHdrLen = c_fdio_socket_msg_hdr_len
 const SockaddrReplyLen = c_mxrio_sockaddr_reply_len
 
 func EncodeSockmsgHdr(dst []byte, addr Addr, port uint16, flags int) (err error) {
@@ -48,7 +48,7 @@ func EncodeSockmsgHdr(dst []byte, addr Addr, port uint16, flags int) (err error)
 			return err
 		}
 	}
-	hdr := (*c_mxio_socket_msg_hdr)(unsafe.Pointer(&dst[0]))
+	hdr := (*c_fdio_socket_msg_hdr)(unsafe.Pointer(&dst[0]))
 	hdr.addrlen = c_socklen(n)
 	hdr.flags = int32(flags)
 	return nil
@@ -62,7 +62,7 @@ func DecodeSockmsgHdr(src []byte) (addr Addr, port uint16, flags int, err error)
 	if err != nil {
 		return "", 0, 0, err
 	}
-	hdr := (*c_mxio_socket_msg_hdr)(unsafe.Pointer(&src[0]))
+	hdr := (*c_fdio_socket_msg_hdr)(unsafe.Pointer(&src[0]))
 	flags = int(hdr.flags)
 	return addr, port, flags, nil
 }
@@ -130,7 +130,7 @@ func (err errString) Error() string { return string(err) }
 const (
 	c_sockaddr_in_len          = int(unsafe.Sizeof(c_sockaddr_in{}))
 	c_sockaddr_in6_len         = int(unsafe.Sizeof(c_sockaddr_in6{}))
-	c_mxio_socket_msg_hdr_len  = int(unsafe.Sizeof(c_mxio_socket_msg_hdr{}))
+	c_fdio_socket_msg_hdr_len  = int(unsafe.Sizeof(c_fdio_socket_msg_hdr{}))
 	c_mxrio_sockaddr_reply_len = int(unsafe.Sizeof(c_mxrio_sockaddr_reply{}))
 )
 

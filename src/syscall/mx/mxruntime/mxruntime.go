@@ -4,7 +4,7 @@
 
 // +build fuchsia
 
-// Package mxruntime provides access to MXIO process state.
+// Package mxruntime provides access to FDIO process state.
 package mxruntime
 
 // TODO: move process handle globals from mx into mxruntime.

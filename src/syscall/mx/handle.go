@@ -8,10 +8,10 @@ package mx
 
 import "unsafe"
 
-// Process-wide MXIO handles.
+// Process-wide FDIO handles.
 var (
 	RootHandle       Handle
-	StdioHandles     [3][3]Handle // 3 stdio files, each with up to 3 (mxio.MaxHandles) handles
+	StdioHandles     [3][3]Handle // 3 stdio files, each with up to 3 (fdio.MaxHandles) handles
 	StdioHandleTypes [3]int
 	CwdHandle        Handle
 	ProcHandle       Handle
@@ -285,7 +285,7 @@ type PacketHeader struct {
 	Extra uint32
 }
 
-// Packet describes the unit of communication via an MXIO protocol
+// Packet describes the unit of communication via an FDIO protocol
 type Packet struct {
 	Hdr   PacketHeader
 	Bytes [32]uint8
@@ -359,7 +359,7 @@ func (p *Port) Cancel(source Handle, key uint64) error {
 
 func (p *Port) WaitAsync(handle Handle, key uint64, signals Signals, options uint32) error {
 	if status := Sys_object_wait_async(handle, p.Handle, key, signals, options); status != ErrOk {
-		return Error{Status: status, Text: "mxio.Port.WaitAsync"}
+		return Error{Status: status, Text: "fdio.Port.WaitAsync"}
 	}
 	return nil
 }

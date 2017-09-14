@@ -8,19 +8,19 @@ package mx
 
 import "unsafe"
 
-type Status int32    // mx_status_t
-type Handle int32    // mx_handle_t
-type Time uint64     // mx_time_t, nanoseconds
-type Duration uint64 // mx_duration_t, nanoseconds
-type Signals uint32  // mx_signals_t
-type Rights uint32   // mx_rights_t
-type Paddr uintptr   // mx_paddr_t
+type Status int32    // zx_status_t
+type Handle int32    // zx_handle_t
+type Time uint64     // zx_time_t, nanoseconds
+type Duration uint64 // zx_duration_t, nanoseconds
+type Signals uint32  // zx_signals_t
+type Rights uint32   // zx_rights_t
+type Paddr uintptr   // zx_paddr_t
 
 type WaitItem struct {
 	Handle  Handle
 	WaitFor Signals
 	Pending Signals
-} // mx_wait_item_t
+} // zx_wait_item_t
 
 const HANDLE_INVALID = Handle(0)
 
@@ -54,7 +54,7 @@ type RrecSelf struct {
 	ChildCount  uint32
 	_           [2]uint32
 	Name        [MX_MAX_NAME_LEN]uint8
-} // mx_rrec_self_t
+} // zx_rrec_self_t
 
 type RrecMMIO struct {
 	Type     uint16 // MX_RREC_MMIO
@@ -63,7 +63,7 @@ type RrecMMIO struct {
 	PhysBase uint64
 	PhysSize uint64
 	_        [10]uint32
-} // mx_rrec_mmio_t
+} // zx_rrec_mmio_t
 
 type RrecIRQ struct {
 	Type     uint16 // MX_RREC_IRQ
@@ -72,7 +72,7 @@ type RrecIRQ struct {
 	IRQBase  uint32
 	IRQCount uint32
 	_        [12]uint32
-} // mx_rrec_irq_t
+} // zx_rrec_irq_t
 
 type RrecIOPort struct {
 	Type      uint16 // MX_RREC_IOPORT
@@ -81,19 +81,19 @@ type RrecIOPort struct {
 	PortBase  uint32
 	PortCount uint32
 	_         [12]uint32
-} // mx_rrec_ioport_t
+} // zx_rrec_ioport_t
 
 type RrecData struct {
 	Type    uint16
 	Subtype uint16
 	Options uint32 // low 4 bits are count
 	Data    [56]uint8
-} // mx_rrec_data_t
+} // zx_rrec_data_t
 
 type Rrec struct {
 	typ uint16
 	_   [62]uint8
-} // mx_rrec_t
+} // zx_rrec_t
 
 func (r *Rrec) Box() RrecValue {
 	switch r.typ {
@@ -139,7 +139,7 @@ type FIFOState struct {
 	head, tail uint64
 }
 
-// Status codes. See magenta/system/public/magenta/errors.h
+// Status codes. See zircon/system/public/zircon/errors.h
 const (
 	ErrOk Status = -iota
 	ErrInternal
