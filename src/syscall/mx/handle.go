@@ -343,13 +343,6 @@ func (p *Port) Wait(packet *Packet, deadline Time) error {
 	return nil
 }
 
-func (p *Port) Bind(key uint64, source Handle, signals Signals) error {
-	if status := Sys_port_bind(p.Handle, key, source, signals); status != ErrOk {
-		return Error{Status: status, Text: "mx.Port.Bind"}
-	}
-	return nil
-}
-
 func (p *Port) Cancel(source Handle, key uint64) error {
 	if status := Sys_port_cancel(p.Handle, source, key); status != ErrOk {
 		return Error{Status: status, Text: "mx.Port.Cancel"}

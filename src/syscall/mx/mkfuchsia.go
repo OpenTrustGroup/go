@@ -286,7 +286,7 @@ func typeSize(t magentaType) int {
 		return 1
 	case zx_int, zx_uint, zx_uintptr_t, zx_size_t:
 		return regSize
-	case zx_char:
+	case zx_char, zx_uint8_t:
 		return 1
 	case zx_int16_t, zx_uint16_t:
 		return 2
@@ -338,7 +338,7 @@ func printGoType(buf *bytes.Buffer, t magentaType) {
 		fmt.Fprint(buf, "uint")
 	case zx_int:
 		fmt.Fprint(buf, "int")
-	case zx_char:
+	case zx_char, zx_uint8_t:
 		fmt.Fprint(buf, "uint8")
 	case zx_int16_t:
 		fmt.Fprint(buf, "int16")
@@ -407,6 +407,16 @@ func (p *parser) parse() (syscalls []magentaSyscallDef, err error) {
 				return nil, err
 			}
 			if strings.Contains(call.name, "_test") {
+				continue
+			}
+			// The PCI syscalls are DDK-only and temporary, so exclude generation of
+			// helpers for them
+			if strings.HasPrefix(call.name, "pci_") {
+				continue
+			}
+			// The hypervisor syscalls have complex parameter and return types. Skip
+			// generation for these until we need them.
+			if strings.HasPrefix(call.name, "guest_") || strings.HasPrefix(call.name, "vcpu_") {
 				continue
 			}
 			syscalls = append(syscalls, call)
@@ -753,6 +763,7 @@ const (
 	zx_uint
 	zx_int
 	zx_char
+	zx_uint8_t
 	zx_int16_t
 	zx_uint16_t
 	zx_int32_t
@@ -788,6 +799,7 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"unsigned int":             zx_uint,
 	"int":                      zx_int,
 	"char":                     zx_char,
+	"uint8_t":                  zx_uint8_t,
 	"int16_t":                  zx_int16_t,
 	"int32_t":                  zx_int32_t,
 	"int64_t":                  zx_int64_t,
@@ -817,8 +829,12 @@ var magentaTypeNamedStr = map[string]magentaTypeNamed{
 	"zx_fifo_state_t":          zx_fifo_state_t,
 	// TODO(smklein): Remove the following temporary types. They could be blacklisted, but this is
 	// easier.
-	"zx_pcie_get_nth_info_t": zx_int,
 	"zx_cache_policy_t":      zx_int,
-	"zx_pci_irq_mode_t":      zx_int,
+	"zx_port_packet_t":       zx_int,
 	"zx_pci_init_arg_t":      zx_int,
+	"zx_pci_irq_mode_t":      zx_int,
+	"zx_pci_resource_t":      zx_int,
+	"zx_pcie_device_info_t":  zx_int,
+	"zx_pcie_get_nth_info_t": zx_int,
+	"zx_vcpu_create_args_t":  zx_int,
 }
