@@ -5,7 +5,7 @@
 package runtime
 
 import (
-	"syscall/mx"
+	"syscall/zx"
 	"unsafe"
 )
 
@@ -20,21 +20,21 @@ func getRandomData(r []byte) {
 
 //go:nosplit
 func futexsleep(addr *uint32, val uint32, ns int64) {
-	deadline := mx.Sys_deadline_after(mx.Duration(ns))
+	deadline := zx.Sys_deadline_after(zx.Duration(ns))
 	if ns < 0 {
-		deadline = mx.Time(mx.TimensecInfinite)
+		deadline = zx.Time(zx.TimensecInfinite)
 	}
-	mx.Sys_futex_wait((*int)(unsafe.Pointer(addr)), int(val), deadline)
+	zx.Sys_futex_wait((*int)(unsafe.Pointer(addr)), int(val), deadline)
 }
 
 //go:nosplit
 func futexwakeup(addr *uint32, cnt uint32) {
-	mx.Sys_futex_wake((*int)(unsafe.Pointer(addr)), cnt)
+	zx.Sys_futex_wake((*int)(unsafe.Pointer(addr)), cnt)
 }
 
 //go:nosplit
 func osyield() {
-	mx.Sys_nanosleep(0)
+	zx.Sys_nanosleep(0)
 }
 
 // cgocallm0 calls a C function on the current stack.
@@ -48,23 +48,23 @@ func cgocallm0(fn, arg unsafe.Pointer)
 func osinit() {
 	if _cgo_get_fdio_root != nil {
 		cgocallm0(_cgo_get_fdio_root, unsafe.Pointer(&fdioHandles))
-		mx.RootHandle = mx.Handle(fdioHandles.rootClone)
+		zx.RootHandle = zx.Handle(fdioHandles.rootClone)
 		for i := 0; i < 3; i = i + 1 {
 			for j := 0; j < int(fdioHandles.stdioCloneNumHandles[i]); j = j + 1 {
-				mx.StdioHandles[i][j] = fdioHandles.stdioClones[i*3+j]
+				zx.StdioHandles[i][j] = fdioHandles.stdioClones[i*3+j]
 			}
-			mx.StdioHandleTypes[i] = int(fdioHandles.stdioCloneTypes[i])
+			zx.StdioHandleTypes[i] = int(fdioHandles.stdioCloneTypes[i])
 		}
-		mx.CwdHandle = mx.Handle(fdioHandles.cwd)
-		mx.ProcHandle = mx.Handle(fdioHandles.processSelf)
-		mx.VMARRoot = mx.VMAR(fdioHandles.vmarRootSelf)
+		zx.CwdHandle = zx.Handle(fdioHandles.cwd)
+		zx.ProcHandle = zx.Handle(fdioHandles.processSelf)
+		zx.VMARRoot = zx.VMAR(fdioHandles.vmarRootSelf)
 	} else {
 		// TODO: implement cgo-less init
 		println("runtime: no fuchsia process handle without cgo yet")
 		exit(2)
 	}
 
-	ncpu = int32(mx.Sys_system_get_num_cpus())
+	ncpu = int32(zx.Sys_system_get_num_cpus())
 	physPageSize = 4096
 }
 
@@ -72,10 +72,10 @@ func parseRootNS() {
 	if fdioHandles.rootNSNumHandles > 0 {
 		const maxHandleCount = 1 << 20 // arbitrary
 		paths := (*(*[maxHandleCount]*byte)(unsafe.Pointer(fdioHandles.rootNSPaths)))[:fdioHandles.rootNSNumHandles]
-		handles := (*(*[maxHandleCount]mx.Handle)(unsafe.Pointer(fdioHandles.rootNSHandles)))[:fdioHandles.rootNSNumHandles]
-		mx.RootNSMap = make(map[string]mx.Handle)
+		handles := (*(*[maxHandleCount]zx.Handle)(unsafe.Pointer(fdioHandles.rootNSHandles)))[:fdioHandles.rootNSNumHandles]
+		zx.RootNSMap = make(map[string]zx.Handle)
 		for i, p := range paths {
-			mx.RootNSMap[gostring(p)] = handles[i]
+			zx.RootNSMap[gostring(p)] = handles[i]
 		}
 	}
 }
@@ -140,17 +140,17 @@ var gothreadname = []byte("gothread")
 
 //go:nowritebarrier
 func newosproc(mp *m, stk unsafe.Pointer) {
-	p := mx.Handle(0) // TODO: only works due to temporary hack in magenta
-	var h mx.Handle
-	status := mx.Sys_thread_create(p, &gothreadname[0], uint32(len(gothreadname)), 0, &h)
+	p := zx.Handle(0) // TODO: only works due to temporary hack in zircon
+	var h zx.Handle
+	status := zx.Sys_thread_create(p, &gothreadname[0], uint32(len(gothreadname)), 0, &h)
 	if status < 0 {
-		println("runtime: newosproc mx.Sys_thread_create failed:", h)
+		println("runtime: newosproc zx.Sys_thread_create failed:", h)
 		exit(2)
 	}
 
-	status = mx.Sys_thread_start(h, funcPC(threadinit), uintptr(stk), uintptr(unsafe.Pointer(mp)), 0)
+	status = zx.Sys_thread_start(h, funcPC(threadinit), uintptr(stk), uintptr(unsafe.Pointer(mp)), 0)
 	if status < 0 {
-		println("runtime: newosproc mx.Sys_thread_start failed:", h)
+		println("runtime: newosproc zx.Sys_thread_start failed:", h)
 		exit(2)
 	}
 }
@@ -168,7 +168,7 @@ type zx_proc_info struct {
 	version       uint32
 	next_tls_slot uint32
 	proc_args     *zx_proc_args
-	handle        *mx.Handle
+	handle        *zx.Handle
 	handle_info   *uint32
 	handle_count  int32
 	argv          **byte
@@ -190,19 +190,19 @@ func resetcpuprofiler(hz int32) {
 
 // fdio_init matches a Go struct of the same name in gcc_fdio.c.
 type fdio_init struct {
-	rootClone            mx.Handle
-	stdioClones          [9]mx.Handle // 3 * fdio.MaxHandles
+	rootClone            zx.Handle
+	stdioClones          [9]zx.Handle // 3 * fdio.MaxHandles
 	stdioCloneNumHandles [3]uint32
 	stdioCloneTypes      [3]uint32
-	cwd                  mx.Handle
-	processSelf          mx.Handle
-	vmarRootSelf         mx.Handle
+	cwd                  zx.Handle
+	processSelf          zx.Handle
+	vmarRootSelf         zx.Handle
 	_                    int32
 	envlen               int32
 	environ              **byte
 	_                    int32
 	rootNSNumHandles     int32
-	rootNSHandles        *mx.Handle
+	rootNSHandles        *zx.Handle
 	rootNSPaths          **byte
 }
 
@@ -230,14 +230,14 @@ const _NSIG = 65 // TODO
 //go:nosplit
 func nanotime() int64 {
 	const MX_CLOCK_MONOTONIC = 0
-	return int64(mx.Sys_time_get(MX_CLOCK_MONOTONIC))
+	return int64(zx.Sys_time_get(MX_CLOCK_MONOTONIC))
 }
 
 //go:linkname time_now time.now
 //go:nosplit
 func time_now() (sec int64, nsec int32) {
 	const MX_CLOCK_UTC = 1
-	x := int64(mx.Sys_time_get(MX_CLOCK_UTC))
+	x := int64(zx.Sys_time_get(MX_CLOCK_UTC))
 	return int64(x / 1e9), int32(x % 1e9)
 }
 
@@ -245,7 +245,7 @@ func unixnanotime() int64 {
 	return nanotime()
 }
 
-var logger mx.Handle
+var logger zx.Handle
 var logBufferArray [1024]byte
 var logBufferN int
 
@@ -256,7 +256,7 @@ func write(fd uintptr, buf unsafe.Pointer, n int32) int32 {
 		// these file descriptors come from print, they will already be serialized by a lock in
 		// print's implementation.
 		if logger <= 0 {
-			mx.Sys_log_create(0, &logger)
+			zx.Sys_log_create(0, &logger)
 			logBufferN = 0
 		}
 		if logger > 0 {
@@ -264,7 +264,7 @@ func write(fd uintptr, buf unsafe.Pointer, n int32) int32 {
 			// output until a newline character is encountered.
 			logBufferN += copy(logBufferArray[logBufferN:], (*[1 << 30]byte)(buf)[:n])
 			if logBufferArray[logBufferN-1] == '\n' {
-				status := mx.Sys_log_write(logger, uint32(logBufferN), unsafe.Pointer(&logBufferArray[0]), 0)
+				status := zx.Sys_log_write(logger, uint32(logBufferN), unsafe.Pointer(&logBufferArray[0]), 0)
 				// Flush buffer, regardless of status returned from write
 				logBufferN = 0
 				if status < 0 {
@@ -279,26 +279,26 @@ func write(fd uintptr, buf unsafe.Pointer, n int32) int32 {
 
 //go:nosplit
 func exit(code int32) {
-	mx.Sys_process_exit(int(code))
+	zx.Sys_process_exit(int(code))
 }
 
 //go:nosplit
 func usleep(usec uint32) {
-	mx.Sys_nanosleep(mx.Sys_deadline_after(mx.Duration(usec * 1000)))
+	zx.Sys_nanosleep(zx.Sys_deadline_after(zx.Duration(usec * 1000)))
 }
 
 func signame(sig uint32) string {
 	return "unknown_sig" // TODO
 }
 
-// magenta_mktls
+// zircon_mktls
 //go:nosplit
-func magenta_mktls() {
+func zircon_mktls() {
 	// TODO
 }
 
 //go:nosplit
-func magenta_settls(val uintptr) {
+func zircon_settls(val uintptr) {
 	// TODO: should call zx_set_object_property with property MX_PROP_REGISTER_FS in amd64 or
 	// MX_PROP_REGISTER_CP15 on arm.
 }

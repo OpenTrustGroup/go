@@ -7,7 +7,7 @@ package os
 import (
 	"errors"
 	"syscall"
-	"syscall/mx/fdio"
+	"syscall/zx/fdio"
 	"time"
 )
 

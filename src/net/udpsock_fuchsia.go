@@ -7,7 +7,7 @@ package net
 import (
 	"context"
 	"syscall"
-	"syscall/mx/mxnet"
+	"syscall/zx/mxnet"
 )
 
 func (a *UDPAddr) encode() ([]byte, error) {

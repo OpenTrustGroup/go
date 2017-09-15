@@ -18,8 +18,8 @@ import "C"
 import (
 	"errors"
 	"syscall"
-	"syscall/mx"
-	"syscall/mx/fdio"
+	"syscall/zx"
+	"syscall/zx/fdio"
 	"unsafe"
 )
 
@@ -80,7 +80,7 @@ func cloneHandleToCHandleArray(m fdio.FDIO) (int, []C.zx_handle_t, []C.uint32_t,
 func closeAll(handles []C.zx_handle_t) {
 	for _, h := range handles {
 		if h != 0 {
-			mx.Handle(h).Close()
+			zx.Handle(h).Close()
 		}
 	}
 }
@@ -101,8 +101,8 @@ func launchpadTransferFileToTargetFd(lp *C.launchpad_t, f *File, target int) err
 		typesC[i] = typesC[i] | C.uint32_t(target<<16)
 	}
 
-	status := mx.Status(C.launchpad_add_handles(lp, C.size_t(numHandles), &(handlesC[0]), &(typesC[0])))
-	if status != mx.ErrOk {
+	status := zx.Status(C.launchpad_add_handles(lp, C.size_t(numHandles), &(handlesC[0]), &(typesC[0])))
+	if status != zx.ErrOk {
 		closeAll(handlesC)
 		return errors.New("transfer file")
 	}
@@ -123,15 +123,15 @@ func launchpadSetWd(lp *C.launchpad_t, dir string) error {
 		return err
 	}
 	typesC[0] = fdio.HandleTypeCWD
-	status := mx.Status(C.launchpad_add_handles(lp, C.size_t(numHandles), &(handlesC[0]), &(typesC[0])))
-	if status != mx.ErrOk {
+	status := zx.Status(C.launchpad_add_handles(lp, C.size_t(numHandles), &(handlesC[0]), &(typesC[0])))
+	if status != zx.ErrOk {
 		closeAll(handlesC)
 		return errors.New("transfer wd error: " + itoa(int(status)))
 	}
 	return nil
 }
 
-func launchpadLaunchFdio(name string, argv []string, attr *ProcAttr) (mx.Handle, error) {
+func launchpadLaunchFdio(name string, argv []string, attr *ProcAttr) (zx.Handle, error) {
 	nameC := C.CString(name)
 	defer C.free(unsafe.Pointer(nameC))
 	argvC := makeCStringArray(argv)
@@ -142,35 +142,35 @@ func launchpadLaunchFdio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 	}
 	envC := makeCStringArray(env)
 	defer freeCStringArray(envC)
-	jobToChild := mx.Handle(0)
-	job := mx.Handle(C.zx_job_default())
+	jobToChild := zx.Handle(0)
+	job := zx.Handle(C.zx_job_default())
 	if job > 0 {
 		err := error(nil)
-		jobToChild, err = job.Duplicate(mx.RightSameRights)
+		jobToChild, err = job.Duplicate(zx.RightSameRights)
 		if err != nil {
 			return 0, errors.New("duplicating job")
 		}
 	}
 	lp := &C.launchpad_t{}
-	status := mx.Status(C.launchpad_create(C.zx_handle_t(jobToChild), nameC, &lp))
-	if status != mx.ErrOk {
+	status := zx.Status(C.launchpad_create(C.zx_handle_t(jobToChild), nameC, &lp))
+	if status != zx.ErrOk {
 		return 0, errors.New("launchpad_create")
 	}
 	defer C.launchpad_destroy(lp)
-	status = mx.Status(C.launchpad_load_from_file(lp, nameC))
-	if status != mx.ErrOk {
+	status = zx.Status(C.launchpad_load_from_file(lp, nameC))
+	if status != zx.ErrOk {
 		return 0, errors.New("loading vdso")
 	}
-	status = mx.Status(C.launchpad_set_args(lp, C.int(len(argvC)-1), &(argvC[0])))
-	if status != mx.ErrOk {
+	status = zx.Status(C.launchpad_set_args(lp, C.int(len(argvC)-1), &(argvC[0])))
+	if status != zx.ErrOk {
 		return 0, errors.New("arguments")
 	}
-	status = mx.Status(C.launchpad_set_environ(lp, &(envC[0])))
-	if status != mx.ErrOk {
+	status = zx.Status(C.launchpad_set_environ(lp, &(envC[0])))
+	if status != zx.ErrOk {
 		return 0, errors.New("environ")
 	}
-	status = mx.Status(C.launchpad_clone(lp, C.uint32_t(LaunchpadCloneFdioNamespace)))
-	if status != mx.ErrOk {
+	status = zx.Status(C.launchpad_clone(lp, C.uint32_t(LaunchpadCloneFdioNamespace)))
+	if status != zx.ErrOk {
 		return 0, errors.New("launchpad_clone")
 	}
 	if attr.Dir != "" {
@@ -179,8 +179,8 @@ func launchpadLaunchFdio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 			return 0, err
 		}
 	} else {
-		status = mx.Status(C.launchpad_clone(lp, C.uint32_t(LaunchpadCloneFdioCwd))) // TODO: Go to Attr.Dir
-		if status != mx.ErrOk {
+		status = zx.Status(C.launchpad_clone(lp, C.uint32_t(LaunchpadCloneFdioCwd))) // TODO: Go to Attr.Dir
+		if status != zx.ErrOk {
 			return 0, errors.New("clone_fdio_cwd")
 		}
 	}
@@ -189,7 +189,7 @@ func launchpadLaunchFdio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 			return 0, err
 		}
 	}
-	h := mx.Handle(C.launchpad_start(lp))
+	h := zx.Handle(C.launchpad_start(lp))
 	if h < 0 {
 		return 0, errors.New("launchpad error")
 	}
@@ -197,23 +197,23 @@ func launchpadLaunchFdio(name string, argv []string, attr *ProcAttr) (mx.Handle,
 }
 
 func (p *Process) kill() error {
-	procHandle := mx.Handle(p.handle)
-	status := mx.Sys_task_kill(procHandle)
-	if status != mx.ErrOk {
+	procHandle := zx.Handle(p.handle)
+	status := zx.Sys_task_kill(procHandle)
+	if status != zx.ErrOk {
 		return errors.New("kill error: " + itoa(int(status)))
 	}
 	return nil
 }
 
 func (p *Process) wait() (ps *ProcessState, err error) {
-	procHandle := mx.Handle(p.handle)
-	_, err = procHandle.WaitOne(mx.SignalTaskTerminated, mx.TimensecInfinite)
+	procHandle := zx.Handle(p.handle)
+	_, err = procHandle.WaitOne(zx.SignalTaskTerminated, zx.TimensecInfinite)
 	if err != nil {
 		return nil, err
 	}
 	procInfo := C.zx_info_process_t{}
-	status := mx.Sys_object_get_info(procHandle, mx.ObjectInfoProcess, unsafe.Pointer(&procInfo), C.sizeof_zx_info_process_t, nil, nil)
-	if status != mx.ErrOk {
+	status := zx.Sys_object_get_info(procHandle, zx.ObjectInfoProcess, unsafe.Pointer(&procInfo), C.sizeof_zx_info_process_t, nil, nil)
+	if status != zx.ErrOk {
 		return nil, errors.New("error retreiving process info: " + itoa(int(status)))
 	}
 	return &ProcessState{int(procInfo.return_code)}, nil

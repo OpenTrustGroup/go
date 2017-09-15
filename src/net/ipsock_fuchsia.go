@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"sync"
 	"syscall"
-	"syscall/mx"
-	"syscall/mx/fdio"
-	"syscall/mx/mxnet"
+	"syscall/zx"
+	"syscall/zx/fdio"
+	"syscall/zx/mxnet"
 	"time"
 )
 
@@ -62,16 +62,16 @@ func favoriteAddrFamily(net string, laddr, raddr sockaddr, mode string) (family 
 
 type netstackInfo struct {
 	mu sync.Mutex
-	h  mx.Handle
+	h  zx.Handle
 }
 
 var netstack netstackInfo
 
-func getNetstack() mx.Handle {
+func getNetstack() zx.Handle {
 	netstack.mu.Lock()
 	defer netstack.mu.Unlock()
-	if netstack.h == mx.HANDLE_INVALID {
-		c0, c1, err := mx.NewChannel(0)
+	if netstack.h == zx.HANDLE_INVALID {
+		c0, c1, err := zx.NewChannel(0)
 		if err == nil {
 			err = fdio.ServiceConnect("/svc/net.Netstack", c0.Handle)
 			if err == nil {
@@ -98,7 +98,7 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 	// See similar logic in zircon/system/ulib/fdio/bsdsocket.c.
 	for i := 0; i < 40; i++ {
 		var r *fdio.RemoteIO
-		r, err = fdio.NewRIO([]mx.Handle{getNetstack()})
+		r, err = fdio.NewRIO([]zx.Handle{getNetstack()})
 		if err == nil {
 			m, err = r.Open(path, 0, 0644)
 			if err == nil {

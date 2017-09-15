@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 	"syscall"
-	"syscall/mx/mxnet"
+	"syscall/zx/mxnet"
 )
 
 func (a *TCPAddr) encode() ([]byte, error) { // TODO remove

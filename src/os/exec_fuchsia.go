@@ -6,7 +6,7 @@ package os
 
 import (
 	"errors"
-	"syscall/mx"
+	"syscall/zx"
 	"time"
 )
 
@@ -50,7 +50,7 @@ func (p *ProcessState) userTime() time.Duration {
 }
 
 func (p *Process) release() error {
-	procHandle := mx.Handle(p.handle)
+	procHandle := zx.Handle(p.handle)
 	return procHandle.Close()
 }
 

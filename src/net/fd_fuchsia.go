@@ -9,20 +9,20 @@ import (
 	"os"
 	"runtime"
 	"syscall"
-	"syscall/mx"
-	"syscall/mx/fdio"
-	"syscall/mx/mxnet"
+	"syscall/zx"
+	"syscall/zx/fdio"
+	"syscall/zx/mxnet"
 	"time"
 )
 
-func mxStatus(err error) mx.Status {
+func mxStatus(err error) zx.Status {
 	if err == nil {
-		return mx.ErrOk
+		return zx.ErrOk
 	}
-	if status, ok := err.(mx.Error); ok {
+	if status, ok := err.(zx.Error); ok {
 		return status.Status
 	}
-	return mx.ErrInternal
+	return zx.ErrInternal
 }
 
 // Network file descriptor.

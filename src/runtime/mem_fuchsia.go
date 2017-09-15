@@ -5,7 +5,7 @@
 package runtime
 
 import (
-	"syscall/mx"
+	"syscall/zx"
 	"unsafe"
 )
 
@@ -33,31 +33,31 @@ func sysUsed(v unsafe.Pointer, n uintptr) {
 //go:nosplit
 func sysFree(v unsafe.Pointer, n uintptr, sysStat *uint64) {
 	mSysStatDec(sysStat, n)
-	err := mx.VMARRoot.Unmap(uintptr(v), uint64(n))
+	err := zx.VMARRoot.Unmap(uintptr(v), uint64(n))
 	if err != nil {
-		println("runtime: mx.VMAR.Unmap failed, err=", err.Error())
+		println("runtime: zx.VMAR.Unmap failed, err=", err.Error())
 	}
 }
 
 func sysMmap(ptr unsafe.Pointer, len uintptr, flags uint32) {
-	vmo, err := mx.NewVMO(uint64(len), 0)
+	vmo, err := zx.NewVMO(uint64(len), 0)
 	if err != nil {
-		println("runtime: mx.NewVMO failed, len=", len, " err=", err.Error())
+		println("runtime: zx.NewVMO failed, len=", len, " err=", err.Error())
 		exit(2)
 	}
-	(mx.Handle)(vmo).SetProperty(mx.PropName, []byte("go-sys-mmap"))
-	vmflags := mx.VMFlagPermRead | mx.VMFlagPermWrite
-	res, err := mx.VMARRoot.Map(0, vmo, 0, uint64(len), vmflags)
+	(zx.Handle)(vmo).SetProperty(zx.PropName, []byte("go-sys-mmap"))
+	vmflags := zx.VMFlagPermRead | zx.VMFlagPermWrite
+	res, err := zx.VMARRoot.Map(0, vmo, 0, uint64(len), vmflags)
 	*(*uintptr)(ptr) = res
 	vmo.Close()
 	if err != nil {
-		println("runtime: mx.VMAR.Map failed, err=", err.Error())
+		println("runtime: zx.VMAR.Map failed, err=", err.Error())
 		exit(2)
 	}
 }
 
 var (
-	sysVMAR         mx.VMAR
+	sysVMAR         zx.VMAR
 	sysVMARBaseAddr uintptr
 )
 
@@ -69,8 +69,8 @@ func sysReserve(v unsafe.Pointer, n uintptr, reserved *bool) unsafe.Pointer {
 
 	var err error
 	*reserved = true
-	flags := mx.VMFlagCanMapSpecific | mx.VMFlagCanMapRead | mx.VMFlagCanMapWrite
-	sysVMAR, sysVMARBaseAddr, err = mx.NewVMAR(mx.VMARRoot, 0, uint64(n), flags)
+	flags := zx.VMFlagCanMapSpecific | zx.VMFlagCanMapRead | zx.VMFlagCanMapWrite
+	sysVMAR, sysVMARBaseAddr, err = zx.NewVMAR(zx.VMARRoot, 0, uint64(n), flags)
 	if err != nil {
 		println("runtime: vmar allocate failed, err=", err.Error())
 		exit(2)
@@ -85,15 +85,15 @@ func sysFault(v unsafe.Pointer, n uintptr) {
 func sysMap(v unsafe.Pointer, n uintptr, reserved bool, sysStat *uint64) {
 	mSysStatInc(sysStat, n)
 
-	vmo, err := mx.NewVMO(uint64(n), 0)
+	vmo, err := zx.NewVMO(uint64(n), 0)
 	if err != nil {
-		println("runtime: mx.NewVMO failed, n=", n, " err=", err.Error())
+		println("runtime: zx.NewVMO failed, n=", n, " err=", err.Error())
 		exit(2)
 	}
-	(mx.Handle)(vmo).SetProperty(mx.PropName, []byte("go-sys-map"))
+	(zx.Handle)(vmo).SetProperty(zx.PropName, []byte("go-sys-map"))
 
 	off := uint64(uintptr(v) - sysVMARBaseAddr)
-	flags := mx.VMFlagPermRead | mx.VMFlagPermWrite | mx.VMFlagSpecificOverwrite
+	flags := zx.VMFlagPermRead | zx.VMFlagPermWrite | zx.VMFlagSpecificOverwrite
 	res, err := sysVMAR.Map(off, vmo, 0, uint64(n), flags)
 	if err != nil {
 		println("runtime: vmar map failed, off=", off, " n=", n, " err=", err.Error())

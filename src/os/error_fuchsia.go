@@ -8,14 +8,14 @@ package os
 
 import (
 	"syscall"
-	"syscall/mx"
+	"syscall/zx"
 )
 
 func isExist(err error) bool {
 	err = underlyingError(err)
 	switch err := err.(type) {
-	case mx.Error:
-		return err.Status == mx.ErrAlreadyExists
+	case zx.Error:
+		return err.Status == zx.ErrAlreadyExists
 	}
 	return err == syscall.EEXIST || err == syscall.ENOTEMPTY || err == ErrExist
 }
@@ -23,8 +23,8 @@ func isExist(err error) bool {
 func isNotExist(err error) bool {
 	err = underlyingError(err)
 	switch err := err.(type) {
-	case mx.Error:
-		return err.Status == mx.ErrNotFound
+	case zx.Error:
+		return err.Status == zx.ErrNotFound
 	}
 	return err == syscall.ENOENT || err == ErrNotExist
 }
@@ -32,8 +32,8 @@ func isNotExist(err error) bool {
 func isPermission(err error) bool {
 	err = underlyingError(err)
 	switch err := err.(type) {
-	case mx.Error:
-		return err.Status == mx.ErrAccessDenied
+	case zx.Error:
+		return err.Status == zx.ErrAccessDenied
 	}
 	return err == syscall.EACCES || err == syscall.EPERM || err == ErrPermission
 }

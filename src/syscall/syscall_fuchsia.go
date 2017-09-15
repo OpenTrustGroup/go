@@ -11,8 +11,8 @@ import (
 	"sync"
 	"unsafe"
 
-	"syscall/mx"
-	"syscall/mx/fdio"
+	"syscall/zx"
+	"syscall/zx/fdio"
 )
 
 var (
@@ -92,7 +92,7 @@ type Stat_t struct {
 
 func Getpid() (pid int) {
 	// TODO: is ProcHandle process-wide or OS-wide?
-	return int(mx.ProcHandle)
+	return int(zx.ProcHandle)
 }
 
 func Getppid() (ppid int) {
@@ -120,7 +120,7 @@ func Getgroups() (gids []int, err error) {
 }
 
 func Exit(code int) {
-	mx.Sys_process_exit(code)
+	zx.Sys_process_exit(code)
 }
 
 const ImplementsGetwd = false
@@ -285,43 +285,43 @@ func Read(fd int, p []byte) (n int, err error) {
 }
 
 func init() {
-	EPIPE = mx.EPIPE
+	EPIPE = zx.EPIPE
 
 	var err error
 
 	rootMu.Lock()
-	root, err = fdio.NewRIO([]mx.Handle{mx.RootHandle})
+	root, err = fdio.NewRIO([]zx.Handle{zx.RootHandle})
 	rootMu.Unlock()
 	if err != nil {
 		println("syscall: failed to create fdio root: ", err.Error())
 	}
 
 	cwdMu.Lock()
-	cwd, err = fdio.NewRIO([]mx.Handle{mx.CwdHandle})
+	cwd, err = fdio.NewRIO([]zx.Handle{zx.CwdHandle})
 	cwdMu.Unlock()
 	if err != nil {
 		println("syscall: failed to create fdio cwd: ", err.Error())
 	}
 
 	nsMu.Lock()
-	ns, err = fdio.NewNSFromMap(mx.RootNSMap)
+	ns, err = fdio.NewNSFromMap(zx.RootNSMap)
 	nsMu.Unlock()
 	if err != nil {
 		println("syscall: failed to create namespace: ", err.Error())
 	}
 
 	initStdio := func(i int) (fdio.FDIO, error) {
-		switch mx.StdioHandleTypes[i] {
+		switch zx.StdioHandleTypes[i] {
 		case 0:
 			return nil, EINVAL
 		case fdio.HandleTypeRemote:
-			return fdio.NewRIO(mx.StdioHandles[i][:])
+			return fdio.NewRIO(zx.StdioHandles[i][:])
 		case fdio.HandleTypePipe:
-			return fdio.NewPipe([]mx.Handle{mx.StdioHandles[i][0]})
+			return fdio.NewPipe([]zx.Handle{zx.StdioHandles[i][0]})
 		case fdio.HandleTypeLogger:
-			return fdio.NewLogger(mx.StdioHandles[i][0])
+			return fdio.NewLogger(zx.StdioHandles[i][0])
 		default:
-			println("syscall: unknown handle type for stdio: " + itoa(mx.StdioHandleTypes[i]))
+			println("syscall: unknown handle type for stdio: " + itoa(zx.StdioHandleTypes[i]))
 			return nil, EINVAL
 		}
 	}
@@ -385,7 +385,7 @@ func Close(fd int) (err error) {
 }
 
 func nsConnect(path string) (f fdio.FDIO, err error) {
-	c0, c1, err := mx.NewChannel(0)
+	c0, c1, err := zx.NewChannel(0)
 	if err != nil {
 		return nil, err
 	}
@@ -396,7 +396,7 @@ func nsConnect(path string) (f fdio.FDIO, err error) {
 		c1.Handle.Close()
 		return nil, err
 	}
-	f, err = fdio.NewRIO([]mx.Handle{c1.Handle})
+	f, err = fdio.NewRIO([]zx.Handle{c1.Handle})
 	if err != nil {
 		c1.Handle.Close()
 		return nil, err
@@ -490,14 +490,14 @@ func OpenFDIO(f fdio.FDIO) (fd int) {
 	return i + fdsOff
 }
 
-func Ioctl(fd int, op uint32, in, out []byte) ([]mx.Handle, error) {
+func Ioctl(fd int, op uint32, in, out []byte) ([]zx.Handle, error) {
 	fdsMu.Lock()
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()
 	return f.Ioctl(op, in, out)
 }
 
-func IoctlSetHandle(fd int, op uint32, in mx.Handle) error {
+func IoctlSetHandle(fd int, op uint32, in zx.Handle) error {
 	fdsMu.Lock()
 	f := fds[fd-fdsOff]
 	fdsMu.Unlock()

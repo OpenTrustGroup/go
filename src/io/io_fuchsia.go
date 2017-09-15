@@ -7,9 +7,9 @@
 package io
 
 import (
-	"syscall/mx"
+	"syscall/zx"
 )
 
 func init() {
-	mx.EOF = EOF
+	zx.EOF = EOF
 }

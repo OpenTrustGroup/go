@@ -112,7 +112,7 @@ func TestLookupGmailMX(t *testing.T) {
 			t.Error("got no record")
 		}
 		for _, mx := range mxs {
-			if !strings.HasSuffix(mx.Host, tt.host) {
+			if !strings.HasSuffix(zx.Host, tt.host) {
 				t.Errorf("got %v; want a record containing %s", mx, tt.host)
 			}
 		}
@@ -541,7 +541,7 @@ func testDots(t *testing.T, mode string) {
 		t.Errorf("LookupMX(google.com): %v (mode=%v)", err, mode)
 	} else {
 		for _, mx := range mxs {
-			if !strings.HasSuffix(mx.Host, ".google.com.") {
+			if !strings.HasSuffix(zx.Host, ".google.com.") {
 				t.Errorf("LookupMX(google.com) = %v, want names ending in .google.com. with trailing dot (mode=%v)", mxString(mxs), mode)
 				break
 			}
@@ -583,7 +583,7 @@ func mxString(mxs []*MX) string {
 	sep := ""
 	fmt.Fprintf(&buf, "[")
 	for _, mx := range mxs {
-		fmt.Fprintf(&buf, "%s%s:%d", sep, mx.Host, mx.Pref)
+		fmt.Fprintf(&buf, "%s%s:%d", sep, zx.Host, zx.Pref)
 		sep = " "
 	}
 	fmt.Fprintf(&buf, "]")

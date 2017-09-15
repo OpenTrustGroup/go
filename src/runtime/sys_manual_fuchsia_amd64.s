@@ -35,21 +35,21 @@ TEXT runtime·threadinit(SB),NOSPLIT,$0
 	CLD				// convention is D is always left cleared
 	CALL	runtime·stackcheck(SB)	// clobbers AX,CX
 	CALL	runtime·mstart(SB)
-	// TODO CALL	syscall/mx·Sys_magenta_thread_exit(SB)
+	// TODO CALL	syscall/zx·Sys_zircon_thread_exit(SB)
 	RET
 
 // set tls base to DI
 // Note that this code is only used when CGO_ENABLED=0.
-// Not using syscall/mx so we can avoid setting up a G.
+// Not using syscall/zx so we can avoid setting up a G.
 //
 // TODO: make VSDO call directly here, avoid the syscall.
 TEXT runtime·settls(SB),NOSPLIT,$8
 	ADDQ   $8, DI	// ELF wants to use -8(FS)
 	PUSHQ  DI
-	LEAQ   0(SP), DX // prctl on magenta takes a pointer, not the value
+	LEAQ   0(SP), DX // prctl on zircon takes a pointer, not the value
 	MOVQ $0, DI
 	MOVQ $0, SI
-	MOVQ $0xff00ff00000035, AX // MAGENTA_SYSCALL_MAGIC | thread_arch_prctl (53)
+	MOVQ $0xff00ff00000035, AX // ZIRCON_SYSCALL_MAGIC | thread_arch_prctl (53)
 	SYSCALL
 	CMPQ	AX, $0xfffffffffffff001
 	JLS	2(PC)

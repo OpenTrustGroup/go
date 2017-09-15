@@ -4,8 +4,8 @@
 
 package log
 
-import "syscall/mx"
+import "syscall/zx"
 
 func init() {
-	SetOutput(mx.NewLog(0))
+	SetOutput(zx.NewLog(0))
 }
