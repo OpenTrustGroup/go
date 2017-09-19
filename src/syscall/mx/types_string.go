@@ -49,9 +49,10 @@ func (i Status) String() string {
 
 func itoa(buf []byte, val int) []byte {
 	i := len(buf) - 1
+	neg := false
 	if val < 0 {
-		buf[0] = '-'
-		i++
+		neg = true
+		val = 0 - val
 	}
 	for val >= 10 {
 		buf[i] = byte(val%10 + '0')
@@ -59,5 +60,9 @@ func itoa(buf []byte, val int) []byte {
 		val /= 10
 	}
 	buf[i] = byte(val + '0')
+	if neg {
+		i--
+		buf[i] = '-'
+	}
 	return buf[i:]
 }
