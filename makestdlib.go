@@ -95,7 +95,7 @@ func main() {
 	go func() {
 		// Generate the stdlib for the host.
 		// It is changed by third_party/go srcs being symlinked into buildtools.
-		cmd := exec.Command(filepath.Join(*flagBootstrapPath, "bin/go"), "install", "std")
+		cmd := exec.Command(filepath.Join(*flagBootstrapPath, "bin/go"), "install", "-a", "std")
 		cmd.Env = []string{
 			"PATH=" + os.Getenv("PATH"),
 			"GOROOT=" + *flagBootstrapPath,
@@ -111,7 +111,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		// Now generate the stdlib for the Fuchsia target.
-		cmd := exec.Command(filepath.Join(*flagBootstrapPath, "bin/go"), "install", "std")
+		cmd := exec.Command(filepath.Join(*flagBootstrapPath, "bin/go"), "install", "-a", "std")
 		cmd.Env = []string{
 			"PATH=" + os.Getenv("PATH"),
 			"GOOS=fuchsia",
@@ -120,7 +120,7 @@ func main() {
 			"CGO_ENABLED=1",
 			"CC=" + filepath.Join(*flagBootstrapPath, "misc/fuchsia/gccwrap.sh"),
 			"ZIRCON=" + filepath.Join(*flagFuchsiaRoot, "zircon"), // used by gccwrap.sh
-			"ZIRCON_BUILD_DIR=" + os.Getenv("ZIRCON_BUILD_DIR"), // used by gccwrap.sh
+			"ZIRCON_BUILD_DIR=" + os.Getenv("ZIRCON_BUILD_DIR"),   // used by gccwrap.sh
 		}
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
