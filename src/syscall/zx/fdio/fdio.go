@@ -108,7 +108,7 @@ var IoctlVFSMountFS = IoctlNum(IoctlKindSetHandle, IoctlFamilyVFS, 0)
 var IoctlVFSUnmountFS = IoctlNum(IoctlKindDefault, IoctlFamilyVFS, 1)
 var IoctlVFSQueryFS = IoctlNum(IoctlKindDefault, IoctlFamilyVFS, 4)
 var IoctlVFSGetTokenFS = IoctlNum(IoctlKindGetHandle, IoctlFamilyVFS, 5)
-var IoctlVFSWatchDir = IoctlNum(IoctlKindSetHandle, IoctlFamilyVFS, 8) // NOTE: Actually v2
+var IoctlVFSWatchDir = IoctlNum(IoctlKindSetHandle, IoctlFamilyVFS, 8)
 var IoctlVFSGetDevicePath = IoctlNum(IoctlKindDefault, IoctlFamilyVFS, 9)
 
 var IoctlPowerGetInfo = IoctlNum(IoctlKindDefault, IoctlFamilyPower, 1)
