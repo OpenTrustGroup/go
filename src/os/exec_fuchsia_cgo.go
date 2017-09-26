@@ -189,11 +189,12 @@ func launchpadLaunchFdio(name string, argv []string, attr *ProcAttr) (zx.Handle,
 			return 0, err
 		}
 	}
-	h := zx.Handle(C.launchpad_start(lp))
-	if h < 0 {
+	h := C.zx_handle_t(0)
+	status = zx.Status(C.launchpad_go(lp, &h, nil))
+	if status < 0 {
 		return 0, errors.New("launchpad error")
 	}
-	return h, nil
+	return zx.Handle(h), nil
 }
 
 func (p *Process) kill() error {
