@@ -17,6 +17,7 @@ const MX_SOCKET_READABLE = zx.SignalObject0
 const MX_SOCKET_WRITABLE = zx.SignalObject1
 const MX_SOCKET_PEER_CLOSED = zx.SignalObject2
 const MXSIO_SIGNAL_INCOMING = zx.SignalUser0
+const MXSIO_SIGNAL_OUTGOING = zx.SignalUser1
 const MXSIO_SIGNAL_CONNECTED = zx.SignalUser3
 const MXSIO_SIGNAL_HALFCLOSED = zx.SignalUser4
 

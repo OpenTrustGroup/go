@@ -243,8 +243,19 @@ func Connect(m FDIO, addr mxnet.Addr, port uint16) error {
 		return err
 	}
 	if !s.dgram {
-		_, err = s.socket.WaitOne(mxnet.MXSIO_SIGNAL_CONNECTED, 0)
-		return err
+		obs, err := s.socket.WaitOne(mxnet.MXSIO_SIGNAL_OUTGOING, zx.TimensecInfinite)
+		switch mxStatus(err) {
+		case zx.ErrOk:
+			switch {
+			case obs&mxnet.MXSIO_SIGNAL_CONNECTED != 0:
+				return nil
+			default:
+				// TODO: Use opSetSockOpt to get the reason of the error.
+				return errors.New("rio.Connect: OpConnect was not successful")
+			}
+		default:
+			return err
+		}
 	}
 	return nil
 }
