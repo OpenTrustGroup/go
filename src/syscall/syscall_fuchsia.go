@@ -7,6 +7,7 @@ package syscall
 import (
 	"errors"
 	"io"
+	"path"
 	"strings"
 	"sync"
 	"unsafe"
@@ -123,20 +124,28 @@ func Exit(code int) {
 	zx.Sys_process_exit(code)
 }
 
-const ImplementsGetwd = false
+const ImplementsGetwd = true
 
 func Getwd() (wd string, err error) {
-	return "", errors.New("Gwd unimplemented")
+	cwdMu.Lock()
+	wd = cwdStr
+	cwdMu.Unlock()
+	return wd, nil
 }
 
-func Chdir(path string) (err error) {
+func Chdir(dir string) (err error) {
 	// TODO: if cgo enabled, change the working directory there too.
-	f, err := OpenPath(path, 0, 0)
+	f, err := OpenPath(dir, 0, 0)
 	if err != nil {
 		return err
 	}
 	cwdMu.Lock()
 	cwd = f
+	if path.IsAbs(dir) {
+		cwdStr = path.Clean(dir)
+	} else {
+		cwdStr = path.Join(cwdStr, dir)
+	}
 	cwdMu.Unlock()
 	return nil
 }
@@ -237,13 +246,14 @@ var (
 )
 
 var (
-	cwdMu sync.Mutex
-	cwd   fdio.FDIO
+	cwdMu  sync.Mutex
+	cwd    fdio.FDIO
+	cwdStr string
 )
 
 var (
-	nsMu   sync.Mutex
-	ns     *fdio.NS
+	nsMu sync.Mutex
+	ns   *fdio.NS
 )
 
 var (
@@ -298,6 +308,16 @@ func init() {
 
 	cwdMu.Lock()
 	cwd, err = fdio.NewRIO([]zx.Handle{zx.CwdHandle})
+	var found bool
+	// TODO(smklein): The cwd path string should be more tightly coupled
+	// with the cwd handle.
+	cwdStr, found = Getenv("PWD")
+	if !found {
+		cwdStr = "/"
+	} else {
+		// Ensure the incoming cwd is absolute and cleaned
+		cwdStr = path.Join("/", cwdStr)
+	}
 	cwdMu.Unlock()
 	if err != nil {
 		println("syscall: failed to create fdio cwd: ", err.Error())

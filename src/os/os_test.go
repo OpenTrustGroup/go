@@ -1198,10 +1198,6 @@ func TestChdirAndGetwd(t *testing.T) {
 
 // Test that Chdir+Getwd is program-wide.
 func TestProgWideChdir(t *testing.T) {
-	if runtime.GOOS == "fuchsia" {
-		t.Skipf("TODO(smklein): Implement")
-	}
-
 	const N = 10
 	c := make(chan bool)
 	cpwd := make(chan string)
