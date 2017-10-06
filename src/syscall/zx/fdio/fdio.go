@@ -106,6 +106,7 @@ var IoctlDeviceDebugResume = IoctlNum(IoctlKindDefault, IoctlFamilyDevice, 8)
 
 var IoctlVFSMountFS = IoctlNum(IoctlKindSetHandle, IoctlFamilyVFS, 0)
 var IoctlVFSUnmountFS = IoctlNum(IoctlKindDefault, IoctlFamilyVFS, 1)
+var IoctlVFSUnmountNode = IoctlNum(IoctlKindGetHandle, IoctlFamilyVFS, 2)
 var IoctlVFSQueryFS = IoctlNum(IoctlKindDefault, IoctlFamilyVFS, 4)
 var IoctlVFSGetTokenFS = IoctlNum(IoctlKindGetHandle, IoctlFamilyVFS, 5)
 var IoctlVFSWatchDir = IoctlNum(IoctlKindSetHandle, IoctlFamilyVFS, 8)
