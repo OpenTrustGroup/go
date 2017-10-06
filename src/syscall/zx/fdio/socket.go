@@ -239,10 +239,7 @@ func Connect(m FDIO, addr mxnet.Addr, port uint16) error {
 		return errors.New("rio.Connect: argument is not a *Socket")
 	}
 	_, err = s.Misc(OpConnect, 0, b, nil, nil)
-	if err != nil && mxStatus(err) != zx.ErrShouldWait {
-		return err
-	}
-	if !s.dgram {
+	if err != nil && mxStatus(err) == zx.ErrShouldWait {
 		obs, err := s.socket.WaitOne(mxnet.MXSIO_SIGNAL_OUTGOING, zx.TimensecInfinite)
 		switch mxStatus(err) {
 		case zx.ErrOk:
@@ -257,7 +254,7 @@ func Connect(m FDIO, addr mxnet.Addr, port uint16) error {
 			return err
 		}
 	}
-	return nil
+	return err
 }
 
 func ListenStream(m FDIO, backlog int) error {
