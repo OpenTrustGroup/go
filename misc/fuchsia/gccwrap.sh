@@ -28,7 +28,7 @@ do
 done
 
 if ! $compiler; then
-	extra_args="-lc $zirconbuild/system/ulib/crt1.o $zirconbuild/system/ulib/zircon/libzircon.so.abi"
+	extra_args="-lc $zirconbuild/sysroot/lib/Scrt1.o $zirconbuild/system/ulib/zircon/libzircon.so.abi"
 fi
 
 exec $gccbin \
@@ -50,4 +50,3 @@ exec $gccbin \
 	-Wl,-dynamic-linker=ld.so.1 \
 	$extra_args \
 	"$@"
-
