@@ -64,6 +64,8 @@ func cloneHandleToCHandleArray(m fdio.FDIO) (int, []C.zx_handle_t, []C.uint32_t,
 		fdioType = fdio.HandleTypeRemote
 	case *fdio.Pipe:
 		fdioType = fdio.HandleTypePipe
+	case *fdio.Logger:
+		fdioType = fdio.HandleTypeLogger
 	default:
 		for _, h := range handles {
 			h.Close()
