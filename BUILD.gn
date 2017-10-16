@@ -3,15 +3,17 @@
 # found in the LICENSE file.
 
 import("//build/go/go_test.gni")
+import("//packages/package.gni")
 
 # The go_runtime action wraps go_toolchain, rebuilding just the standard
 # if it has changed.
 if (current_toolchain == target_toolchain) {
   action("go_runtime_internal") {
+    visibility = [ ":*" ]
 
-    visibility = [":*"]
-
-    outputs = [ "$root_gen_dir/gostdlib.done" ]
+    outputs = [
+      "$root_gen_dir/gostdlib.done",
+    ]
     depfile = "$root_gen_dir/gostdlib.d"
     script = rebase_path("//buildtools/go")
     args = [
@@ -30,11 +32,15 @@ if (current_toolchain == target_toolchain) {
       "--bootstrap-path",
       rebase_path("//buildtools/${host_os}-${host_cpu}/go"),
     ]
-    deps = [ ":go_toolchain" ]
+    deps = [
+      ":go_toolchain",
+    ]
   }
 
   action("go_toolchain") {
-    outputs = [ "$root_gen_dir/goroot.done" ]
+    outputs = [
+      "$root_gen_dir/goroot.done",
+    ]
 
     visibility = [ ":*" ]
 
@@ -53,16 +59,23 @@ if (current_toolchain == target_toolchain) {
 }
 
 group("go_runtime") {
-  public_deps = [ ":go_runtime_internal(${target_toolchain})" ]
+  public_deps = [
+    ":go_runtime_internal(${target_toolchain})",
+  ]
 }
 
 go_test("go_os_test") {
   gopackage = "os"
 }
 
-group("go_stdlib_tests") {
+package("go_stdlib_tests") {
   testonly = true
+
   deps = [
     ":go_os_test",
   ]
+
+  tests = [ {
+        name = "go_os_test"
+      } ]
 }
