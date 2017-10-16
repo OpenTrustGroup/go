@@ -158,7 +158,11 @@ func launchpadLaunchFdio(name string, argv []string, attr *ProcAttr) (zx.Handle,
 	if status != zx.ErrOk {
 		return 0, errors.New("launchpad_create")
 	}
-	defer C.launchpad_destroy(lp)
+	defer func() {
+		if lp != nil {
+			C.launchpad_destroy(lp)
+		}
+	}()
 	status = zx.Status(C.launchpad_load_from_file(lp, nameC))
 	if status != zx.ErrOk {
 		return 0, errors.New("loading vdso")
@@ -193,6 +197,8 @@ func launchpadLaunchFdio(name string, argv []string, attr *ProcAttr) (zx.Handle,
 	}
 	h := C.zx_handle_t(0)
 	status = zx.Status(C.launchpad_go(lp, &h, nil))
+	// lp is freed by launchpad_go unconditionally
+	lp = nil
 	if status < 0 {
 		return 0, errors.New("launchpad error")
 	}
