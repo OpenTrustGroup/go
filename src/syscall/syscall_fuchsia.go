@@ -307,10 +307,7 @@ func init() {
 	}
 
 	cwdMu.Lock()
-	cwd, err = fdio.NewRIO([]zx.Handle{zx.CwdHandle})
 	var found bool
-	// TODO(smklein): The cwd path string should be more tightly coupled
-	// with the cwd handle.
 	cwdStr, found = Getenv("PWD")
 	if !found {
 		cwdStr = "/"
@@ -318,6 +315,8 @@ func init() {
 		// Ensure the incoming cwd is absolute and cleaned
 		cwdStr = path.Join("/", cwdStr)
 	}
+	cwd = root
+	cwd, err = OpenPath(cwdStr, 0, 0)
 	cwdMu.Unlock()
 	if err != nil {
 		println("syscall: failed to create fdio cwd: ", err.Error())

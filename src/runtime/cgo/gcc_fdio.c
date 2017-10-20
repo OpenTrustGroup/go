@@ -22,7 +22,6 @@ struct fdio_init {
 	zx_handle_t stdioClones[3 * FDIO_MAX_HANDLES];
 	uint32_t stdioCloneNumHandles[3];
 	uint32_t stdioCloneTypes[3];
-	zx_handle_t cwd;
 	zx_handle_t processSelf;
 	zx_handle_t vmarRootSelf;
 	int32_t unused;
@@ -68,11 +67,6 @@ x_cgo_get_fdio_root(struct fdio_init *handles)
 		}
 	}
 	type = 0;
-	r = fdio_clone_cwd(&handles->cwd, &type);
-	if (r <= 0) {
-		printf("runtime/cgo: fdio_clone_cwd failed: %d\n", r);
-		handles->cwd = 0;
-	}
 
 	handles->processSelf = zx_process_self();
 	handles->vmarRootSelf = zx_vmar_root_self();

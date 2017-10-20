@@ -55,7 +55,6 @@ func osinit() {
 			}
 			zx.StdioHandleTypes[i] = int(fdioHandles.stdioCloneTypes[i])
 		}
-		zx.CwdHandle = zx.Handle(fdioHandles.cwd)
 		zx.ProcHandle = zx.Handle(fdioHandles.processSelf)
 		zx.VMARRoot = zx.VMAR(fdioHandles.vmarRootSelf)
 	} else {
@@ -194,7 +193,6 @@ type fdio_init struct {
 	stdioClones          [9]zx.Handle // 3 * fdio.MaxHandles
 	stdioCloneNumHandles [3]uint32
 	stdioCloneTypes      [3]uint32
-	cwd                  zx.Handle
 	processSelf          zx.Handle
 	vmarRootSelf         zx.Handle
 	_                    int32
