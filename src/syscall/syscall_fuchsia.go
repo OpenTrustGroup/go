@@ -306,6 +306,13 @@ func init() {
 		println("syscall: failed to create fdio root: ", err.Error())
 	}
 
+	nsMu.Lock()
+	ns, err = fdio.NewNSFromMap(zx.RootNSMap)
+	nsMu.Unlock()
+	if err != nil {
+		println("syscall: failed to create namespace: ", err.Error())
+	}
+
 	cwdMu.Lock()
 	var found bool
 	cwdStr, found = Getenv("PWD")
@@ -316,17 +323,12 @@ func init() {
 		cwdStr = path.Join("/", cwdStr)
 	}
 	cwd = root
-	cwd, err = OpenPath(cwdStr, 0, 0)
+	if cwdStr != "/" {
+		cwd, err = OpenPath(cwdStr, 0, 0)
+	}
 	cwdMu.Unlock()
 	if err != nil {
 		println("syscall: failed to create fdio cwd: ", err.Error())
-	}
-
-	nsMu.Lock()
-	ns, err = fdio.NewNSFromMap(zx.RootNSMap)
-	nsMu.Unlock()
-	if err != nil {
-		println("syscall: failed to create namespace: ", err.Error())
 	}
 
 	initStdio := func(i int) (fdio.FDIO, error) {
