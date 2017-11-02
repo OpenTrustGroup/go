@@ -21,12 +21,13 @@ import (
 )
 
 var (
-	flagFuchsiaRoot   = flag.String("fuchsia-root", "", "Path to root of the Fuchsia project")
-	flagDepfile       = flag.String("depfile", "", "Stdlib depfile")
-	flagRootOutDir    = flag.String("root-out-dir", "", "GN variable")
-	flagRootGenDir    = flag.String("root-gen-dir", "", "GN variable")
-	flagTargetCPU     = flag.String("target-cpu", "", "GN variable")
-	flagBootstrapPath = flag.String("bootstrap-path", "", "Path to bootstrap Go installation")
+	flagFuchsiaRoot    = flag.String("fuchsia-root", "", "Path to root of the Fuchsia project")
+	flagZirconBuildDir = flag.String("zircon-build-dir", "", "The Zircon build dir to use")
+	flagDepfile        = flag.String("depfile", "", "Stdlib depfile")
+	flagRootOutDir     = flag.String("root-out-dir", "", "GN variable")
+	flagRootGenDir     = flag.String("root-gen-dir", "", "GN variable")
+	flagTargetCPU      = flag.String("target-cpu", "", "GN variable")
+	flagBootstrapPath  = flag.String("bootstrap-path", "", "Path to bootstrap Go installation")
 )
 
 func genDepfileStdlib() {
@@ -120,7 +121,7 @@ func main() {
 			"CGO_ENABLED=1",
 			"CC=" + filepath.Join(*flagBootstrapPath, "misc/fuchsia/gccwrap.sh"),
 			"ZIRCON=" + filepath.Join(*flagFuchsiaRoot, "zircon"), // used by gccwrap.sh
-			"ZIRCON_BUILD_DIR=" + os.Getenv("ZIRCON_BUILD_DIR"),   // used by gccwrap.sh
+			"ZIRCON_BUILD_DIR=" + *flagZirconBuildDir,             // used by gccwrap.sh
 		}
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr

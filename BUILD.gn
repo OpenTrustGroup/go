@@ -11,6 +11,7 @@ if (current_toolchain == target_toolchain) {
   action("go_runtime_internal") {
     visibility = [ ":*" ]
 
+    inputs = [ "makestdlib.go" ]
     outputs = [
       "$root_gen_dir/gostdlib.done",
     ]
@@ -21,6 +22,8 @@ if (current_toolchain == target_toolchain) {
       rebase_path("makestdlib.go", root_build_dir),
       "-fuchsia-root",
       rebase_path("//."),
+      "-zircon-build-dir",
+      rebase_path("//out/build-zircon/build-${zircon_project}"),
       "-depfile",
       rebase_path(depfile),
       "-root-out-dir",

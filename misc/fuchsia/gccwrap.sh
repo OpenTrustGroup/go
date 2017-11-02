@@ -1,17 +1,21 @@
 #!/bin/bash
 # This uses the zircon prebuild C++ toolchain
 
-if [ "$ZIRCON" == "" ]; then
+if [ -z "${ZIRCON}" ]; then
 	echo "gccwrap.sh: missing ZIRCON env variable" >&2
+	exit 1
+fi
+
+zirconbuild="${ZIRCON_BUILD_DIR}"
+if [ -z "${zirconbuild}" ]; then
+	echo "gccwrap.sh: missing ZIRCON_BUILD_DIR env variable" >&2
 	exit 1
 fi
 
 if [ "$GOARCH" == "amd64" ]; then
 	gccbin="$ZIRCON/prebuilt/downloads/x86_64-elf-6.3.0-$(uname)-x86_64/bin/x86_64-elf-gcc"
-	zirconbuild="$ZIRCON/../out/build-zircon/build-zircon-pc-x86-64"
 elif [ "$GOARCH" == "arm64" ]; then
 	gccbin="$ZIRCON/prebuilt/downloads/aarch64-elf-6.3.0-$(uname)-x86_64/bin/aarch64-elf-gcc"
-	zirconbuild="${ZIRCON_BUILD_DIR:-"$ZIRCON/../out/build-zircon/build-zircon-qemu-arm64"}"
 else
 	echo "gccwrap.sh: unsupported GOARCH: $GOARCH" >&2
 	exit 1
