@@ -179,14 +179,16 @@ func IndirectError(h zx.Handle, status zx.Status) zx.Status {
 }
 
 type MsgHeader struct {
-	Txid     uint32
-	op       uint32
-	Datalen  uint32
-	Arg      int32
-	arg2     int64
-	Reserved int32
-	Hcount   uint32
-	Handle   [MessageMaxHandles + 1]zx.Handle // 3 handles + reply pipe
+	Txid      uint32 // FIDL2 message header
+	reserved0 uint32
+	flags     uint32
+	op        uint32
+	Datalen   uint32
+	Arg       int32
+	arg2      int64
+	reserved1 int32
+	Hcount    uint32
+	Handle    [MessageMaxHandles + 1]zx.Handle // 3 handles + reply pipe
 }
 
 // Msg is the message sent in the Remote IO protocol
