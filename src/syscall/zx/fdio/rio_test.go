@@ -45,7 +45,7 @@ func CreateRIOClient(d *Dispatcher, cb ServerHandler, cookie int64) *RemoteIO {
 var testData = []struct {
 	// Input messages
 	inOp   uint32  // Operation (always used)
-	inArg  int32   // 'arg', or 0 if ignored
+	inArg  uint32  // 'arg', or 0 if ignored
 	inArg2 int64   // 'arg2', or 0 if ignored
 	inData []uint8 // 'data', or 0 if ignored
 

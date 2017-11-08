@@ -172,7 +172,7 @@ func (s *Socket) Close() error {
 	return nil
 }
 
-func (s *Socket) Open(path string, flags int32, mode uint32) (FDIO, error) {
+func (s *Socket) Open(path string, flags uint32, mode uint32) (FDIO, error) {
 	return s.r.Open(path, flags, mode)
 }
 func (*Socket) Clone() ([]zx.Handle, error) {

@@ -19,7 +19,7 @@ type FDIO interface {
 	WriteAt(data []byte, off int64) (int, error)
 	Seek(offset int64, whence int) (int64, error)
 	Close() error
-	Open(path string, flags int32, mode uint32) (FDIO, error)
+	Open(path string, flags uint32, mode uint32) (FDIO, error)
 	Clone() ([]zx.Handle, error) // TODO(smklein): Pass type back from Clone
 	Ioctl(op uint32, in, out []byte) ([]zx.Handle, error)
 	IoctlSetHandle(op uint32, in zx.Handle) error

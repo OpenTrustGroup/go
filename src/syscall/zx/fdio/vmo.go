@@ -102,7 +102,7 @@ func (f *VMOFile) Close() error {
 	return nil
 }
 
-func (f *VMOFile) Open(path string, flags int32, mode uint32) (FDIO, error) {
+func (f *VMOFile) Open(path string, flags uint32, mode uint32) (FDIO, error) {
 	return nil, zx.Error{Status: zx.ErrNotSupported, Text: "rio.VMOFile"}
 }
 func (f *VMOFile) Clone() ([]zx.Handle, error) {

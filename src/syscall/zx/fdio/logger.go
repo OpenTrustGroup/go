@@ -61,7 +61,7 @@ func (f *Logger) Close() error {
 	return nil
 }
 
-func (f *Logger) Open(path string, flags int32, mode uint32) (FDIO, error) {
+func (f *Logger) Open(path string, flags uint32, mode uint32) (FDIO, error) {
 	return nil, zx.Error{Status: zx.ErrNotSupported, Text: "zx.Logger"}
 }
 

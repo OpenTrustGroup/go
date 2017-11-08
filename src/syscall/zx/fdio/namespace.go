@@ -153,7 +153,7 @@ func (d *dir) Close() error {
 	return nil
 }
 
-func (d *dir) Open(path string, flags int32, mode uint32) (FDIO, error) {
+func (d *dir) Open(path string, flags uint32, mode uint32) (FDIO, error) {
 	vn := d.vn
 
 	if path == "." || path == "" {
