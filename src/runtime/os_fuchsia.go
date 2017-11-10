@@ -46,9 +46,8 @@ func osyield() {
 func cgocallm0(fn, arg unsafe.Pointer)
 
 func osinit() {
-	if _cgo_get_fdio_root != nil {
-		cgocallm0(_cgo_get_fdio_root, unsafe.Pointer(&fdioHandles))
-		zx.RootHandle = zx.Handle(fdioHandles.rootClone)
+	if _cgo_get_initial_handles != nil {
+		cgocallm0(_cgo_get_initial_handles, unsafe.Pointer(&fdioHandles))
 		for i := 0; i < 3; i = i + 1 {
 			for j := 0; j < int(fdioHandles.stdioCloneNumHandles[i]); j = j + 1 {
 				zx.StdioHandles[i][j] = fdioHandles.stdioClones[i*3+j]
@@ -80,7 +79,7 @@ func parseRootNS() {
 }
 
 // Filled in by runtime/cgo when linked into binary.
-var _cgo_get_fdio_root unsafe.Pointer // pointer to C function
+var _cgo_get_initial_handles unsafe.Pointer // pointer to C function
 
 func minit() {
 }
@@ -189,7 +188,6 @@ func resetcpuprofiler(hz int32) {
 
 // fdio_init matches a Go struct of the same name in gcc_fdio.c.
 type fdio_init struct {
-	rootClone            zx.Handle
 	stdioClones          [9]zx.Handle // 3 * fdio.MaxHandles
 	stdioCloneNumHandles [3]uint32
 	stdioCloneTypes      [3]uint32
@@ -207,7 +205,7 @@ type fdio_init struct {
 var fdioHandles fdio_init
 
 func goenvs() {
-	if _cgo_get_fdio_root != nil {
+	if _cgo_get_initial_handles != nil {
 		const maxEnvSize = 1 << 20 // arbitrary
 		envp := (*(*[maxEnvSize]*byte)(unsafe.Pointer(fdioHandles.environ)))[:fdioHandles.envlen]
 		envs = make([]string, len(envp))

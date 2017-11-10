@@ -300,18 +300,18 @@ func init() {
 
 	var err error
 
-	rootMu.Lock()
-	root, err = fdio.NewRIO([]zx.Handle{zx.RootHandle})
-	rootMu.Unlock()
-	if err != nil {
-		println("syscall: failed to create fdio root: ", err.Error())
-	}
-
 	nsMu.Lock()
 	ns, err = fdio.NewNSFromMap(zx.RootNSMap)
 	nsMu.Unlock()
 	if err != nil {
 		println("syscall: failed to create namespace: ", err.Error())
+	}
+
+	rootMu.Lock()
+	root, err = ns.OpenRoot()
+	rootMu.Unlock()
+	if err != nil {
+		println("syscall: failed to create root directory from namespace: ", err.Error())
 	}
 
 	cwdMu.Lock()
@@ -406,46 +406,23 @@ func Close(fd int) (err error) {
 	return f.Close()
 }
 
-func nsConnect(path string) (f fdio.FDIO, err error) {
-	c0, c1, err := zx.NewChannel(0)
-	if err != nil {
-		return nil, err
-	}
-	nsMu.Lock()
-	err = ns.Connect(path, c0.Handle)
-	nsMu.Unlock()
-	if err != nil {
-		c1.Handle.Close()
-		return nil, err
-	}
-	f, err = fdio.NewRIO([]zx.Handle{c1.Handle})
-	if err != nil {
-		c1.Handle.Close()
-		return nil, err
-	}
-	return f, nil
-}
-
-func OpenPath(path string, mode int, perm uint32) (f fdio.FDIO, err error) {
-	if path == "" {
-		path = "."
-	}
-
-	if strings.Contains(path, "\x00") {
+func OpenPath(p string, mode int, perm uint32) (f fdio.FDIO, err error) {
+	if strings.Contains(p, "\x00") {
 		return nil, EINVAL
-	} else if path[0] != '/' {
+	}
+
+	p = path.Clean(p)
+
+	if p[0] != '/' {
 		cwdMu.Lock()
 		c := cwd
 		cwdMu.Unlock()
-		f, err = c.Open(path, int32(mode), perm)
-	} else if strings.HasPrefix(path, "/dev/") || strings.HasPrefix(path, "/svc/") {
-		// TODO: look up the nodes in namespace instead of hardcoding the prefixes
-		f, err = nsConnect(path)
+		f, err = c.Open(p, int32(mode), perm)
 	} else {
 		rootMu.Lock()
 		r := root
 		rootMu.Unlock()
-		f, err = r.Open(path, int32(mode), perm)
+		f, err = r.Open(p[1:], int32(mode), perm)
 	}
 	return f, err
 }

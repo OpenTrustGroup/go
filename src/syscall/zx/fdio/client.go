@@ -32,6 +32,10 @@ func NewRIO(handle []zx.Handle) (*RemoteIO, error) {
 	return r, nil
 }
 
+func NewRIOFromChannel(h *zx.Channel) (*RemoteIO) {
+	return &RemoteIO{h: h}
+}
+
 // txn completes the client-side part of the RIO transaction.
 // It wraps the raw 'Call Message' syscall with some error checking.
 func (r *RemoteIO) txn(msg *Msg) (uint32, error) {
@@ -216,7 +220,7 @@ func (r *RemoteIO) Close() error {
 }
 
 // getObject requests an FDIO object remotely
-func (r *RemoteIO) getObject(op uint32, name string, flags int32, mode uint32) (*RioObject, error) {
+func getObject(rio *zx.Channel, op uint32, name string, flags int32, mode uint32) (*RioObject, error) {
 	if len(name) > MessageChunkSize {
 		return nil, zx.Error{Status: zx.ErrInvalidArgs, Text: "RemoteIO"}
 	}
@@ -227,10 +231,10 @@ func (r *RemoteIO) getObject(op uint32, name string, flags int32, mode uint32) (
 	msg.SetMode(mode)
 	copy(msg.Data[:], name)
 
-	return r.replyChannelCall(&msg)
+	return replyChannelCall(rio, &msg)
 }
 
-func (r *RemoteIO) replyChannelCall(msg *Msg) (*RioObject, error) {
+func replyChannelCall(rio *zx.Channel, msg *Msg) (*RioObject, error) {
 	// Create a new channel to receive the 'callback' on
 	h, rh, err := zx.NewChannel(0)
 	if err != nil {
@@ -240,7 +244,7 @@ func (r *RemoteIO) replyChannelCall(msg *Msg) (*RioObject, error) {
 	msg.Hcount = 1
 
 	// Write the (one-way) OPEN or CLONE request message
-	if err := msg.WriteMsg(r.h); err != nil {
+	if err := msg.WriteMsg(rio); err != nil {
 		msg.DiscardHandles()
 		h.Close()
 		return nil, err
@@ -335,20 +339,28 @@ func createFromHandles(protocol Protocol, handles []zx.Handle, extra []byte) (FD
 	}
 }
 
-func (r *RemoteIO) Open(path string, flags int32, mode uint32) (FDIO, error) {
-	ro, err := r.getObject(OpOpen, path, flags, mode)
+func OpenHandle(rio *zx.Channel, path string, flags int32, mode uint32) (FDIO, error) {
+	ro, err := getObject(rio, OpOpen, path, flags, mode)
 	if err != nil {
 		return nil, err
 	}
 	return createFromHandles(Protocol(ro.Type), ro.Handle[:ro.Hcount], ro.Extra[:ro.Esize])
 }
 
-func (r *RemoteIO) Clone() ([]zx.Handle, error) {
-	ro, err := r.getObject(OpClone, "", 0, 0)
+func CloneHandle(rio *zx.Channel) ([]zx.Handle, error) {
+	ro, err := getObject(rio, OpClone, "", 0, 0)
 	if err != nil {
 		return nil, err
 	}
 	return ro.Handle[:ro.Hcount], nil
+}
+
+func (r *RemoteIO) Open(path string, flags int32, mode uint32) (FDIO, error) {
+	return OpenHandle(r.h, path, flags, mode)
+}
+
+func (r *RemoteIO) Clone() ([]zx.Handle, error) {
+	return CloneHandle(r.h)
 }
 
 const handleSize = uint32(unsafe.Sizeof(zx.Handle(0)))

@@ -18,7 +18,6 @@ extern char **environ;
 
 // fdio_init matches a Go struct of the same name in os_fuchsia.go.
 struct fdio_init {
-	zx_handle_t rootClone;
 	zx_handle_t stdioClones[3 * FDIO_MAX_HANDLES];
 	uint32_t stdioCloneNumHandles[3];
 	uint32_t stdioCloneTypes[3];
@@ -34,7 +33,7 @@ struct fdio_init {
 };
 
 void
-x_cgo_get_fdio_root(struct fdio_init *handles)
+x_cgo_get_initial_handles(struct fdio_init *handles)
 {
 	// When running with cgo support, there are two FDIO libraries in the
 	// same process. We let the C FDIO start first, then clone its root
@@ -43,18 +42,11 @@ x_cgo_get_fdio_root(struct fdio_init *handles)
 	//       have to share between Go and C, in particular, cwd.
 	//       Work out how.
 
-	uint32_t type;
-	zx_status_t r;
-	r = fdio_clone_root(&handles->rootClone, &type);
-	if (r <= 0 || type != PA_FDIO_REMOTE) {
-		printf("runtime/cgo: fdio_clone_root failed: %d\n", r);
-		handles->rootClone = 0;
-	}
-
 	// fdio may have initialized std{in,out,err} with a single fd if the FDIO_FLAG_USE_FOR_STDIO
 	// flag was set, or have separate in/out/err fds. We clone fds {0,1,2} to separate fds for use
 	// in the Go runtime. The cloned fds aren't installed into fdio's fd table so they are only
 	// usable from Go's table.
+	zx_status_t r;
 	for (int i = 0; i < 3; ++i) {
 		uint32_t handle_types[FDIO_MAX_HANDLES];
 		r = fdio_clone_fd(i, 0, &handles->stdioClones[i * FDIO_MAX_HANDLES], handle_types);
@@ -66,7 +58,6 @@ x_cgo_get_fdio_root(struct fdio_init *handles)
 			handles->stdioCloneTypes[i] = PA_HND_TYPE(handle_types[0]);
 		}
 	}
-	type = 0;
 
 	handles->processSelf = zx_process_self();
 	handles->vmarRootSelf = zx_vmar_root_self();

@@ -10,7 +10,6 @@ import "unsafe"
 
 // Process-wide FDIO handles.
 var (
-	RootHandle       Handle
 	StdioHandles     [3][3]Handle // 3 stdio files, each with up to 3 (fdio.MaxHandles) handles
 	StdioHandleTypes [3]int
 	CwdHandle        Handle
