@@ -6,9 +6,9 @@ if [ -z "${ZIRCON}" ]; then
 	exit 1
 fi
 
-zirconbuild="${ZIRCON_BUILD_DIR}"
-if [ -z "${zirconbuild}" ]; then
-	echo "gccwrap.sh: missing ZIRCON_BUILD_DIR env variable" >&2
+zirconsysroot="${ZIRCON_SYSROOT}"
+if [ -z "${zirconsysroot}" ]; then
+	echo "gccwrap.sh: missing ZIRCON_SYSROOT env variable" >&2
 	exit 1
 fi
 
@@ -32,13 +32,13 @@ do
 done
 
 if ! $compiler; then
-	extra_args="-lc $zirconbuild/sysroot/lib/Scrt1.o $zirconbuild/system/ulib/zircon/libzircon.so.abi"
+	extra_args="-lc $zirconsysroot/lib/Scrt1.o $zirconsysroot/../system/ulib/zircon/libzircon.so.abi"
 fi
 
 exec $gccbin \
-	--sysroot=$zirconbuild/sysroot \
-	-I$zirconbuild/sysroot/include \
-	-L$zirconbuild/sysroot/lib \
+	--sysroot=$zirconsysroot \
+	-I$zirconsysroot/include \
+	-L$zirconsysroot/lib \
 	-nostdlib \
 	-fuse-ld=gold \
 	-fno-use-linker-plugin \
