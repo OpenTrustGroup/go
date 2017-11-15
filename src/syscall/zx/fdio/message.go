@@ -69,13 +69,13 @@ const (
 // Top 4 bits of open flags are reserved for the protocol
 const (
 	OpOpenFlagProtocolMask = uint32(0xf0000000)
-	OpOpenFlagPipeline     = uint32(0x80000000)
+	OpOpenFlagPipeline     = uint32(0x10000000)
 )
 
 const (
-	OpOpenFlagReadable = 1
-	OpOpenFlagWritable = 2
-	OpOpenFlagRDWR     = OpOpenFlagReadable | OpOpenFlagWritable
+	OpOpenFlagRDOnly = uint32(iota)
+	OpOpenFlagWROnly
+	OpOpenFlagRDWR
 )
 
 // Ops which correspond to a previously listed operation, but have a different number of handles

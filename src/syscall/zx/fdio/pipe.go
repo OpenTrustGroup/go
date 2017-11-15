@@ -109,7 +109,7 @@ func (f *Pipe) Close() error {
 	return nil
 }
 
-func (f *Pipe) Open(path string, flags uint32, mode uint32) (FDIO, error) {
+func (f *Pipe) Open(path string, flags int32, mode uint32) (FDIO, error) {
 	return nil, zx.Error{Status: zx.ErrNotSupported, Text: "fdio.Pipe"}
 }
 

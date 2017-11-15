@@ -23,67 +23,27 @@ var (
 )
 
 const (
-	FsRightReadable = 0x00000001
-	FsRightWritable = 0x00000002
-	FsRightAdmin    = 0x00000004
-	FsRightRight    = 0x0000FFFF
-	FsFlagCreate    = 0x00010000
-	FsFlagExclusive = 0x00020000
-	FsFlagTruncate  = 0x00040000
-	FsFlagDirectory = 0x00080000
-	FsFlagAppend    = 0x00100000
-	FsFlagNoRemote  = 0x00200000
-	FsFlagPath      = 0x00400000
-	FsFlagPipeline  = 0x80000000
-)
-
-const (
 	O_RDONLY = 0x0
 	O_WRONLY = 0x1
 	O_RDWR   = 0x2
 
-	// Flags which align with ZXIO_FS_*
-	O_ADMIN     = FsRightAdmin
-	O_CREAT     = FsFlagCreate
-	O_EXCL      = FsFlagExclusive
-	O_TRUNC     = FsFlagTruncate
-	O_DIRECTORY = FsFlagDirectory
-	O_APPEND    = FsFlagAppend
-	O_NOREMOTE  = FsFlagNoRemote
-	O_PATH      = FsFlagPath
-	O_PIPELINE  = FsFlagPipeline
-
-	FdioAlignedFlags = O_ADMIN | O_CREAT | O_EXCL | O_TRUNC | O_DIRECTORY | O_APPEND |
-		O_NOREMOTE | O_PATH | O_PIPELINE
-
-	// Flags which do not align with ZXIO_FS_*
-	O_NONBLOCK  = 0x00000010
-	O_DSYNC     = 0x00000020
-	O_SYNC      = 0x00000040 | O_DSYNC
-	O_RSYNC     = O_SYNC
-	O_NOFOLLOW  = 0x00000080
-	O_CLOEXEC   = 0x00000100
-	O_NOCTTY    = 0x00000200
-	O_ASYNC     = 0x00000400
-	O_DIRECT    = 0x00000800
-	O_LARGEFILE = 0x00001000
-	O_NOATIME   = 0x00002000
-	O_TMPFILE   = 0x00004000
+	O_CREAT     = 00000100
+	O_EXCL      = 00000200
+	O_NOCTTY    = 00000400
+	O_TRUNC     = 00001000
+	O_APPEND    = 00002000
+	O_NONBLOCK  = 00004000
+	O_DSYNC     = 00010000
+	O_SYNC      = 04010000
+	O_RSYNC     = 04010000
+	O_DIRECTORY = 00200000
+	O_NOFOLLOW  = 00400000
+	O_CLOEXEC   = 02000000
+	O_PATH      = 010000000
+	O_NOREMOTE  = 0100000000
+	O_ADMIN     = 0200000000
+	O_PIPELINE  = 02000000000
 )
-
-func FdioFlagsToZxio(flags uint32) (zflags uint32) {
-	perms := uint32(O_RDONLY | O_WRONLY | O_RDWR)
-	switch flags & perms {
-	case O_RDONLY:
-		zflags |= FsRightReadable
-	case O_WRONLY:
-		zflags |= FsRightWritable
-	case O_RDWR:
-		zflags |= FsRightReadable | FsRightWritable
-	}
-	zflags |= (flags & FdioAlignedFlags)
-	return zflags
-}
 
 const (
 	S_IFMT  = 0000170000
@@ -457,12 +417,12 @@ func OpenPath(p string, mode int, perm uint32) (f fdio.FDIO, err error) {
 		cwdMu.Lock()
 		c := cwd
 		cwdMu.Unlock()
-		f, err = c.Open(p, FdioFlagsToZxio(uint32(mode)), perm)
+		f, err = c.Open(p, int32(mode), perm)
 	} else {
 		rootMu.Lock()
 		r := root
 		rootMu.Unlock()
-		f, err = r.Open(p[1:], FdioFlagsToZxio(uint32(mode)), perm)
+		f, err = r.Open(p[1:], int32(mode), perm)
 	}
 	return f, err
 }
@@ -483,7 +443,7 @@ func OpenAt(fdParent int, path string, mode int, perm uint32) (fd int, err error
 	if parent == nil {
 		return -1, EBADF
 	}
-	f, err := parent.Open(path, FdioFlagsToZxio(uint32(mode)), perm)
+	f, err := parent.Open(path, int32(mode), perm)
 	if err != nil {
 		return -1, err
 	}

@@ -32,7 +32,7 @@ func NewRIO(handle []zx.Handle) (*RemoteIO, error) {
 	return r, nil
 }
 
-func NewRIOFromChannel(h *zx.Channel) *RemoteIO {
+func NewRIOFromChannel(h *zx.Channel) (*RemoteIO) {
 	return &RemoteIO{h: h}
 }
 
@@ -220,14 +220,14 @@ func (r *RemoteIO) Close() error {
 }
 
 // getObject requests an FDIO object remotely
-func getObject(rio *zx.Channel, op uint32, name string, flags uint32, mode uint32) (*RioObject, error) {
+func getObject(rio *zx.Channel, op uint32, name string, flags int32, mode uint32) (*RioObject, error) {
 	if len(name) > MessageChunkSize {
 		return nil, zx.Error{Status: zx.ErrInvalidArgs, Text: "RemoteIO"}
 	}
 	var msg Msg
 	msg.SetOp(op)
 	msg.Datalen = uint32(len(name))
-	msg.Arg = int32(flags)
+	msg.Arg = flags
 	msg.SetMode(mode)
 	copy(msg.Data[:], name)
 
@@ -270,11 +270,7 @@ func connect(svc zx.Handle, cnxn zx.Handle, op uint32, name string) error {
 	msg := Msg{}
 	msg.SetOp(op)
 	msg.Datalen = uint32(len(name))
-	// TODO(smklein): Avoid using this weird pointer magic if we can make
-	// msg.Arg unsigned -- it's caused because OpOpenFlagPipeline is the top
-	// bit of a 32-bit constant.
-	uarg := OpOpenFlagPipeline | OpOpenFlagRDWR
-	msg.Arg = *(*int32)(unsafe.Pointer(&uarg))
+	msg.Arg = int32(OpOpenFlagPipeline | OpOpenFlagRDWR)
 	msg.SetMode(0755)
 	msg.Hcount = 1
 	msg.Handle[0] = cnxn
@@ -343,7 +339,7 @@ func createFromHandles(protocol Protocol, handles []zx.Handle, extra []byte) (FD
 	}
 }
 
-func OpenHandle(rio *zx.Channel, path string, flags uint32, mode uint32) (FDIO, error) {
+func OpenHandle(rio *zx.Channel, path string, flags int32, mode uint32) (FDIO, error) {
 	ro, err := getObject(rio, OpOpen, path, flags, mode)
 	if err != nil {
 		return nil, err
@@ -359,7 +355,7 @@ func CloneHandle(rio *zx.Channel) ([]zx.Handle, error) {
 	return ro.Handle[:ro.Hcount], nil
 }
 
-func (r *RemoteIO) Open(path string, flags uint32, mode uint32) (FDIO, error) {
+func (r *RemoteIO) Open(path string, flags int32, mode uint32) (FDIO, error) {
 	return OpenHandle(r.h, path, flags, mode)
 }
 
