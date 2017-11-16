@@ -6,45 +6,13 @@ import("//build/config/sysroot.gni")
 import("//build/go/go_test.gni")
 import("//build/package.gni")
 
-# The go_runtime action wraps go_toolchain, rebuilding just the standard
-# if it has changed.
 if (current_toolchain == target_toolchain) {
-  action("go_runtime_internal") {
-    visibility = [ ":*" ]
-
-    inputs = [ "makestdlib.go" ]
-    outputs = [
-      "$root_gen_dir/gostdlib.done",
-    ]
-    depfile = "$root_gen_dir/gostdlib.d"
-    script = rebase_path("//buildtools/go")
-    args = [
-      "run",
-      rebase_path("makestdlib.go", root_build_dir),
-      "-fuchsia-root",
-      rebase_path("//."),
-      "-zircon-sysroot",
-      sysroot,
-      "-depfile",
-      rebase_path(depfile),
-      "-root-out-dir",
-      rebase_path("$root_out_dir"),
-      "-root-gen-dir",
-      rebase_path("$root_gen_dir"),
-      "-target-cpu",
-      target_cpu,
-      "--bootstrap-path",
-      rebase_path("//buildtools/${host_os}-${host_cpu}/go"),
-    ]
-    deps = [
-      ":go_toolchain",
-    ]
-  }
-
   action("go_toolchain") {
     outputs = [
       "$root_gen_dir/goroot.done",
     ]
+
+    depfile = "$root_gen_dir/goroot.d"
 
     visibility = [ ":*" ]
 
@@ -52,19 +20,25 @@ if (current_toolchain == target_toolchain) {
     args = [
       "run",
       rebase_path("makefuchsia.go", root_build_dir),
-      "-fuchsia-root",
-      rebase_path("//."),
+      "-fuchsia-goroot",
+      rebase_path("."),
+      "-depfile",
+      rebase_path(depfile),
       "-root-gen-dir",
       rebase_path("$root_gen_dir"),
-      "--bootstrap-path",
-      rebase_path("//buildtools/${host_os}-${host_cpu}/go"),
+      "-root-out-dir",
+      rebase_path("$root_out_dir"),
+      "--out-goroot",
+      rebase_path("$root_out_dir/goroot"),
+      "-target-cpu",
+      target_cpu,
     ]
   }
 }
 
 group("go_runtime") {
   public_deps = [
-    ":go_runtime_internal(${target_toolchain})",
+    ":go_toolchain(${target_toolchain})",
   ]
 }
 
