@@ -6,6 +6,12 @@ if [ -z "${ZIRCON}" ]; then
 	exit 1
 fi
 
+# TODO(mcgrathr): Remove this fallback when everything has percolated through
+# to passing sysroot instead of build-dir.
+if [ -z "$ZIRCON_SYSROOT" -a -n "$ZIRCON_BUILD_DIR" ]; then
+	ZIRCON_SYSROOT="${ZIRCON_BUILD_DIR}/sysroot"
+fi
+
 zirconsysroot="${ZIRCON_SYSROOT}"
 if [ -z "${zirconsysroot}" ]; then
 	echo "gccwrap.sh: missing ZIRCON_SYSROOT env variable" >&2
