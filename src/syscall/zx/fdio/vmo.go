@@ -45,8 +45,27 @@ func (f *VMOFile) Read(data []byte) (n int, err error) {
 	return n, err
 }
 
-func (f *VMOFile) ReadAt(data []byte, off int64) (int, error) {
-	panic("TODO")
+func (f *VMOFile) ReadAt(data []byte, off int64) (n int, err error) {
+	if off < 0 {
+		return 0, zx.Error{Status: zx.ErrInvalidArgs, Text: "fdio.VMOFile.ReadAt"}
+	}
+	if off >= f.end {
+		return 0, zx.EOF
+	}
+	if len(data) == 0 {
+		return 0, zx.EOF
+	}
+	n = len(data)
+	max := int(f.end - off)
+	if max < n {
+		n = max
+		err = zx.EOF
+	}
+	data = data[:n]
+	if n2, err2 := f.h.Read(data, uint64(off)); err2 != nil {
+		return n2, err2
+	}
+	return
 }
 
 func (f *VMOFile) Write(data []byte) (int, error) {
