@@ -4,7 +4,7 @@
 
 import("//build/config/sysroot.gni")
 import("//build/go/go_test.gni")
-import("//packages/package.gni")
+import("//build/package.gni")
 
 # The go_runtime action wraps go_toolchain, rebuilding just the standard
 # if it has changed.
