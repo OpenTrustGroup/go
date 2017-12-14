@@ -276,11 +276,15 @@ const (
 	SignalChannelPeerClosed = SignalObject2
 
 	// Socket
-	SignalSocketReadable      = SignalObject0
-	SignalSocketWritable      = SignalObject1
-	SignalSocketPeerClosed    = SignalObject2
-	SignalSocketReadDisabled  = SignalObject4
-	SignalSocketWriteDisabled = SignalObject5
+	SignalSocketReadable         = SignalObject0
+	SignalSocketWritable         = SignalObject1
+	SignalSocketPeerClosed       = SignalObject2
+	SignalSocketReadDisabled     = SignalObject4
+	SignalSocketWriteDisabled    = SignalObject5
+	SignalSocketControlReadable  = SignalObject6
+	SignalSocketControlWriteable = SignalObject7
+	SignalSocketAccept           = SignalObject8
+	SignalSocketShare            = SignalObject9
 
 	// Port
 	SignalPortReadable   = SignalObject0
@@ -340,10 +344,11 @@ const (
 )
 
 // Options for socket_create
-
 const (
-	SocketStream   = iota // 0
-	SocketDatagram        // 1
+	SocketStream     = iota            // 0
+	SocketDatagram   = 1 << (iota - 1) // 1
+	SocketHasControl                   // 2
+	SocketHasAccept                    // 4
 )
 
 // Options for socket_write
@@ -351,6 +356,11 @@ const (
 	_                   = iota // 0
 	SocketShutdownWrite        // 1
 	SocketShutdownRead         // 2
+)
+
+// Options for socket_write and socket_read
+const (
+	SocketControl = 1 << 2
 )
 
 const (

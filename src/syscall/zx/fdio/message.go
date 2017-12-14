@@ -192,6 +192,8 @@ type MsgHeader struct {
 }
 
 // Msg is the message sent in the Remote IO protocol
+// Note: if you change this structure in any way, make sure to make the
+// same change to zxsocket.Msg (though size of Data can be different).
 type Msg struct {
 	MsgHeader
 	Data [MessageChunkSize]uint8
