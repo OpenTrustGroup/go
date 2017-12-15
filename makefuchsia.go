@@ -271,7 +271,7 @@ func main() {
 		}
 
 		env := os.Environ()
-		env = append(env, "GOROOT_BOOTSTRAP="+string(out))
+		env = append(env, "GOROOT_BOOTSTRAP="+strings.TrimSpace(string(out)))
 		env = append(env, "CC_FOR_fuchsia_"+goarchTarget+"="+dstGoroot+"/misc/fuchsia/gccwrap.sh")
 
 		// Fresh copy, we need to build the compiler.
