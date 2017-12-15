@@ -28,6 +28,7 @@ import (
 )
 
 var (
+	flagBuiltoolsGo   = flag.String("buildtools-go", "", "Path to go tool used for bootstrap")
 	flagFuchsiaGoroot = flag.String("fuchsia-goroot", "", "Path to Fuchsia's source GOROOT")
 	flagDepfile       = flag.String("depfile", "", "Stdlib depfile")
 	flagRootOutDir    = flag.String("root-out-dir", "", "GN variable")
@@ -263,13 +264,20 @@ func main() {
 	wg.Wait()
 
 	if _, err := os.Stat(join(dstGoroot, "bin", "go")); err != nil {
+		cmd := exec.Command(*flagBuiltoolsGo, "env", "GOROOT")
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Fatalf("cannot find bootstrap GOROOT: %v", err)
+		}
+
 		env := os.Environ()
+		env = append(env, "GOROOT_BOOTSTRAP="+string(out))
 		env = append(env, "CC_FOR_fuchsia_"+goarchTarget+"="+dstGoroot+"/misc/fuchsia/gccwrap.sh")
 
 		// Fresh copy, we need to build the compiler.
 		// On subsequent copies, we can rely on "go build" to
 		// rebuild any standard library changes.
-		cmd := exec.Command(join(dst, "make.bash"))
+		cmd = exec.Command(join(dst, "make.bash"))
 		cmd.Dir = dst
 		cmd.Env = env
 		buf := new(bytes.Buffer)

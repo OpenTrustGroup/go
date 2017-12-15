@@ -20,6 +20,8 @@ if (current_toolchain == target_toolchain) {
     args = [
       "run",
       rebase_path("makefuchsia.go", root_build_dir),
+      "-buildtools-go",
+      rebase_path("//buildtools/go"),
       "-fuchsia-goroot",
       rebase_path("."),
       "-depfile",
