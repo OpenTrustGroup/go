@@ -34,13 +34,14 @@ const (
 	FsFlagAppend    = 0x00100000
 	FsFlagNoRemote  = 0x00200000
 	FsFlagPath      = 0x00400000
-	FsFlagPipeline  = 0x80000000
+	FsFlagDescribe  = 0x00800000
 )
 
 const (
-	O_RDONLY = 0x0
-	O_WRONLY = 0x1
-	O_RDWR   = 0x2
+	O_RDONLY   = 0x0
+	O_WRONLY   = 0x1
+	O_RDWR     = 0x2
+	O_PIPELINE = 0x80000000
 
 	// Flags which align with ZXIO_FS_*
 	O_ADMIN     = FsRightAdmin
@@ -51,10 +52,9 @@ const (
 	O_APPEND    = FsFlagAppend
 	O_NOREMOTE  = FsFlagNoRemote
 	O_PATH      = FsFlagPath
-	O_PIPELINE  = FsFlagPipeline
 
 	FdioAlignedFlags = O_ADMIN | O_CREAT | O_EXCL | O_TRUNC | O_DIRECTORY | O_APPEND |
-		O_NOREMOTE | O_PATH | O_PIPELINE
+		O_NOREMOTE | O_PATH
 
 	// Flags which do not align with ZXIO_FS_*
 	O_NONBLOCK  = 0x00000010
@@ -81,6 +81,11 @@ func FdioFlagsToZxio(flags uint32) (zflags uint32) {
 	case O_RDWR:
 		zflags |= FsRightReadable | FsRightWritable
 	}
+
+	if (flags & O_PIPELINE) == 0 {
+		zflags |= FsFlagDescribe
+	}
+
 	zflags |= (flags & FdioAlignedFlags)
 	return zflags
 }

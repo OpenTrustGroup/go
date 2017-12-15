@@ -220,9 +220,9 @@ func (r *RemoteIO) Close() error {
 }
 
 // getObject requests an FDIO object remotely
-func getObject(rio *zx.Channel, op uint32, name string, flags uint32, mode uint32) (*RioObject, error) {
+func getObject(rio *zx.Channel, op uint32, name string, flags uint32, mode uint32) (*zx.Channel, *RioDescription, error) {
 	if len(name) > MessageChunkSize {
-		return nil, zx.Error{Status: zx.ErrInvalidArgs, Text: "RemoteIO"}
+		return nil, nil, zx.Error{Status: zx.ErrInvalidArgs, Text: "RemoteIO"}
 	}
 	var msg Msg
 	msg.SetOp(op)
@@ -234,12 +234,13 @@ func getObject(rio *zx.Channel, op uint32, name string, flags uint32, mode uint3
 	return replyChannelCall(rio, &msg)
 }
 
-func replyChannelCall(rio *zx.Channel, msg *Msg) (*RioObject, error) {
+func replyChannelCall(rio *zx.Channel, msg *Msg) (*zx.Channel, *RioDescription, error) {
 	// Create a new channel to receive the 'callback' on
 	h, rh, err := zx.NewChannel(0)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	msg.Arg |= OpenFlagDescribe
 	msg.Handle[0] = rh.Handle
 	msg.Hcount = 1
 
@@ -247,18 +248,18 @@ func replyChannelCall(rio *zx.Channel, msg *Msg) (*RioObject, error) {
 	if err := msg.WriteMsg(rio); err != nil {
 		msg.DiscardHandles()
 		h.Close()
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Wait
 	h.Handle.WaitOne(zx.SignalChannelReadable|zx.SignalChannelPeerClosed, zx.TimensecInfinite)
 
 	// Attempt to read the callback response
-	var ro RioObject
+	var ro RioDescription
 	if status := ro.Read(h.Handle, 0); status < 0 {
-		return nil, zx.Error{Status: status, Text: "RemoteIO.replyChannelCall"}
+		return nil, nil, zx.Error{Status: status, Text: "RemoteIO.replyChannelCall"}
 	} else {
-		return &ro, nil
+		return h, &ro, nil
 	}
 }
 
@@ -270,11 +271,7 @@ func connect(svc zx.Handle, cnxn zx.Handle, op uint32, name string) error {
 	msg := Msg{}
 	msg.SetOp(op)
 	msg.Datalen = uint32(len(name))
-	// TODO(smklein): Avoid using this weird pointer magic if we can make
-	// msg.Arg unsigned -- it's caused because OpOpenFlagPipeline is the top
-	// bit of a 32-bit constant.
-	uarg := OpOpenFlagPipeline | OpOpenFlagRDWR
-	msg.Arg = *(*int32)(unsafe.Pointer(&uarg))
+	msg.Arg = OpOpenFlagRDWR
 	msg.SetMode(0755)
 	msg.Hcount = 1
 	msg.Handle[0] = cnxn
@@ -312,7 +309,7 @@ func closeAll(handles []zx.Handle) {
 }
 
 // Consumes handles, wrapping them in fdio object or closing them on error.
-func createFromHandles(protocol Protocol, handles []zx.Handle, extra []byte) (FDIO, error) {
+func createFromHandles(protocol Protocol, handles []zx.Handle, extra [RioDescribeExtra]byte) (FDIO, error) {
 	switch protocol {
 	case ProtocolPipe:
 		if len(handles) != 1 {
@@ -327,12 +324,12 @@ func createFromHandles(protocol Protocol, handles []zx.Handle, extra []byte) (FD
 		}
 		return NewRIO(handles)
 	case ProtocolVMOFile:
-		if len(handles) != 2 || len(extra) != 16 {
+		if len(handles) != 2 {
 			closeAll(handles)
 			return nil, zx.Error{Status: zx.ErrInvalidArgs, Text: "createFromHandles: VMOFile"}
 		}
 		handles[0].Close()
-		return NewVMOFile(handles[1], extra)
+		return NewVMOFile(handles[1], extra[:16])
 	case ProtocolSocket:
 		return NewSocket(handles)
 	default:
@@ -344,19 +341,19 @@ func createFromHandles(protocol Protocol, handles []zx.Handle, extra []byte) (FD
 }
 
 func OpenHandle(rio *zx.Channel, path string, flags uint32, mode uint32) (FDIO, error) {
-	ro, err := getObject(rio, OpOpen, path, flags, mode)
+	c, ro, err := getObject(rio, OpOpen, path, flags, mode)
 	if err != nil {
 		return nil, err
 	}
-	return createFromHandles(Protocol(ro.Type), ro.Handle[:ro.Hcount], ro.Extra[:ro.Esize])
+	return createFromHandles(Protocol(ro.Type), append([]zx.Handle{c.Handle}, ro.Handle), ro.Extra)
 }
 
 func CloneHandle(rio *zx.Channel) ([]zx.Handle, error) {
-	ro, err := getObject(rio, OpClone, "", 0, 0)
+	c, _, err := getObject(rio, OpClone, "", 0, 0)
 	if err != nil {
 		return nil, err
 	}
-	return ro.Handle[:ro.Hcount], nil
+	return []zx.Handle{c.Handle}, nil
 }
 
 func (r *RemoteIO) Open(path string, flags uint32, mode uint32) (FDIO, error) {

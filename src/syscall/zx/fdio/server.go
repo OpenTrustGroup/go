@@ -78,11 +78,15 @@ func Handler(h zx.Handle, cb interface{}, cookie int64) error {
 func TxnHandoff(srv *zx.Channel, reply zx.Handle, msg *Msg) {
 	msg.Txid = 0
 	msg.Handle[0] = reply
-	msg.Hcount = 1
+
+	ro := &RioDescription{}
+	ro.SetOp(OpOnOpen)
 
 	if !msg.IsValid() {
-		IndirectError(reply, zx.ErrInvalidArgs)
+		ro.Status = zx.ErrInvalidArgs
+		ro.Write(reply, 0)
 	} else if err := msg.WriteMsg(srv); err != nil {
-		IndirectError(reply, err.(zx.Error).Status)
+		ro.Status = err.(zx.Error).Status
+		ro.Write(reply, 0)
 	}
 }

@@ -66,10 +66,14 @@ const (
 	OpNumOps = uint32(iota) // The total number of operations
 )
 
-// Top 4 bits of open flags are reserved for the protocol
+// Control ordinal operations. Sent from server to client without
+// necessarily having an accompanying request message.
 const (
-	OpOpenFlagProtocolMask = uint32(0xf0000000)
-	OpOpenFlagPipeline     = uint32(0x80000000)
+	OpOnOpen = uint32(0x80000000) | (iota + 1)
+)
+
+const (
+	OpenFlagDescribe = 0x00800000
 )
 
 const (
@@ -89,66 +93,68 @@ const (
 )
 
 const (
-	RioObjectExtra   = 32
-	RioObjectMinSize = uint32(unsafe.Sizeof(RioObjectHeader{}))
-	RioObjectMaxSize = RioObjectMinSize + RioObjectExtra
+	RioDescribeExtra   = 16
+	RioDescriptionSize = uint32(unsafe.Sizeof(RioDescription{}))
 )
 
-type RioObjectHeader struct {
-	Status zx.Status
-	Type   uint32
+// FIDL2 message header
+type FIDLHeader struct {
+	Txid      uint32
+	reserved0 uint32
+	flags     uint32
+	op        uint32
 }
 
-type RioObject struct {
-	// Required Header
-	RioObjectHeader
-
+type RioDescription struct {
+	FIDLHeader
+	Status   zx.Status
+	Handle   zx.Handle
+	Type     uint32
+	reserved uint32
 	// Optional Extra Data
-	Extra [RioObjectExtra]uint8
+	Extra [RioDescribeExtra]uint8
+}
 
-	// OOB Data
-	Esize  uint32
-	Hcount uint32
-	Handle [MessageMaxHandles]zx.Handle
+func (ro *RioDescription) Op() uint32 {
+	return ro.op
+}
+func (ro *RioDescription) SetOp(v uint32) {
+	ro.op = v
 }
 
 // Helper to write back a RIO object. Does not consume h.
-func (ro *RioObject) Write(h zx.Handle, flags uint32) {
+func (ro *RioDescription) Write(h zx.Handle, flags uint32) {
 	c := &zx.Channel{h}
 
-	// Prepare the raw data
-	size := RioObjectMinSize + ro.Esize
-	if size > RioObjectMaxSize {
-		panic("Invalid RIO Object (too large): RIO Implementation error")
-	}
-	msgBytes := (*[RioObjectMaxSize]byte)(unsafe.Pointer(ro))
-	data := msgBytes[:size]
+	data := (*[RioDescriptionSize]byte)(unsafe.Pointer(ro))
 
 	// Prepare the handles
 	var handles []zx.Handle
-	if ro.Hcount > 0 {
-		handles = ro.Handle[:ro.Hcount]
+	if ro.Handle != zx.HANDLE_INVALID {
+		handles = append(handles, ro.Handle)
 	}
-	c.Write(data, handles, flags)
+	c.Write(data[:], handles, flags)
 }
 
-// Helper to read a RIO object. Consumes h.
-func (ro *RioObject) Read(h zx.Handle, flags uint32) zx.Status {
+// Helper to read a RIO object. Does not consume h.
+func (ro *RioDescription) Read(h zx.Handle, flags uint32) zx.Status {
 	c := &zx.Channel{h}
-	msgBytes := (*[RioObjectMaxSize]byte)(unsafe.Pointer(ro))
-	numBytes, numHandles, err := c.Read(msgBytes[:], ro.Handle[1:], flags)
+	msgBytes := (*[RioDescriptionSize]byte)(unsafe.Pointer(ro))
+	var handles [1]zx.Handle
+	numBytes, numHandles, err := c.Read(msgBytes[:], handles[:], flags)
 	if err != nil {
 		c.Close()
 		return err.(zx.Error).Status
 	}
-	ro.Handle[0] = c.Handle
-	numHandles++
-	if numBytes < RioObjectMinSize {
+	if numBytes != RioDescriptionSize {
 		ro.DiscardHandles()
 		return zx.ErrIO
 	}
-	ro.Hcount = numHandles
-	ro.Esize = numBytes - RioObjectMinSize
+	if numHandles == 1 {
+		ro.Handle = handles[0]
+	} else {
+		ro.Handle = zx.HANDLE_INVALID
+	}
 	r := ro.Status
 	if r < 0 {
 		ro.DiscardHandles()
@@ -157,32 +163,15 @@ func (ro *RioObject) Read(h zx.Handle, flags uint32) zx.Status {
 }
 
 // DiscardHandles throws away any handles that might exist within the object
-func (ro *RioObject) DiscardHandles() {
-	for i := uint32(0); i < ro.Hcount; i++ {
-		ro.Handle[i].Close()
+func (ro *RioDescription) DiscardHandles() {
+	if ro.Handle != zx.HANDLE_INVALID {
+		ro.Handle.Close()
 	}
-	ro.Hcount = 0
-}
-
-// Helper wrapping the common case of 'write back only a status'
-func IndirectError(h zx.Handle, status zx.Status) zx.Status {
-	ro := &RioObject{
-		RioObjectHeader: RioObjectHeader{
-			Status: status,
-		},
-		Esize:  0,
-		Hcount: 0,
-	}
-	ro.Write(h, 0)
-	h.Close()
-	return ErrIndirect.Status
+	ro.Handle = zx.HANDLE_INVALID
 }
 
 type MsgHeader struct {
-	Txid      uint32 // FIDL2 message header
-	reserved0 uint32
-	flags     uint32
-	op        uint32
+	FIDLHeader
 	Datalen   uint32
 	Arg       int32
 	arg2      int64
