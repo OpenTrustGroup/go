@@ -318,6 +318,22 @@ TEXT ·sys_socket_read(SB),NOSPLIT,$0-36
 	MOVW R0, ret+32(FP)
 	RET
 
+// func sys_socket_share(handle Handle, socket_to_share Handle) Status
+TEXT ·sys_socket_share(SB),NOSPLIT,$0-12
+	MOVW handle+0(FP), R0
+	MOVW socket_to_share+4(FP), R1
+	BL vdso_zx_socket_share(SB)
+	MOVW R0, ret+8(FP)
+	RET
+
+// func sys_socket_accept(handle Handle, out_socket *Handle) Status
+TEXT ·sys_socket_accept(SB),NOSPLIT,$0-20
+	MOVW handle+0(FP), R0
+	MOVD out_socket+8(FP), R1
+	BL vdso_zx_socket_accept(SB)
+	MOVW R0, ret+16(FP)
+	RET
+
 // func Sys_thread_exit()
 TEXT ·Sys_thread_exit(SB),NOSPLIT,$0-0
 	BL vdso_zx_thread_exit(SB)
@@ -530,22 +546,22 @@ TEXT ·Sys_port_create(SB),NOSPLIT,$0-20
 	MOVW R0, ret+16(FP)
 	RET
 
-// func Sys_port_queue(handle Handle, packet unsafe.Pointer, size uint) Status
+// func Sys_port_queue(handle Handle, packet *int, count uint) Status
 TEXT ·Sys_port_queue(SB),NOSPLIT,$0-28
 	MOVW handle+0(FP), R0
 	MOVD packet+8(FP), R1
-	MOVD size+16(FP), R2
+	MOVD count+16(FP), R2
 	BL vdso_zx_port_queue(SB)
 	MOVW R0, ret+24(FP)
 	RET
 
-// func Sys_port_wait(handle Handle, deadline Time, packet unsafe.Pointer, size uint) Status
+// func Sys_port_wait(handle Handle, deadline Time, packet *int, count uint) Status
 TEXT ·Sys_port_wait(SB),NOSPLIT,$0-36
 	CALL runtime·entersyscall(SB)
 	MOVW handle+0(FP), R0
 	MOVD deadline+8(FP), R1
 	MOVD packet+16(FP), R2
-	MOVD size+24(FP), R3
+	MOVD count+24(FP), R3
 	BL vdso_zx_port_wait(SB)
 	MOVW R0, ret+32(FP)
 	BL runtime·exitsyscall(SB)
@@ -967,6 +983,17 @@ TEXT ·Sys_vmo_create_physical(SB),NOSPLIT,$0-36
 	MOVW R0, ret+32(FP)
 	RET
 
+// func Sys_iommu_create(rsrc_handle Handle, typ uint32, desc unsafe.Pointer, desc_len uint32, out *Handle) Status
+TEXT ·Sys_iommu_create(SB),NOSPLIT,$0-36
+	MOVW rsrc_handle+0(FP), R0
+	MOVW typ+4(FP), R1
+	MOVD desc+8(FP), R2
+	MOVW desc_len+16(FP), R3
+	MOVD out+24(FP), R4
+	BL vdso_zx_iommu_create(SB)
+	MOVW R0, ret+32(FP)
+	RET
+
 // func Sys_bootloader_fb_get_info(format *uint32, width *uint32, height *uint32, stride *uint32) Status
 TEXT ·Sys_bootloader_fb_get_info(SB),NOSPLIT,$0-36
 	MOVD format+0(FP), R0
@@ -1010,13 +1037,6 @@ TEXT ·Sys_acpi_uefi_rsdp(SB),NOSPLIT,$0-16
 	MOVD R0, ret+8(FP)
 	RET
 
-// func Sys_acpi_cache_flush(handle Handle) Status
-TEXT ·Sys_acpi_cache_flush(SB),NOSPLIT,$0-12
-	MOVW handle+0(FP), R0
-	BL vdso_zx_acpi_cache_flush(SB)
-	MOVW R0, ret+8(FP)
-	RET
-
 // func Sys_resource_create(parent_handle Handle, kind uint32, low uint64, high uint64, resource_out *Handle) Status
 TEXT ·Sys_resource_create(SB),NOSPLIT,$0-36
 	MOVW parent_handle+0(FP), R0
@@ -1028,14 +1048,21 @@ TEXT ·Sys_resource_create(SB),NOSPLIT,$0-36
 	MOVW R0, ret+32(FP)
 	RET
 
-// func Sys_system_mexec(kernel Handle, bootimage Handle, cmdline *uint8, cmdline_len uint32) Status
-TEXT ·Sys_system_mexec(SB),NOSPLIT,$0-28
+// func Sys_system_mexec(kernel Handle, bootimage Handle) Status
+TEXT ·Sys_system_mexec(SB),NOSPLIT,$0-12
 	MOVW kernel+0(FP), R0
 	MOVW bootimage+4(FP), R1
-	MOVD cmdline+8(FP), R2
-	MOVW cmdline_len+16(FP), R3
 	BL vdso_zx_system_mexec(SB)
-	MOVW R0, ret+24(FP)
+	MOVW R0, ret+8(FP)
+	RET
+
+// func Sys_system_powerctl(root_rsrc Handle, cmd uint32, arg *int) Status
+TEXT ·Sys_system_powerctl(SB),NOSPLIT,$0-20
+	MOVW root_rsrc+0(FP), R0
+	MOVW cmd+4(FP), R1
+	MOVD arg+8(FP), R2
+	BL vdso_zx_system_powerctl(SB)
+	MOVW R0, ret+16(FP)
 	RET
 
 // func Sys_job_set_relative_importance(root_resource Handle, job Handle, less_important_job Handle) Status

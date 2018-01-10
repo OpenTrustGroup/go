@@ -629,7 +629,12 @@ func (p *parser) nextIdent() string {
 	for isLetter(p.r) || isNumber(p.r) {
 		p.nextRune()
 	}
-	return string(p.buf[off : p.off-1])
+	r := string(p.buf[off : p.off-1])
+	if r == "type" {
+		// "type" is a reserved word in Go.
+		return "typ"
+	}
+	return r
 }
 
 func (p *parser) nextNumber() string {
@@ -730,6 +735,8 @@ func (call zirconSyscallDef) exported() bool {
 		"socket_create",
 		"socket_read",
 		"socket_write",
+		"socket_accept",
+		"socket_share",
 		"vmar_allocate",
 		"vmar_destroy",
 		"vmar_map",
@@ -829,12 +836,13 @@ var zirconTypeNamedStr = map[string]zirconTypeNamed{
 	"zx_fifo_state_t":          zx_fifo_state_t,
 	// TODO(smklein): Remove the following temporary types. They could be blacklisted, but this is
 	// easier.
-	"zx_cache_policy_t":      zx_int,
-	"zx_port_packet_t":       zx_int,
-	"zx_pci_init_arg_t":      zx_int,
-	"zx_pci_irq_mode_t":      zx_int,
-	"zx_pci_resource_t":      zx_int,
-	"zx_pcie_device_info_t":  zx_int,
-	"zx_pcie_get_nth_info_t": zx_int,
-	"zx_vcpu_create_args_t":  zx_int,
+	"zx_cache_policy_t":        zx_int,
+	"zx_port_packet_t":         zx_int,
+	"zx_pci_init_arg_t":        zx_int,
+	"zx_pci_irq_mode_t":        zx_int,
+	"zx_pci_resource_t":        zx_int,
+	"zx_pcie_device_info_t":    zx_int,
+	"zx_pcie_get_nth_info_t":   zx_int,
+	"zx_vcpu_create_args_t":    zx_int,
+	"zx_system_powerctl_arg_t": zx_int,
 }

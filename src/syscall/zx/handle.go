@@ -327,7 +327,7 @@ func (p *Port) Close() error {
 
 // Queue a PortPacket, which may have a varying size.
 func (p *Port) Queue(packet PortPacket) error {
-	if status := Sys_port_queue(p.Handle, unsafe.Pointer(packet.Header()), uint(packet.Length())); status != ErrOk {
+	if status := Sys_port_queue(p.Handle, (*int)(unsafe.Pointer(packet.Header())), uint(packet.Length())); status != ErrOk {
 		return Error{Status: status, Text: "zx.Port.Queue"}
 	}
 	return nil
@@ -336,7 +336,7 @@ func (p *Port) Queue(packet PortPacket) error {
 // Wait for a Packet, which must be as large as the largest
 // possible packet that may be received.
 func (p *Port) Wait(packet *Packet, deadline Time) error {
-	if status := Sys_port_wait(p.Handle, deadline, unsafe.Pointer(packet), 0); status != ErrOk {
+	if status := Sys_port_wait(p.Handle, deadline, (*int)(unsafe.Pointer(packet)), 0); status != ErrOk {
 		return Error{Status: status, Text: "zx.Port.Wait"}
 	}
 	return nil
