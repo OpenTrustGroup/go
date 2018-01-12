@@ -63,6 +63,7 @@ const (
 	OpLink = uint32(iota) | OpFlagOneHandle
 	OpMmap = uint32(iota)
 	OpFcntl
+	OpAccept
 	OpNumOps = uint32(iota) // The total number of operations
 )
 

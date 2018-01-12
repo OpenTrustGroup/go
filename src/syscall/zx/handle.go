@@ -58,6 +58,13 @@ func (s Socket) Write(data []byte, flags uint32) (n int, err error) {
 	return int(actual), nil
 }
 
+func (s Socket) Share(h Handle) error {
+	if status := sys_socket_share(Handle(s), h); status != ErrOk {
+		return Error{Status: status, Text: "zx.Socket.Share"}
+	}
+	return nil
+}
+
 func (s Socket) Close() error { return Handle(s).Close() }
 func (s Socket) WaitOne(waitFor Signals, timeout Time) (Signals, error) {
 	return Handle(s).WaitOne(waitFor, timeout)
