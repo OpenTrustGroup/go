@@ -38,7 +38,7 @@ do
 done
 
 if ! $compiler; then
-	extra_args="-lc $zirconsysroot/lib/Scrt1.o $zirconsysroot/../system/ulib/zircon/libzircon.so.abi"
+	extra_args="-lc $zirconsysroot/lib/Scrt1.o $zirconsysroot/lib/libzircon.so"
 fi
 
 exec $gccbin \

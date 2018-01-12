@@ -8,9 +8,28 @@ import("//build/package.gni")
 
 if (current_toolchain == target_toolchain) {
   action("go_toolchain") {
+    go_root = "$root_out_dir/goroot"
+
+    # These files are copied over to //out by makefuchsia.go.
+    copied_files = [
+      "misc/fuchsia/clangwrap.sh",
+      "misc/fuchsia/gccwrap.sh",
+      "misc/fuchsia/go_stdlib_tests.json",
+    ]
+
+    inputs = copied_files
+    inputs += [
+      "makefuchsia.go",
+    ]
+
     outputs = [
       "$root_gen_dir/goroot.done",
     ]
+    foreach(file, copied_files) {
+      outputs += [
+        "$go_root/$file",
+      ]
+    }
 
     depfile = "$root_gen_dir/goroot.d"
 
@@ -31,7 +50,7 @@ if (current_toolchain == target_toolchain) {
       "-root-out-dir",
       rebase_path("$root_out_dir"),
       "--out-goroot",
-      rebase_path("$root_out_dir/goroot"),
+      rebase_path(go_root),
       "-target-cpu",
       target_cpu,
     ]
