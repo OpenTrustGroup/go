@@ -9,7 +9,7 @@ package zx
 
 import "unsafe"
 
-//go:cgo_import_dynamic vdso_zx_time_get zx_time_get "libzircon.so"
+//go:cgo_import_dynamic vdso_zx_clock_get zx_clock_get "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_nanosleep zx_nanosleep "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_ticks_get zx_ticks_get "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_ticks_per_second zx_ticks_per_second "libzircon.so"
@@ -123,7 +123,7 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_zx_system_powerctl zx_system_powerctl "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_job_set_relative_importance zx_job_set_relative_importance "libzircon.so"
 
-//go:linkname vdso_zx_time_get vdso_zx_time_get
+//go:linkname vdso_zx_clock_get vdso_zx_clock_get
 //go:linkname vdso_zx_nanosleep vdso_zx_nanosleep
 //go:linkname vdso_zx_ticks_get vdso_zx_ticks_get
 //go:linkname vdso_zx_ticks_per_second vdso_zx_ticks_per_second
@@ -238,7 +238,7 @@ import "unsafe"
 //go:linkname vdso_zx_job_set_relative_importance vdso_zx_job_set_relative_importance
 
 var (
-	vdso_zx_time_get                            uintptr
+	vdso_zx_clock_get                           uintptr
 	vdso_zx_nanosleep                           uintptr
 	vdso_zx_ticks_get                           uintptr
 	vdso_zx_ticks_per_second                    uintptr
@@ -355,7 +355,7 @@ var (
 
 //go:noescape
 //go:nosplit
-func Sys_time_get(clock_id uint32) Time
+func Sys_clock_get(clock_id uint32) Time
 
 //go:noescape
 //go:nosplit

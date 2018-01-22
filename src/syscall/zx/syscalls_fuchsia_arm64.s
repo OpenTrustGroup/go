@@ -7,10 +7,10 @@
 
 #include "textflag.h"
 
-// func Sys_time_get(clock_id uint32) Time
-TEXT ·Sys_time_get(SB),NOSPLIT,$0-16
+// func Sys_clock_get(clock_id uint32) Time
+TEXT ·Sys_clock_get(SB),NOSPLIT,$0-16
 	MOVW clock_id+0(FP), R0
-	BL vdso_zx_time_get(SB)
+	BL vdso_zx_clock_get(SB)
 	MOVD R0, ret+8(FP)
 	RET
 

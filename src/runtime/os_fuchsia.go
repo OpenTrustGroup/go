@@ -226,14 +226,14 @@ const _NSIG = 65 // TODO
 //go:nosplit
 func nanotime() int64 {
 	const MX_CLOCK_MONOTONIC = 0
-	return int64(zx.Sys_time_get(MX_CLOCK_MONOTONIC))
+	return int64(zx.Sys_clock_get(MX_CLOCK_MONOTONIC))
 }
 
 //go:linkname time_now time.now
 //go:nosplit
 func time_now() (sec int64, nsec int32) {
 	const MX_CLOCK_UTC = 1
-	x := int64(zx.Sys_time_get(MX_CLOCK_UTC))
+	x := int64(zx.Sys_clock_get(MX_CLOCK_UTC))
 	return int64(x / 1e9), int32(x % 1e9)
 }
 
