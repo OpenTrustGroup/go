@@ -70,7 +70,7 @@ const (
 // Control ordinal operations. Sent from server to client without
 // necessarily having an accompanying request message.
 const (
-	OpOnOpen = uint32(0x80000000) | (iota + 1)
+	OpOnOpen = uint32(0x80000007)
 )
 
 const (
