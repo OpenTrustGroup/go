@@ -20,12 +20,12 @@ type VMOFile struct {
 	at  int64
 }
 
-func NewVMOFile(handle zx.Handle, extra []byte) (*VMOFile, error) {
+func NewVMOFile(handle zx.Handle, offset uint64, length uint64) (*VMOFile, error) {
 	// fdio_vmofile_create
 	f := &VMOFile{
 		h:   zx.VMO(handle),
-		off: *(*int64)(unsafe.Pointer(&extra[0:8][0])),
-		len: *(*int64)(unsafe.Pointer(&extra[8:16][0])),
+		off: int64(offset),
+		len: int64(length),
 	}
 	f.end = f.off + f.len
 	f.at = f.off

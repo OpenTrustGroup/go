@@ -309,31 +309,27 @@ func closeAll(handles []zx.Handle) {
 }
 
 // Consumes handles, wrapping them in fdio object or closing them on error.
-func createFromHandles(protocol Protocol, handles []zx.Handle, extra [RioDescribeExtra]byte) (FDIO, error) {
-	switch protocol {
-	case ProtocolPipe:
-		if len(handles) != 1 {
-			closeAll(handles)
-			return nil, zx.Error{Status: zx.ErrInvalidArgs, Text: "createFromHandles: Pipe"}
-		}
-		return NewPipe(handles)
-	case ProtocolRemote:
-		if len(handles) == 0 || len(handles) > 2 {
-			closeAll(handles)
-			return nil, zx.Error{Status: zx.ErrInvalidArgs, Text: "createFromHandles: RemoteIO"}
-		}
+func createFromHandles(handle zx.Handle, info ObjectInfo) (FDIO, error) {
+	handles := append([]zx.Handle{handle}, info.GetHandles()...)
+	switch info.Tag {
+	case ProtocolService:
 		return NewRIO(handles)
+	case ProtocolFile:
+		return NewRIO(handles)
+	case ProtocolDirectory:
+		return NewRIO(handles)
+	case ProtocolPipe:
+		return NewPipe(handles)
 	case ProtocolVMOFile:
-		if len(handles) != 2 {
-			closeAll(handles)
-			return nil, zx.Error{Status: zx.ErrInvalidArgs, Text: "createFromHandles: VMOFile"}
-		}
 		handles[0].Close()
-		return NewVMOFile(handles[1], extra[:16])
+		vInfo := info.VMOFile()
+		return NewVMOFile(handles[1], vInfo.Offset, vInfo.Length)
+	case ProtocolDevice:
+		return NewRIO(handles)
 	case ProtocolSocket:
 		return NewSocket(handles)
 	default:
-		println("Unknown fdio protocol, ", protocol)
+		println("Unknown fdio protocol, ", info.Tag)
 		// In the error case, the server may have given us handles -- close them
 		closeAll(handles)
 		return nil, zx.Error{Status: zx.ErrNotSupported, Text: "RemoteIO"}
@@ -345,7 +341,7 @@ func OpenHandle(rio *zx.Channel, path string, flags uint32, mode uint32) (FDIO, 
 	if err != nil {
 		return nil, err
 	}
-	return createFromHandles(Protocol(ro.Type), append([]zx.Handle{c.Handle}, ro.Handle), ro.Extra)
+	return createFromHandles(c.Handle, ro.Info)
 }
 
 func CloneHandle(rio *zx.Channel) ([]zx.Handle, error) {

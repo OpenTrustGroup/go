@@ -94,7 +94,7 @@ const (
 )
 
 const (
-	RioDescribeExtra   = 16
+	RioDescribeExtra   = 24
 	RioDescriptionSize = uint32(unsafe.Sizeof(RioDescription{}))
 )
 
@@ -106,14 +106,117 @@ type FIDLHeader struct {
 	op        uint32
 }
 
+// ObjectInfo represents the union of "extra", identified
+// by "Tag".
+type ObjectInfo struct {
+	Tag      Protocol
+	reserved uint32
+	extra    [RioDescribeExtra]uint8
+}
+
+type ServiceInfo struct {
+}
+
+func (o *ObjectInfo) checkProtocol(p Protocol) {
+	if o.Tag != p {
+		panic("Unexpected FDIO protocol")
+	}
+}
+
+func (o *ObjectInfo) Service() *ServiceInfo {
+	o.checkProtocol(ProtocolService)
+	return (*ServiceInfo)(unsafe.Pointer(&o.extra[0]))
+}
+
+type FileInfo struct {
+	Handle zx.Handle
+}
+
+func (o *ObjectInfo) File() *FileInfo {
+	o.checkProtocol(ProtocolFile)
+	return (*FileInfo)(unsafe.Pointer(&o.extra[0]))
+}
+
+type DirectoryInfo struct {
+}
+
+func (o *ObjectInfo) Directory() *DirectoryInfo {
+	o.checkProtocol(ProtocolDirectory)
+	return (*DirectoryInfo)(unsafe.Pointer(&o.extra[0]))
+}
+
+type PipeInfo struct {
+	Handle zx.Handle
+}
+
+func (o *ObjectInfo) Pipe() *PipeInfo {
+	o.checkProtocol(ProtocolPipe)
+	return (*PipeInfo)(unsafe.Pointer(&o.extra[0]))
+}
+
+type VMOFileInfo struct {
+	Handle zx.Handle
+	Offset uint64
+	Length uint64
+}
+
+func (o *ObjectInfo) VMOFile() *VMOFileInfo {
+	o.checkProtocol(ProtocolVMOFile)
+	return (*VMOFileInfo)(unsafe.Pointer(&o.extra[0]))
+}
+
+type DeviceInfo struct {
+	Handle zx.Handle
+}
+
+func (o *ObjectInfo) Device() *DeviceInfo {
+	o.checkProtocol(ProtocolDevice)
+	return (*DeviceInfo)(unsafe.Pointer(&o.extra[0]))
+}
+
+type SocketInfo struct {
+	Handle zx.Handle
+}
+
+func (o *ObjectInfo) Socket() *SocketInfo {
+	o.checkProtocol(ProtocolSocket)
+	return (*SocketInfo)(unsafe.Pointer(&o.extra[0]))
+}
+
+func (o *ObjectInfo) GetHandles() []zx.Handle {
+	switch o.Tag {
+	case ProtocolService:
+		return []zx.Handle{}
+	case ProtocolFile:
+		h := o.File().Handle
+		if h != zx.HANDLE_INVALID {
+			return []zx.Handle{h}
+		}
+	case ProtocolDirectory:
+		return []zx.Handle{}
+	case ProtocolPipe:
+		return []zx.Handle{o.Pipe().Handle}
+	case ProtocolVMOFile:
+		return []zx.Handle{o.VMOFile().Handle}
+	case ProtocolDevice:
+		h := o.Device().Handle
+		if h != zx.HANDLE_INVALID {
+			return []zx.Handle{h}
+		}
+	case ProtocolSocket:
+		h := o.Socket().Handle
+		if h != zx.HANDLE_INVALID {
+			return []zx.Handle{h}
+		}
+	}
+	return []zx.Handle{}
+}
+
 type RioDescription struct {
 	FIDLHeader
-	Status   zx.Status
-	Handle   zx.Handle
-	Type     uint32
-	reserved uint32
-	// Optional Extra Data
-	Extra [RioDescribeExtra]uint8
+	Status  zx.Status
+	infoPtr *uint8
+	Info    ObjectInfo
 }
 
 func (ro *RioDescription) Op() uint32 {
@@ -128,17 +231,11 @@ func (ro *RioDescription) Write(h zx.Handle, flags uint32) {
 	c := &zx.Channel{h}
 
 	data := (*[RioDescriptionSize]byte)(unsafe.Pointer(ro))
-
-	// Prepare the handles
-	var handles []zx.Handle
-	if ro.Handle != zx.HANDLE_INVALID {
-		handles = append(handles, ro.Handle)
-	}
-	c.Write(data[:], handles, flags)
+	c.Write(data[:], ro.Info.GetHandles(), flags)
 }
 
 // Helper to read a RIO object. Does not consume h.
-func (ro *RioDescription) Read(h zx.Handle, flags uint32) zx.Status {
+func (ro *RioDescription) Read(h zx.Handle, flags uint32) (r zx.Status) {
 	c := &zx.Channel{h}
 	msgBytes := (*[RioDescriptionSize]byte)(unsafe.Pointer(ro))
 	var handles [1]zx.Handle
@@ -147,28 +244,77 @@ func (ro *RioDescription) Read(h zx.Handle, flags uint32) zx.Status {
 		c.Close()
 		return err.(zx.Error).Status
 	}
+
+	// Helper to throw away handles before they're embedded in the description
+	// object.
+	defer func() {
+		if r != zx.ErrOk {
+			for i := 0; i < int(numHandles); i++ {
+				handles[i].Close()
+			}
+		}
+	}()
+
 	if numBytes != RioDescriptionSize {
-		ro.DiscardHandles()
+		println("RioDescription.Read: Did not read message of expected description size")
 		return zx.ErrIO
 	}
-	if numHandles == 1 {
-		ro.Handle = handles[0]
-	} else {
-		ro.Handle = zx.HANDLE_INVALID
+
+	if ro.Status != zx.ErrOk {
+		return ro.Status
 	}
-	r := ro.Status
-	if r < 0 {
-		ro.DiscardHandles()
+
+	switch ro.Info.Tag {
+	case ProtocolService:
+		if numHandles != 0 {
+			return zx.ErrIO
+		}
+	case ProtocolFile:
+		if numHandles == 1 {
+			ro.Info.File().Handle = handles[0]
+		} else {
+			ro.Info.File().Handle = zx.HANDLE_INVALID
+		}
+	case ProtocolDirectory:
+		if numHandles != 0 {
+			return zx.ErrIO
+		}
+	case ProtocolPipe:
+		if numHandles != 1 {
+			return zx.ErrIO
+		}
+		ro.Info.Pipe().Handle = handles[0]
+	case ProtocolVMOFile:
+		if numHandles != 1 {
+			return zx.ErrIO
+		}
+		ro.Info.VMOFile().Handle = handles[0]
+	case ProtocolDevice:
+		if numHandles == 1 {
+			ro.Info.Device().Handle = handles[0]
+		} else {
+			ro.Info.Device().Handle = zx.HANDLE_INVALID
+		}
+	case ProtocolSocket:
+		if numHandles == 1 {
+			ro.Info.Socket().Handle = handles[0]
+		} else {
+			ro.Info.Socket().Handle = zx.HANDLE_INVALID
+		}
+	default:
+		println("Unexpected Protocol")
+		return zx.ErrIO
 	}
-	return r
+
+	return ro.Status
 }
 
 // DiscardHandles throws away any handles that might exist within the object
 func (ro *RioDescription) DiscardHandles() {
-	if ro.Handle != zx.HANDLE_INVALID {
-		ro.Handle.Close()
+	handles := ro.Info.GetHandles()
+	for i := 0; i < len(handles); i++ {
+		handles[i].Close()
 	}
-	ro.Handle = zx.HANDLE_INVALID
 }
 
 type MsgHeader struct {

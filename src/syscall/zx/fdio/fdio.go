@@ -42,18 +42,22 @@ type Protocol uint32
 
 // All available FDIO protocols
 const (
-	ProtocolUndefined = Protocol(iota)
+	// The SERVICE protocol allows access to a generic interface.
+	ProtocolService = Protocol(iota)
+	// The FILE protocol allows access to a regular file.
+	ProtocolFile
+	// The DIRECTORY protocol allows access to a directory, which may
+	// contain additional nodes.
+	ProtocolDirectory
 	// The PIPE protocol uses message ports as simple, no-flow-control io pipes.
 	ProtocolPipe
-	// The REMOTEIO protocol uses message ports to implement synchronous remoting of
-	// read/write/close operations.
-	ProtocolRemote
 	// The VMOFILE protocol accesses a file as a VMO.
 	ProtocolVMOFile
+	// The DEVICE protocol allows access to a generic device.
+	ProtocolDevice
 	// The SOCKET protocol provides socket access.
 	ProtocolSocket
-	// The SERVICE protocol provides generic services.
-	ProtocolService
+	ProtocolSocketConnected
 )
 
 // FDIO Ioctls
