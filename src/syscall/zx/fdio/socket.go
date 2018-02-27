@@ -91,12 +91,25 @@ func (s *Socket) Write(data []byte) (int, error) {
 		switch mxStatus(err) {
 		case zx.ErrOk:
 			return n, nil
+		case zx.ErrPeerClosed:
+			return 0, io.EOF
 		case zx.ErrShouldWait:
-			_, err := s.socket.WaitOne(zx.SignalSocketWritable, zx.TimensecInfinite)
-			if err != nil {
-				return n, err
+			obs, err := s.socket.WaitOne(zx.SignalSocketWritable|zx.SignalSocketPeerClosed, zx.TimensecInfinite)
+			switch mxStatus(err) {
+			case zx.ErrOk:
+				switch {
+				case obs&zx.SignalSocketPeerClosed != 0:
+					return 0, io.EOF
+				case obs&zx.SignalSocketWritable != 0:
+					continue
+				}
+			case zx.ErrBadHandle, zx.ErrCanceled:
+				return 0, io.EOF
+			default:
+				return 0, err
 			}
-			continue
+		default:
+			return 0, err
 		}
 	}
 }
