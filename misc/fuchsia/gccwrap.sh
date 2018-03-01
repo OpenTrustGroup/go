@@ -19,9 +19,9 @@ if [ -z "${zirconsysroot}" ]; then
 fi
 
 if [ "$GOARCH" == "amd64" ]; then
-	gccbin="$ZIRCON/prebuilt/downloads/x86_64-elf-6.3.0-$(uname)-x86_64/bin/x86_64-elf-gcc"
+	gccbin="$ZIRCON/prebuilt/downloads/gcc/bin/x86_64-elf-gcc"
 elif [ "$GOARCH" == "arm64" ]; then
-	gccbin="$ZIRCON/prebuilt/downloads/aarch64-elf-6.3.0-$(uname)-x86_64/bin/aarch64-elf-gcc"
+	gccbin="$ZIRCON/prebuilt/downloads/gcc/bin/aarch64-elf-gcc"
 else
 	echo "gccwrap.sh: unsupported GOARCH: $GOARCH" >&2
 	exit 1
