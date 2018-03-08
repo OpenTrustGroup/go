@@ -65,6 +65,13 @@ func (s Socket) Share(h Handle) error {
 	return nil
 }
 
+func (s Socket) Accept(h *Handle) error {
+	if status := sys_socket_accept(Handle(s), h); status != ErrOk {
+		return Error{Status: status, Text: "zx.Socket.Accept"}
+	}
+	return nil
+}
+
 func (s Socket) Close() error { return Handle(s).Close() }
 func (s Socket) WaitOne(waitFor Signals, timeout Time) (Signals, error) {
 	return Handle(s).WaitOne(waitFor, timeout)

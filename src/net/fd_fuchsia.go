@@ -12,6 +12,7 @@ import (
 	"syscall/zx"
 	"syscall/zx/fdio"
 	"syscall/zx/mxnet"
+	"syscall/zx/zxsocket"
 	"time"
 )
 
@@ -62,13 +63,13 @@ func (fd *netFD) Write(b []byte) (n int, err error) {
 }
 
 func (fd *netFD) recvMsg(b []byte) (n, flags int, addr string, port uint16, err error) {
-	data, flags, addr, port, err := fd.m.(*fdio.Socket).RecvMsg(len(b))
+	data, flags, addr, port, err := fd.m.(*zxsocket.Socket).RecvMsg(len(b))
 	n = copy(b, data)
 	return n, flags, addr, port, err
 }
 
 func (fd *netFD) sendMsg(b []byte, addr string, port uint16) (n int, err error) {
-	return fd.m.(*fdio.Socket).SendMsg(b, addr, port)
+	return fd.m.(*zxsocket.Socket).SendMsg(b, addr, port)
 }
 
 func (fd *netFD) closeRead() error {
@@ -105,7 +106,7 @@ func (fd *netFD) accept() (netfd *netFD, err error) {
 	}
 	defer fd.readUnlock()
 
-	m, err := fdio.Accept(fd.m)
+	m, err := zxsocket.Accept(fd.m)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +139,7 @@ func (fd *netFD) asAddr(ipAddr mxnet.Addr, port uint16, err error) sockaddr {
 }
 
 func (fd *netFD) setAddr() {
-	fd.laddr = fd.asAddr(fdio.GetSockName(fd.m))
-	fd.raddr = fd.asAddr(fdio.GetPeerName(fd.m))
+	fd.laddr = fd.asAddr(zxsocket.GetSockName(fd.m))
+	fd.raddr = fd.asAddr(zxsocket.GetPeerName(fd.m))
 	runtime.SetFinalizer(fd, (*netFD).Close)
 }

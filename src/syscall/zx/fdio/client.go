@@ -219,8 +219,8 @@ func (r *RemoteIO) Close() error {
 	return nil
 }
 
-// getObject requests an FDIO object remotely
-func getObject(rio *zx.Channel, op uint32, name string, flags uint32, mode uint32) (*zx.Channel, *RioDescription, error) {
+// GetObject requests an FDIO object remotely
+func GetObject(rio *zx.Channel, op uint32, name string, flags uint32, mode uint32) (*zx.Channel, *RioDescription, error) {
 	if len(name) > MessageChunkSize {
 		return nil, nil, zx.Error{Status: zx.ErrInvalidArgs, Text: "RemoteIO"}
 	}
@@ -337,7 +337,7 @@ func createFromHandles(handle zx.Handle, info ObjectInfo) (FDIO, error) {
 }
 
 func OpenHandle(rio *zx.Channel, path string, flags uint32, mode uint32) (FDIO, error) {
-	c, ro, err := getObject(rio, OpOpen, path, flags, mode)
+	c, ro, err := GetObject(rio, OpOpen, path, flags, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -345,7 +345,7 @@ func OpenHandle(rio *zx.Channel, path string, flags uint32, mode uint32) (FDIO, 
 }
 
 func CloneHandle(rio *zx.Channel) ([]zx.Handle, error) {
-	c, _, err := getObject(rio, OpClone, "", 0, 0)
+	c, _, err := GetObject(rio, OpClone, "", 0, 0)
 	if err != nil {
 		return nil, err
 	}

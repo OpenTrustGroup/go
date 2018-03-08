@@ -14,6 +14,7 @@ import (
 	"syscall/zx"
 	"syscall/zx/fdio"
 	"syscall/zx/mxnet"
+	"syscall/zx/zxsocket"
 	"time"
 )
 
@@ -91,16 +92,15 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 	}
 	proto := syscall.IPPROTO_IP
 
-	path := "socket/" + strconv.Itoa(family) + "/" + strconv.Itoa(sotype) + "/" + strconv.Itoa(proto)
+	path := "socket-v2/" + strconv.Itoa(family) + "/" + strconv.Itoa(sotype) + "/" + strconv.Itoa(proto)
 
 	var m fdio.FDIO
 	// Wait for the network stack to publish the socket device.
 	// See similar logic in zircon/system/ulib/fdio/bsdsocket.c.
 	for i := 0; i < 40; i++ {
-		var r *fdio.RemoteIO
-		r, err = fdio.NewRIO([]zx.Handle{getNetstack()})
-		if err == nil {
-			m, err = r.Open(path, 0, 0644)
+		ns := &zx.Channel{getNetstack()}
+		if ns.Handle != zx.HANDLE_INVALID {
+			m, err = zxsocket.OpenHandle(ns, path, 0, 0644)
 			if err == nil {
 				break
 			}
@@ -111,7 +111,7 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 		return nil, err
 	}
 	if sotype == syscall.SOCK_DGRAM {
-		fdio.SetDgram(m)
+		zxsocket.SetDgram(m)
 	}
 
 	fd = &netFD{
@@ -127,14 +127,14 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 			return nil, err
 		}
 		if addr != "" || port != 0 {
-			if err := fdio.Bind(fd.m, addr, port); err != nil {
+			if err := zxsocket.Bind(fd.m, addr, port); err != nil {
 				return nil, err
 			}
 		}
 		if raddr == nil {
 			switch sotype {
 			case syscall.SOCK_STREAM:
-				if err := fdio.ListenStream(m, listenerBacklog); err != nil {
+				if err := zxsocket.ListenStream(m, listenerBacklog); err != nil {
 					return nil, err
 				}
 			case syscall.SOCK_DGRAM:
@@ -147,7 +147,7 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 		if err != nil {
 			return nil, err
 		}
-		if err := fdio.Connect(fd.m, addr, port); err != nil {
+		if err := zxsocket.Connect(fd.m, addr, port); err != nil {
 			return nil, err
 		}
 		fd.isConnected = true
