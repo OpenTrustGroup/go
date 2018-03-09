@@ -38,7 +38,11 @@ type Socket Handle
 
 func (s Socket) Read(data []byte, flags uint32) (n int, err error) {
 	var actual uint
-	status := sys_socket_read(Handle(s), flags, unsafe.Pointer(&data[0]), uint(len(data)), &actual)
+	var p unsafe.Pointer
+	if len(data) > 0 {
+		p = unsafe.Pointer(&data[0])
+	}
+	status := sys_socket_read(Handle(s), flags, p, uint(len(data)), &actual)
 	if status != ErrOk {
 		return int(actual), Error{Status: status, Text: "zx.Socket.Read"}
 	}
