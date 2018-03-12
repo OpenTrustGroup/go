@@ -36,55 +36,66 @@ func (hi HandleInfo) Arg() uint32 {
 
 type Socket Handle
 
-func (s Socket) Read(data []byte, flags uint32) (n int, err error) {
+func (s *Socket) Handle() *Handle {
+	return (*Handle)(s)
+}
+
+func (s *Socket) Read(data []byte, flags uint32) (n int, err error) {
 	var actual uint
 	var p unsafe.Pointer
 	if len(data) > 0 {
 		p = unsafe.Pointer(&data[0])
 	}
-	status := sys_socket_read(Handle(s), flags, p, uint(len(data)), &actual)
+	status := sys_socket_read(Handle(*s), flags, p, uint(len(data)), &actual)
 	if status != ErrOk {
 		return int(actual), Error{Status: status, Text: "zx.Socket.Read"}
 	}
 	return int(actual), nil
 }
 
-func (s Socket) Write(data []byte, flags uint32) (n int, err error) {
+func (s *Socket) Write(data []byte, flags uint32) (n int, err error) {
 	var p unsafe.Pointer
 	if len(data) > 0 {
 		p = unsafe.Pointer(&data[0])
 	}
 	var actual uint
-	status := sys_socket_write(Handle(s), flags, p, uint(len(data)), &actual)
+	status := sys_socket_write(Handle(*s), flags, p, uint(len(data)), &actual)
 	if status != ErrOk {
 		return int(actual), Error{Status: status, Text: "zx.Socket.Write"}
 	}
 	return int(actual), nil
 }
 
-func (s Socket) Share(h Handle) error {
-	if status := sys_socket_share(Handle(s), h); status != ErrOk {
+func (s *Socket) Share(h Handle) error {
+	if status := sys_socket_share(Handle(*s), h); status != ErrOk {
 		return Error{Status: status, Text: "zx.Socket.Share"}
 	}
 	return nil
 }
 
-func (s Socket) Accept(h *Handle) error {
-	if status := sys_socket_accept(Handle(s), h); status != ErrOk {
+func (s *Socket) Accept(h *Handle) error {
+	if status := sys_socket_accept(Handle(*s), h); status != ErrOk {
 		return Error{Status: status, Text: "zx.Socket.Accept"}
 	}
 	return nil
 }
 
-func (s Socket) Close() error { return Handle(s).Close() }
-func (s Socket) WaitOne(waitFor Signals, timeout Time) (Signals, error) {
-	return Handle(s).WaitOne(waitFor, timeout)
+func (s *Socket) Close() error {
+	h := Handle(*s)
+	err := h.Close()
+	*s = Socket(HANDLE_INVALID)
+	return err
+}
+
+func (s *Socket) WaitOne(waitFor Signals, timeout Time) (Signals, error) {
+	h := Handle(*s)
+	return h.WaitOne(waitFor, timeout)
 }
 
 func NewSocket(flags uint32) (s0, s1 Socket, err error) {
 	var h0, h1 Handle
 	if status := sys_socket_create(flags, &h0, &h1); status != ErrOk {
-		return 0, 0, Error{Status: status, Text: "zx.Socket"}
+		return Socket(HANDLE_INVALID), Socket(HANDLE_INVALID), Error{Status: status, Text: "zx.Socket"}
 	}
 	return Socket(h0), Socket(h1), nil
 }
@@ -94,97 +105,109 @@ type Event Handle
 func NewEvent(options uint32) (e Event, err error) {
 	var h Handle
 	if status := Sys_event_create(options, &h); status != ErrOk {
-		return 0, Error{Status: status, Text: "zx.Event"}
+		return Event(HANDLE_INVALID), Error{Status: status, Text: "zx.Event"}
 	}
 	return Event(h), nil
 }
 
-func (e Event) Close() error { return Handle(e).Close() }
-func (e Event) Duplicate(rights Rights) (Event, error) {
-	h, err := Handle(e).Duplicate(rights)
+func (e *Event) Handle() *Handle {
+	return (*Handle)(e)
+}
+
+func (e *Event) Close() error {
+	h := Handle(*e)
+	err := h.Close()
+	*e = Event(HANDLE_INVALID)
+	return err
+}
+
+func (e *Event) Duplicate(rights Rights) (Event, error) {
+	h := Handle(*e)
+	h, err := h.Duplicate(rights)
 	if err != nil {
-		return 0, err
+		return Event(HANDLE_INVALID), err
 	}
 	return Event(h), nil
 }
 
-func (h Handle) Close() error {
-	if status := sys_handle_close(h); status != ErrOk {
+func (h *Handle) Close() error {
+	if status := sys_handle_close(*h); status != ErrOk {
 		return Error{Status: status, Text: "zx.Handle.Close"}
 	}
+	*h = HANDLE_INVALID
 	return nil
 }
 
-func (h Handle) Duplicate(rights Rights) (Handle, error) {
+func (h *Handle) Duplicate(rights Rights) (Handle, error) {
 	var dup Handle
-	if status := sys_handle_duplicate(h, rights, &dup); status != ErrOk {
-		return 0, Error{Status: status, Text: "zx.Handle.Duplicate"}
+	if status := sys_handle_duplicate(*h, rights, &dup); status != ErrOk {
+		return HANDLE_INVALID, Error{Status: status, Text: "zx.Handle.Duplicate"}
 	}
 	return dup, nil
 }
 
-func (h Handle) WaitOne(waitFor Signals, timeout Time) (observed Signals, err error) {
-	if status := sys_object_wait_one(h, waitFor, timeout, &observed); status != ErrOk {
+func (h *Handle) WaitOne(waitFor Signals, timeout Time) (observed Signals, err error) {
+	if status := sys_object_wait_one(*h, waitFor, timeout, &observed); status != ErrOk {
 		return observed, Error{Status: status, Text: "zx.Handle.WaitOne"}
 	}
 	return observed, nil
 }
 
-func (h Handle) Signal(clearMask, setMask Signals) error {
-	if status := Sys_object_signal(h, uint32(clearMask), uint32(setMask)); status != ErrOk {
+func (h *Handle) Signal(clearMask, setMask Signals) error {
+	if status := Sys_object_signal(*h, uint32(clearMask), uint32(setMask)); status != ErrOk {
 		return Error{Status: status, Text: "zx.Handle.Signal"}
 	}
 	return nil
 }
 
-func (h Handle) SignalPeer(clearMask, setMask Signals) error {
-	if status := Sys_object_signal_peer(h, uint32(clearMask), uint32(setMask)); status != ErrOk {
+func (h *Handle) SignalPeer(clearMask, setMask Signals) error {
+	if status := Sys_object_signal_peer(*h, uint32(clearMask), uint32(setMask)); status != ErrOk {
 		return Error{Status: status, Text: "zx.Handle.SignalPeer"}
 	}
 	return nil
 }
 
-func (h Handle) SetCookie(scope Handle, cookie uint64) error {
-	if status := Sys_object_set_cookie(h, scope, cookie); status != ErrOk {
+func (h *Handle) SetCookie(scope Handle, cookie uint64) error {
+	if status := Sys_object_set_cookie(*h, scope, cookie); status != ErrOk {
 		return Error{Status: status, Text: "zx.Handle.SetCookie"}
 	}
 	return nil
 }
 
-func (h Handle) GetCookie(scope Handle) (uint64, error) {
+func (h *Handle) GetCookie(scope Handle) (uint64, error) {
 	var cookie uint64
-	if status := Sys_object_get_cookie(h, scope, &cookie); status != ErrOk {
+	if status := Sys_object_get_cookie(*h, scope, &cookie); status != ErrOk {
 		return 0, Error{Status: status, Text: "zx.Handle.GetCookie"}
 	}
 	return cookie, nil
 }
 
-func (h Handle) GetProperty(property uint32, data []byte) error {
+func (h *Handle) GetProperty(property uint32, data []byte) error {
 	var numBytes = uint(len(data))
 	var dataPtr unsafe.Pointer
 	if numBytes > 0 {
 		dataPtr = unsafe.Pointer(&data[0])
 	}
-	if status := Sys_object_get_property(h, property, dataPtr, numBytes); status != ErrOk {
+	if status := Sys_object_get_property(*h, property, dataPtr, numBytes); status != ErrOk {
 		return Error{Status: status, Text: "zx.Handle.GetProperty"}
 	}
 	return nil
 }
 
-func (h Handle) SetProperty(property uint32, data []byte) error {
+func (h *Handle) SetProperty(property uint32, data []byte) error {
 	var numBytes = uint(len(data))
 	var dataPtr unsafe.Pointer
 	if numBytes > 0 {
 		dataPtr = unsafe.Pointer(&data[0])
 	}
-	if status := Sys_object_set_property(h, property, dataPtr, numBytes); status != ErrOk {
+	if status := Sys_object_set_property(*h, property, dataPtr, numBytes); status != ErrOk {
 		return Error{Status: status, Text: "zx.Handle.SetProperty"}
 	}
 	return nil
 }
 
-func (h Handle) IsValid() bool {
-	return h > HANDLE_INVALID
+func (h *Handle) IsValid() bool {
+	return *h > HANDLE_INVALID
 }
 
 func WaitMany(items []WaitItem, timeout Time) error {
@@ -194,13 +217,16 @@ func WaitMany(items []WaitItem, timeout Time) error {
 	return nil
 }
 
-type Channel struct {
-	Handle Handle
+type Channel Handle
+
+func (c *Channel) Handle() *Handle {
+	return (*Handle)(c)
 }
 
-func (s *Channel) Close() error {
-	err := s.Handle.Close()
-	s.Handle = 0
+func (c *Channel) Close() error {
+	h := Handle(*c)
+	err := h.Close()
+	*c = Channel(HANDLE_INVALID)
 	return err
 }
 
@@ -215,7 +241,7 @@ func (c *Channel) Read(data []byte, handles []Handle, flags uint32) (numBytes, n
 	if len(handles) > 0 {
 		handlePtr = &handles[0]
 	}
-	if status := sys_channel_read(c.Handle, flags, dataPtr, handlePtr, numBytes, numHandles, &numBytes, &numHandles); status != ErrOk {
+	if status := sys_channel_read(Handle(*c), flags, dataPtr, handlePtr, numBytes, numHandles, &numBytes, &numHandles); status != ErrOk {
 		err = Error{Status: status, Text: "zx.Channel.Read"}
 	}
 	return numBytes, numHandles, err
@@ -230,7 +256,7 @@ func (c *Channel) Write(data []byte, handles []Handle, flags uint32) error {
 	if len(handles) > 0 {
 		handlePtr = &handles[0]
 	}
-	status := sys_channel_write(c.Handle, flags, dataPtr, uint32(len(data)), handlePtr, uint32(len(handles)))
+	status := sys_channel_write(Handle(*c), flags, dataPtr, uint32(len(data)), handlePtr, uint32(len(handles)))
 	if status != ErrOk {
 		return Error{Status: status, Text: "zx.Channel.Write"}
 	}
@@ -265,19 +291,19 @@ func (c *Channel) Call(flags uint32, deadline Time, wData []byte, wHandles []Han
 		ReadNumHandles:  uint32(len(rHandles)),
 	}
 
-	status := Sys_channel_call(c.Handle, flags, deadline, args, &actualBytes, &actualHandles, &actualStatus)
+	status := Sys_channel_call(Handle(*c), flags, deadline, args, &actualBytes, &actualHandles, &actualStatus)
 	if status != ErrOk {
 		err = Error{Status: status, Text: "zx.Channel.Call"}
 	}
 	return actualBytes, actualHandles, actualStatus, err
 }
 
-func NewChannel(flags uint32) (c0, c1 *Channel, err error) {
-	c0, c1 = new(Channel), new(Channel)
-	if status := sys_channel_create(flags, &c0.Handle, &c1.Handle); status != ErrOk {
-		return nil, nil, Error{Status: status, Text: "zx.Channel"}
+func NewChannel(flags uint32) (c0, c1 Channel, err error) {
+	var h0, h1 Handle
+	if status := sys_channel_create(flags, &h0, &h1); status != ErrOk {
+		return Channel(HANDLE_INVALID), Channel(HANDLE_INVALID), Error{Status: status, Text: "zx.Channel"}
 	}
-	return c0, c1, nil
+	return Channel(h0), Channel(h1), nil
 }
 
 const (
@@ -333,19 +359,22 @@ func (s *PacketSignal) Length() int {
 	return int(unsafe.Sizeof(*s))
 }
 
-type Port struct {
-	Handle Handle
+type Port Handle
+
+func (p *Port) Handle() *Handle {
+	return (*Handle)(p)
 }
 
 func (p *Port) Close() error {
-	err := p.Handle.Close()
-	p.Handle = 0
+	h := Handle(*p)
+	err := h.Close()
+	*p = Port(HANDLE_INVALID)
 	return err
 }
 
 // Queue a PortPacket, which may have a varying size.
 func (p *Port) Queue(packet PortPacket) error {
-	if status := Sys_port_queue(p.Handle, (*int)(unsafe.Pointer(packet.Header())), uint(packet.Length())); status != ErrOk {
+	if status := Sys_port_queue(Handle(*p), (*int)(unsafe.Pointer(packet.Header())), uint(packet.Length())); status != ErrOk {
 		return Error{Status: status, Text: "zx.Port.Queue"}
 	}
 	return nil
@@ -354,90 +383,97 @@ func (p *Port) Queue(packet PortPacket) error {
 // Wait for a Packet, which must be as large as the largest
 // possible packet that may be received.
 func (p *Port) Wait(packet *Packet, deadline Time) error {
-	if status := Sys_port_wait(p.Handle, deadline, (*int)(unsafe.Pointer(packet)), 0); status != ErrOk {
+	if status := Sys_port_wait(Handle(*p), deadline, (*int)(unsafe.Pointer(packet)), 0); status != ErrOk {
 		return Error{Status: status, Text: "zx.Port.Wait"}
 	}
 	return nil
 }
 
 func (p *Port) Cancel(source Handle, key uint64) error {
-	if status := Sys_port_cancel(p.Handle, source, key); status != ErrOk {
+	if status := Sys_port_cancel(Handle(*p), source, key); status != ErrOk {
 		return Error{Status: status, Text: "zx.Port.Cancel"}
 	}
 	return nil
 }
 
 func (p *Port) WaitAsync(handle Handle, key uint64, signals Signals, options uint32) error {
-	if status := Sys_object_wait_async(handle, p.Handle, key, signals, options); status != ErrOk {
+	if status := Sys_object_wait_async(handle, Handle(*p), key, signals, options); status != ErrOk {
 		return Error{Status: status, Text: "fdio.Port.WaitAsync"}
 	}
 	return nil
 }
 
-func NewPort(options uint32) (*Port, error) {
-	p := new(Port)
-	if status := Sys_port_create(options, &p.Handle); status != ErrOk {
-		return nil, Error{Status: status, Text: "zx.Port"}
+func NewPort(options uint32) (Port, error) {
+	var h Handle
+	if status := Sys_port_create(options, &h); status != ErrOk {
+		return Port(HANDLE_INVALID), Error{Status: status, Text: "zx.Port"}
 	}
-	return p, nil
+	return Port(h), nil
 }
 
 type VMO Handle
 
-func (vmo VMO) Clone(options uint32, offset, size uint64) (VMO, error) {
+func (vmo *VMO) Handle() *Handle {
+	return (*Handle)(vmo)
+}
+
+func (vmo *VMO) Clone(options uint32, offset, size uint64) (VMO, error) {
 	var h Handle
-	if status := Sys_vmo_clone(Handle(vmo), options, offset, size, &h); status != ErrOk {
-		return 0, Error{Status: status, Text: "zx.VMO.Clone"}
+	if status := Sys_vmo_clone(Handle(*vmo), options, offset, size, &h); status != ErrOk {
+		return VMO(HANDLE_INVALID), Error{Status: status, Text: "zx.VMO.Clone"}
 	}
 	return VMO(h), nil
 }
 
-func (vmo VMO) Read(b []byte, offset uint64) (n int, err error) {
+func (vmo *VMO) Read(b []byte, offset uint64) (n int, err error) {
 	var actual uint
-	if status := sys_vmo_read(Handle(vmo), unsafe.Pointer(&b[0]), offset, uint(len(b)), &actual); status != ErrOk {
+	if status := sys_vmo_read(Handle(*vmo), unsafe.Pointer(&b[0]), offset, uint(len(b)), &actual); status != ErrOk {
 		return int(actual), Error{Status: status, Text: "zx.VMO.Read"}
 	}
 	return int(actual), nil
 }
 
-func (vmo VMO) Write(b []byte, offset uint64) (n int, err error) {
+func (vmo *VMO) Write(b []byte, offset uint64) (n int, err error) {
 	var actual uint
-	if status := sys_vmo_write(Handle(vmo), unsafe.Pointer(&b[0]), offset, uint(len(b)), &actual); status != ErrOk {
+	if status := sys_vmo_write(Handle(*vmo), unsafe.Pointer(&b[0]), offset, uint(len(b)), &actual); status != ErrOk {
 		return int(actual), Error{Status: status, Text: "zx.VMO.Write"}
 	}
 	return int(actual), nil
 }
 
-func (vmo VMO) Size() (uint64, error) {
+func (vmo *VMO) Size() (uint64, error) {
 	var size uint64
-	if status := sys_vmo_get_size(Handle(vmo), &size); status != ErrOk {
+	if status := sys_vmo_get_size(Handle(*vmo), &size); status != ErrOk {
 		return size, Error{Status: status, Text: "zx.VMO.Size"}
 	}
 	return size, nil
 }
 
-func (vmo VMO) SetSize(size uint64) error {
-	if status := sys_vmo_set_size(Handle(vmo), size); status != ErrOk {
+func (vmo *VMO) SetSize(size uint64) error {
+	if status := sys_vmo_set_size(Handle(*vmo), size); status != ErrOk {
 		return Error{Status: status, Text: "zx.VMO.SetSize"}
 	}
 	return nil
 }
 
-func (vmo VMO) OpRange(op uint32, offset, size uint64, b []byte) error {
-	if status := sys_vmo_op_range(Handle(vmo), op, offset, size, unsafe.Pointer(&b[0]), uint(len(b))); status != ErrOk {
+func (vmo *VMO) OpRange(op uint32, offset, size uint64, b []byte) error {
+	if status := sys_vmo_op_range(Handle(*vmo), op, offset, size, unsafe.Pointer(&b[0]), uint(len(b))); status != ErrOk {
 		return Error{Status: status, Text: "zx.VMO.OpRange"}
 	}
 	return nil
 }
 
-func (vmo VMO) Close() error {
-	return Handle(vmo).Close()
+func (vmo *VMO) Close() error {
+	h := Handle(*vmo)
+	err := h.Close()
+	*vmo = VMO(HANDLE_INVALID)
+	return err
 }
 
 func NewVMO(size uint64, options uint32) (VMO, error) {
 	var h Handle
 	if status := sys_vmo_create(size, options, &h); status != ErrOk {
-		return 0, Error{Status: status, Text: "zx.VMO"}
+		return VMO(HANDLE_INVALID), Error{Status: status, Text: "zx.VMO"}
 	}
 	return VMO(h), nil
 }
@@ -484,29 +520,31 @@ func NewVMAR(parent VMAR, offset, size uint64, flags VMFlag) (child VMAR, addr u
 	return VMAR(childHandle), addr, nil
 }
 
-type Log struct {
-	Handle Handle
-}
+type Log Handle
 
-func NewLog(options uint32) *Log {
-	log := &Log{}
-	status := Sys_log_create(options, &log.Handle)
+func NewLog(options uint32) Log {
+	var h Handle
+	status := Sys_log_create(options, &h)
 	if status != ErrOk {
-		return nil
+		return Log(HANDLE_INVALID)
 	}
-	return log
+	return Log(h)
 }
 
-func (l *Log) Write(b []byte) (n int, err error) {
-	status := Sys_log_write(l.Handle, uint32(len(b)), unsafe.Pointer(&b[0]), 0)
+func (l *Log) Handle() *Handle {
+	return (*Handle)(l)
+}
+
+func (l Log) Write(b []byte) (n int, err error) {
+	status := Sys_log_write(Handle(l), uint32(len(b)), unsafe.Pointer(&b[0]), 0)
 	if status != ErrOk {
 		return 0, Error{Status: status, Text: "zx.Log.Write"}
 	}
 	return len(b), nil
 }
 
-func (l *Log) Read(b []byte) (n int, err error) {
-	status := Sys_log_read(l.Handle, uint32(len(b)), unsafe.Pointer(&b[0]), 0)
+func (l Log) Read(b []byte) (n int, err error) {
+	status := Sys_log_read(Handle(l), uint32(len(b)), unsafe.Pointer(&b[0]), 0)
 	if status != ErrOk {
 		return 0, Error{Status: status, Text: "zx.Log.Read"}
 	}
@@ -514,7 +552,10 @@ func (l *Log) Read(b []byte) (n int, err error) {
 }
 
 func (l *Log) Close() (err error) {
-	return l.Handle.Close()
+	h := Handle(*l)
+	err = h.Close()
+	*l = Log(HANDLE_INVALID)
+	return err
 }
 
 func RandRead(b []byte) (n int, err error) {

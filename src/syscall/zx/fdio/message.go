@@ -228,7 +228,7 @@ func (ro *RioDescription) SetOp(v uint32) {
 
 // Helper to write back a RIO object. Does not consume h.
 func (ro *RioDescription) Write(h zx.Handle, flags uint32) {
-	c := &zx.Channel{h}
+	c := zx.Channel(h)
 
 	data := (*[RioDescriptionSize]byte)(unsafe.Pointer(ro))
 	c.Write(data[:], ro.Info.GetHandles(), flags)
@@ -236,7 +236,7 @@ func (ro *RioDescription) Write(h zx.Handle, flags uint32) {
 
 // Helper to read a RIO object. Does not consume h.
 func (ro *RioDescription) Read(h zx.Handle, flags uint32) (r zx.Status) {
-	c := &zx.Channel{h}
+	c := zx.Channel(h)
 	msgBytes := (*[RioDescriptionSize]byte)(unsafe.Pointer(ro))
 	var handles [1]zx.Handle
 	numBytes, numHandles, err := c.Read(msgBytes[:], handles[:], flags)
@@ -335,7 +335,7 @@ type Msg struct {
 	Data [MessageChunkSize]uint8
 }
 
-func (m *Msg) CallMsg(c *zx.Channel) (numBytes, numHandles uint32, callStatus zx.Status, err error) {
+func (m *Msg) CallMsg(c zx.Channel) (numBytes, numHandles uint32, callStatus zx.Status, err error) {
 	wData := (*[MessageSizeMax]byte)(unsafe.Pointer(m))[:MessageHeaderSize+m.Datalen]
 	var wHandles []zx.Handle
 	if m.Hcount > 0 {
@@ -349,7 +349,7 @@ func (m *Msg) CallMsg(c *zx.Channel) (numBytes, numHandles uint32, callStatus zx
 }
 
 // ReadMsg reads a message from a handle
-func (m *Msg) ReadMsg(c *zx.Channel) (numBytes, numHandles uint32, err error) {
+func (m *Msg) ReadMsg(c zx.Channel) (numBytes, numHandles uint32, err error) {
 	msgBytes := (*[MessageSizeMax]byte)(unsafe.Pointer(m))
 	numBytes, numHandles, err = c.Read(msgBytes[:], m.Handle[:], 0)
 	m.Hcount = numHandles
@@ -357,7 +357,7 @@ func (m *Msg) ReadMsg(c *zx.Channel) (numBytes, numHandles uint32, err error) {
 }
 
 // WriteMsg writes a message to a handle
-func (m *Msg) WriteMsg(c *zx.Channel) error {
+func (m *Msg) WriteMsg(c zx.Channel) error {
 	msgBytes := (*[MessageSizeMax]byte)(unsafe.Pointer(m))
 	data := msgBytes[:MessageHeaderSize+m.Datalen]
 	var handles []zx.Handle

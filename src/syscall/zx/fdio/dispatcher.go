@@ -29,7 +29,7 @@ type handler struct {
 
 // Dispatcher can read messages from a handle and assign them to a callback.
 type Dispatcher struct {
-	port     *zx.Port
+	port     zx.Port
 	callback DispatcherCallback
 
 	mu            sync.Mutex

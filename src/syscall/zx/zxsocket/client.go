@@ -79,12 +79,12 @@ func createFromHandles(handle zx.Handle, info fdio.ObjectInfo) (fdio.FDIO, error
 	}
 }
 
-func OpenHandle(rio *zx.Channel, path string, flags uint32, mode uint32) (fdio.FDIO, error) {
+func OpenHandle(rio zx.Channel, path string, flags uint32, mode uint32) (fdio.FDIO, error) {
 	c, ro, err := fdio.GetObject(rio, OpOpen, path, flags, mode)
 	if err != nil {
 		return nil, err
 	}
-	return createFromHandles(c.Handle, ro.Info)
+	return createFromHandles(zx.Handle(c), ro.Info)
 }
 
 // TODO(smklein): Remove; this function is a subset of "Ioctl".

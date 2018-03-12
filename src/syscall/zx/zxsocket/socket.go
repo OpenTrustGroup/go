@@ -73,7 +73,7 @@ func (s *Socket) Read(data []byte) (n int, err error) {
 	}
 	// c.f. mxsio_read_stream in zircon/system/ulib/fdio/remoteio.c
 	for {
-		n, err = zx.Socket(s.socket).Read(data, 0)
+		n, err = s.socket.Read(data, 0)
 		switch zxStatus(err) {
 		case zx.ErrOk:
 			return n, nil
@@ -128,7 +128,7 @@ func (s *Socket) Write(data []byte) (int, error) {
 	}
 	// c.f. mxsio_write_stream
 	for {
-		n, err := zx.Socket(s.socket).Write(data, 0)
+		n, err := s.socket.Write(data, 0)
 		switch zxStatus(err) {
 		case zx.ErrOk:
 			return n, nil
@@ -318,7 +318,7 @@ func Accept(m fdio.FDIO) (newm fdio.FDIO, err error) {
 		if zxStatus(err) != zx.ErrShouldWait {
 			return nil, err
 		}
-		zx.Handle(s.socket).SignalPeer(0, zx.SignalUser7)
+		s.socket.Handle().SignalPeer(0, zx.SignalUser7)
 		// TODO: non-blocking support, pass this to the poller
 		const ZX_SOCKET_ACCEPT = zx.SignalSocketAccept
 		const ZX_SOCKET_PEER_CLOSED = zx.SignalSocketPeerClosed

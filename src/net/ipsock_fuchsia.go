@@ -74,9 +74,9 @@ func getNetstack() zx.Handle {
 	if netstack.h == zx.HANDLE_INVALID {
 		c0, c1, err := zx.NewChannel(0)
 		if err == nil {
-			err = fdio.ServiceConnect("/svc/net.Netstack", c0.Handle)
+			err = fdio.ServiceConnect("/svc/net.Netstack", zx.Handle(c0))
 			if err == nil {
-				netstack.h = c1.Handle
+				netstack.h = zx.Handle(c1)
 			}
 		}
 	}
@@ -98,8 +98,8 @@ func dialFuchsia(ctx context.Context, net string, laddr, raddr sockaddr) (fd *ne
 	// Wait for the network stack to publish the socket device.
 	// See similar logic in zircon/system/ulib/fdio/bsdsocket.c.
 	for i := 0; i < 40; i++ {
-		ns := &zx.Channel{getNetstack()}
-		if ns.Handle != zx.HANDLE_INVALID {
+		ns := zx.Channel(getNetstack())
+		if zx.Handle(ns) != zx.HANDLE_INVALID {
 			m, err = zxsocket.OpenHandle(ns, path, 0, 0644)
 			if err == nil {
 				break

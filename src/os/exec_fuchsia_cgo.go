@@ -82,7 +82,8 @@ func cloneHandleToCHandleArray(m fdio.FDIO) (int, []C.zx_handle_t, []C.uint32_t,
 func closeAll(handles []C.zx_handle_t) {
 	for _, h := range handles {
 		if h != 0 {
-			zx.Handle(h).Close()
+			h := zx.Handle(h)
+			h.Close()
 		}
 	}
 }

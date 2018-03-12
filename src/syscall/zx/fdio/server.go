@@ -32,7 +32,7 @@ func Handler(h zx.Handle, cb interface{}, cookie int64) error {
 		return nil
 	}
 	msg.Hcount = MessageMaxHandles
-	numBytes, _, err := msg.ReadMsg(&zx.Channel{h}) // TODO: take *zx.Channel as arugment
+	numBytes, _, err := msg.ReadMsg(zx.Channel(h)) // TODO: take zx.Channel as arugment
 	if err != nil {
 		if mxerr, hasStatus := err.(zx.Error); hasStatus && mxerr.Status == zx.ErrBadState {
 			return ErrNoWork
@@ -62,7 +62,7 @@ func Handler(h zx.Handle, cb interface{}, cookie int64) error {
 	}
 
 	msg.SetOp(OpStatus)
-	err = msg.WriteMsg(&zx.Channel{h}) // TODO: make h an *zx.Channel
+	err = msg.WriteMsg(zx.Channel(h)) // TODO: make h an zx.Channel
 	if err != nil {
 		msg.DiscardHandles()
 	}
@@ -75,7 +75,7 @@ func Handler(h zx.Handle, cb interface{}, cookie int64) error {
 
 // TxnHandoff passes a message to srv along with a reply handle 'reply'
 // The other server will reply using 'reply', and this call will return immediately.
-func TxnHandoff(srv *zx.Channel, reply zx.Handle, msg *Msg) {
+func TxnHandoff(srv zx.Channel, reply zx.Handle, msg *Msg) {
 	msg.Txid = 0
 	msg.Handle[0] = reply
 

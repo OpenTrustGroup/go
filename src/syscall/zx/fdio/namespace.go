@@ -76,10 +76,10 @@ func (ns *NS) OpenRoot() (FDIO, error) {
 			vn = vn.getOrAddChild(name)
 			path = remaining
 		}
-		if vn.remote != nil {
+		if vn.remote != 0 {
 			return nil, zx.Error{Status: zx.ErrAlreadyExists, Text: "fdio.OpenRoot"}
 		}
-		vn.remote = &zx.Channel{h}
+		vn.remote = zx.Channel(h)
 	}
 	return newDir(root)
 }
@@ -88,7 +88,7 @@ type vnode struct {
 	child  *vnode
 	parent *vnode
 	next   *vnode
-	remote *zx.Channel
+	remote zx.Channel
 	name   string
 }
 
@@ -121,7 +121,7 @@ type dir struct {
 
 func newDir(vn *vnode) (*dir, error) {
 	d := &dir{vn: vn}
-	if vn.remote != nil {
+	if vn.remote != 0 {
 		d.rio = NewRIOFromChannel(vn.remote)
 	}
 	return d, nil
@@ -178,7 +178,7 @@ func (d *dir) Open(path string, flags uint32, mode uint32) (FDIO, error) {
 			if remaining == "" {
 				// We've resolved all the path segments and found the vnode we're
 				// looking for.
-				if child.remote != nil {
+				if child.remote != 0 {
 					handles, err := CloneHandle(child.remote)
 					if err != nil {
 						return nil, err
@@ -195,7 +195,7 @@ func (d *dir) Open(path string, flags uint32, mode uint32) (FDIO, error) {
 				// If this child has a remote file system, we might hand off to
 				// this remote if we don't find anything more specific below
 				// this vnode.
-				if child.remote != nil {
+				if child.remote != 0 {
 					savedVn = vn
 					savedPath = path
 				}
@@ -207,7 +207,7 @@ func (d *dir) Open(path string, flags uint32, mode uint32) (FDIO, error) {
 		// We've reached the end of our local vnode structure with more
 		// path to resolve.
 
-		if vn.remote != nil {
+		if vn.remote != 0 {
 			// We've got a remote file system at this vnode. We can hand off
 			// directly to that file system.
 			return OpenHandle(vn.remote, path, flags, mode)

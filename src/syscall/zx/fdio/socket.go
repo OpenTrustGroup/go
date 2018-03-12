@@ -32,7 +32,7 @@ func NewSocket(handles []zx.Handle) (*Socket, error) {
 		return nil, err
 	}
 	s := &Socket{
-		ctrl: zx.Channel{Handle: handles[0]},
+		ctrl: zx.Channel(handles[0]),
 		r:    r,
 	}
 	if len(handles) > 1 {
@@ -49,7 +49,7 @@ func (s *Socket) Read(data []byte) (n int, err error) {
 	}
 	// c.f. mxsio_read_stream in zircon/system/ulib/fdio/remoteio.c
 	for {
-		n, err = zx.Socket(s.socket).Read(data, 0)
+		n, err = s.socket.Read(data, 0)
 		switch mxStatus(err) {
 		case zx.ErrOk:
 			return n, nil
@@ -87,7 +87,7 @@ func (s *Socket) Write(data []byte) (int, error) {
 	}
 	// c.f. mxsio_write_stream
 	for {
-		n, err := zx.Socket(s.socket).Write(data, 0)
+		n, err := s.socket.Write(data, 0)
 		switch mxStatus(err) {
 		case zx.ErrOk:
 			return n, nil
@@ -180,7 +180,7 @@ func (s *Socket) Close() error {
 	if err := s.socket.Close(); err != nil {
 		return err
 	}
-	s.ctrl = zx.Channel{}
+	s.ctrl = 0
 	s.socket = 0
 	return nil
 }

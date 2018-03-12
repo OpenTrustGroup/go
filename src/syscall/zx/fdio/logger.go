@@ -18,7 +18,7 @@ type Logger struct {
 
 func NewLogger(h zx.Handle) (*Logger, error) {
 	return &Logger{
-		log: zx.Log{Handle: h},
+		log: zx.Log(h),
 	}, nil
 }
 
@@ -66,7 +66,7 @@ func (f *Logger) Open(path string, flags uint32, mode uint32) (FDIO, error) {
 }
 
 func (f *Logger) Clone() ([]zx.Handle, error) {
-	h, err := zx.Handle(f.log.Handle).Duplicate(zx.RightSameRights)
+	h, err := f.log.Handle().Duplicate(zx.RightSameRights)
 	if err != nil {
 		return nil, err
 	}

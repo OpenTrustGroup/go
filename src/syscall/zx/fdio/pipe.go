@@ -114,7 +114,7 @@ func (f *Pipe) Open(path string, flags uint32, mode uint32) (FDIO, error) {
 }
 
 func (f *Pipe) Clone() ([]zx.Handle, error) {
-	h, err := zx.Handle(f.s).Duplicate(zx.RightSameRights)
+	h, err := f.s.Handle().Duplicate(zx.RightSameRights)
 	if err != nil {
 		return nil, err
 	}

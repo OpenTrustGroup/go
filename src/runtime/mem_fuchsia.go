@@ -45,7 +45,7 @@ func sysMmap(ptr unsafe.Pointer, len uintptr, flags uint32) {
 		println("runtime: zx.NewVMO failed, len=", len, " err=", err.Error())
 		exit(2)
 	}
-	(zx.Handle)(vmo).SetProperty(zx.PropName, []byte("go-sys-mmap"))
+	vmo.Handle().SetProperty(zx.PropName, []byte("go-sys-mmap"))
 	vmflags := zx.VMFlagPermRead | zx.VMFlagPermWrite
 	res, err := zx.VMARRoot.Map(0, vmo, 0, uint64(len), vmflags)
 	*(*uintptr)(ptr) = res
@@ -90,7 +90,7 @@ func sysMap(v unsafe.Pointer, n uintptr, reserved bool, sysStat *uint64) {
 		println("runtime: zx.NewVMO failed, n=", n, " err=", err.Error())
 		exit(2)
 	}
-	(zx.Handle)(vmo).SetProperty(zx.PropName, []byte("go-sys-map"))
+	vmo.Handle().SetProperty(zx.PropName, []byte("go-sys-map"))
 
 	off := uint64(uintptr(v) - sysVMARBaseAddr)
 	flags := zx.VMFlagPermRead | zx.VMFlagPermWrite | zx.VMFlagSpecificOverwrite

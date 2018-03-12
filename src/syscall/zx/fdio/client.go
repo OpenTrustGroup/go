@@ -15,16 +15,16 @@ import (
 // RemoteIO is an object which manages file-like operations on a remote object, accessible through a
 // handle.
 type RemoteIO struct {
-	h    *zx.Channel // Channel handle for the RPC
-	e    zx.Handle   // Event handle for device state signals
-	txid uint32      // Transaction ID used for synchronous remoteio calls
+	h    zx.Channel // Channel handle for the RPC
+	e    zx.Handle  // Event handle for device state signals
+	txid uint32     // Transaction ID used for synchronous remoteio calls
 }
 
 // New returns a new RemoteIO object
 func NewRIO(handle []zx.Handle) (*RemoteIO, error) {
 	r := &RemoteIO{}
 	if len(handle) > 0 {
-		r.h = &zx.Channel{handle[0]}
+		r.h = zx.Channel(handle[0])
 	}
 	if len(handle) > 1 {
 		r.e = handle[1]
@@ -32,7 +32,7 @@ func NewRIO(handle []zx.Handle) (*RemoteIO, error) {
 	return r, nil
 }
 
-func NewRIOFromChannel(h *zx.Channel) *RemoteIO {
+func NewRIOFromChannel(h zx.Channel) *RemoteIO {
 	return &RemoteIO{h: h}
 }
 
@@ -207,10 +207,8 @@ func (r *RemoteIO) Close() error {
 	}
 
 	r.h.Close()
-	r.h = nil
-	if r.e > 0 {
+	if r.e.IsValid() {
 		r.e.Close()
-		r.e = 0
 	}
 
 	if err != nil {
@@ -220,9 +218,9 @@ func (r *RemoteIO) Close() error {
 }
 
 // GetObject requests an FDIO object remotely
-func GetObject(rio *zx.Channel, op uint32, name string, flags uint32, mode uint32) (*zx.Channel, *RioDescription, error) {
+func GetObject(rio zx.Channel, op uint32, name string, flags uint32, mode uint32) (zx.Channel, *RioDescription, error) {
 	if len(name) > MessageChunkSize {
-		return nil, nil, zx.Error{Status: zx.ErrInvalidArgs, Text: "RemoteIO"}
+		return zx.Channel(zx.HANDLE_INVALID), nil, zx.Error{Status: zx.ErrInvalidArgs, Text: "RemoteIO"}
 	}
 	var msg Msg
 	msg.SetOp(op)
@@ -234,30 +232,30 @@ func GetObject(rio *zx.Channel, op uint32, name string, flags uint32, mode uint3
 	return replyChannelCall(rio, &msg)
 }
 
-func replyChannelCall(rio *zx.Channel, msg *Msg) (*zx.Channel, *RioDescription, error) {
+func replyChannelCall(rio zx.Channel, msg *Msg) (zx.Channel, *RioDescription, error) {
 	// Create a new channel to receive the 'callback' on
 	h, rh, err := zx.NewChannel(0)
 	if err != nil {
-		return nil, nil, err
+		return zx.Channel(zx.HANDLE_INVALID), nil, err
 	}
 	msg.Arg |= OpenFlagDescribe
-	msg.Handle[0] = rh.Handle
+	msg.Handle[0] = zx.Handle(rh)
 	msg.Hcount = 1
 
 	// Write the (one-way) OPEN or CLONE request message
 	if err := msg.WriteMsg(rio); err != nil {
 		msg.DiscardHandles()
 		h.Close()
-		return nil, nil, err
+		return zx.Channel(zx.HANDLE_INVALID), nil, err
 	}
 
 	// Wait
-	h.Handle.WaitOne(zx.SignalChannelReadable|zx.SignalChannelPeerClosed, zx.TimensecInfinite)
+	h.Handle().WaitOne(zx.SignalChannelReadable|zx.SignalChannelPeerClosed, zx.TimensecInfinite)
 
 	// Attempt to read the callback response
 	var ro RioDescription
-	if status := ro.Read(h.Handle, 0); status < 0 {
-		return nil, nil, zx.Error{Status: status, Text: "RemoteIO.replyChannelCall"}
+	if status := ro.Read(zx.Handle(h), 0); status < 0 {
+		return zx.Channel(zx.HANDLE_INVALID), nil, zx.Error{Status: status, Text: "RemoteIO.replyChannelCall"}
 	} else {
 		return h, &ro, nil
 	}
@@ -277,7 +275,7 @@ func connect(svc zx.Handle, cnxn zx.Handle, op uint32, name string) error {
 	msg.Handle[0] = cnxn
 	copy(msg.Data[:], name)
 
-	if err := msg.WriteMsg(&zx.Channel{svc}); err != nil {
+	if err := msg.WriteMsg(zx.Channel(svc)); err != nil {
 		cnxn.Close()
 		return err
 	}
@@ -336,20 +334,20 @@ func createFromHandles(handle zx.Handle, info ObjectInfo) (FDIO, error) {
 	}
 }
 
-func OpenHandle(rio *zx.Channel, path string, flags uint32, mode uint32) (FDIO, error) {
+func OpenHandle(rio zx.Channel, path string, flags uint32, mode uint32) (FDIO, error) {
 	c, ro, err := GetObject(rio, OpOpen, path, flags, mode)
 	if err != nil {
 		return nil, err
 	}
-	return createFromHandles(c.Handle, ro.Info)
+	return createFromHandles(zx.Handle(c), ro.Info)
 }
 
-func CloneHandle(rio *zx.Channel) ([]zx.Handle, error) {
+func CloneHandle(rio zx.Channel) ([]zx.Handle, error) {
 	c, _, err := GetObject(rio, OpClone, "", 0, 0)
 	if err != nil {
 		return nil, err
 	}
-	return []zx.Handle{c.Handle}, nil
+	return []zx.Handle{zx.Handle(c)}, nil
 }
 
 func (r *RemoteIO) Open(path string, flags uint32, mode uint32) (FDIO, error) {
