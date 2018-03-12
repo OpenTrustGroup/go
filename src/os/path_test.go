@@ -199,7 +199,7 @@ func TestMkdirAllWithSymlink(t *testing.T) {
 
 func TestMkdirAllAtSlash(t *testing.T) {
 	switch runtime.GOOS {
-	case "android", "plan9", "windows":
+	case "android", "fuchsia", "plan9", "windows":
 		t.Skipf("skipping on %s", runtime.GOOS)
 	case "darwin":
 		switch runtime.GOARCH {
