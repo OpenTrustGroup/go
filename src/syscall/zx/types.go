@@ -9,7 +9,7 @@ package zx
 import "unsafe"
 
 type Status int32    // zx_status_t
-type Handle int32    // zx_handle_t
+type Handle uint32   // zx_handle_t
 type Time uint64     // zx_time_t, nanoseconds
 type Duration uint64 // zx_duration_t, nanoseconds
 type Signals uint32  // zx_signals_t
