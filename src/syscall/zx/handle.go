@@ -217,6 +217,11 @@ func WaitMany(items []WaitItem, timeout Time) error {
 	return nil
 }
 
+const (
+	ChannelMaxMessageBytes = 65536
+	ChannelMaxMessageHandles = 64
+)
+
 type Channel Handle
 
 func (c *Channel) Handle() *Handle {
