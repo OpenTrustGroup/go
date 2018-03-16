@@ -63,6 +63,10 @@ group("go_runtime") {
   ]
 }
 
+go_test("go_dispatch_test") {
+  gopackage = "syscall/zx/dispatch"
+}
+
 go_test("go_os_test") {
   gopackage = "os"
 }
@@ -72,10 +76,12 @@ package("go_stdlib_tests") {
   system_image = true
 
   deps = [
+    ":go_dispatch_test",
     ":go_os_test",
   ]
 
-  tests = [ {
-        name = "go_os_test"
-      } ]
+  tests = [
+    { name = "go_dispatch_test" },
+    { name = "go_os_test" },
+  ]
 }
