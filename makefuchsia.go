@@ -4,17 +4,10 @@
 
 // The makefuchsia.go script builds a GOROOT in the out/ build directory
 // using sources from third_party/go.
-//
-// When the GOROOT is first built, this script also calls make.bash.
-// On subsquent modifications to source files in third_party/go, the
-// source files are copied into the out/ directory but the toolchain
-// is not rebuilt as the content-based hashing in the Go tool will
-// rebuild any stale packages.
 package main
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"flag"
 	"fmt"
 	"io"
@@ -24,7 +17,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 )
 
 var (
@@ -49,49 +41,21 @@ func mkdir(path ...string) {
 
 func join(path ...string) string { return filepath.Join(path...) }
 
-func rm(path string) {
-	didSomething = true
-	if err := os.RemoveAll(path); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func hashfile(path string) string {
-	h := sha256.New()
-
-	f, err := os.Open(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "does_not_exist(" + path + ")"
-		}
-		log.Fatal(err)
-	}
-	defer f.Close()
-
-	if _, err := io.Copy(h, f); err != nil {
-		log.Fatalf("hash %s: %v", path, err)
-	}
-
-	return string(h.Sum(nil))
-}
-
-var didSomething = false
-
 // copyfile copies src to dst if the two files have different contents.
 func copyfile(src, dst string) {
-	if hashfile(src) == hashfile(dst) {
-		return
-	}
-	didSomething = true
-
-	rm(dst)
 	srcfile, err := os.Open(src)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer srcfile.Close()
 
-	f, err := os.Create(dst)
+	fi, err := srcfile.Stat()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mkdir(filepath.Dir(dst))
+	f, err := os.OpenFile(dst, os.O_CREATE|os.O_RDWR|os.O_TRUNC, fi.Mode())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -100,53 +64,6 @@ func copyfile(src, dst string) {
 	}
 	if err := f.Close(); err != nil {
 		log.Fatalf("cp %s %s: close: %v", src, dst, err)
-	}
-
-	fi, err := os.Stat(src)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := os.Chmod(dst, fi.Mode()); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func collectDeps(w io.Writer) error {
-	fn := func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() || strings.HasSuffix(path, "_test.go") {
-			return err
-		}
-		fmt.Fprintf(w, " %s", path)
-		return err
-	}
-	srcGoroot := join(*flagFuchsiaGoroot, "src")
-	return filepath.Walk(srcGoroot, fn)
-}
-
-func genDepfileStdlib() {
-	// Change anything under src/*, and we copy those changes into out/.
-	path := *flagDepfile
-	if path == "" {
-		return
-	}
-	os.Remove(path)
-	buf := new(bytes.Buffer)
-	buf.WriteString(relGenDir() + "/goroot.done:")
-	if err := collectDeps(buf); err != nil {
-		log.Fatal("gen depfile stdlib: %v", err)
-	}
-	depbytes := buf.Bytes()
-
-	h := sha256.New()
-	h.Write(depbytes)
-	newhash := string(h.Sum(nil))
-
-	if hashfile(path) == newhash {
-		return // don't overwrite an accurate file
-	}
-
-	if err := ioutil.WriteFile(path, depbytes, 0664); err != nil {
-		log.Fatal("gen depfile stdlib: %v", err)
 	}
 }
 
@@ -158,6 +75,25 @@ func convCPU(cpu string) (arch string) {
 		return "arm64"
 	}
 	return ""
+}
+
+// allFilesIn recursively walks a set of files, returning the entire tree in
+// paths relative to the given root. A map is returned for convenience. If
+// prefix is given, only files that match the prefix are considered.
+func allFilesIn(root string, paths map[string]struct{}, prefix ...string) error {
+	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
+		}
+		for _, pfx := range prefix {
+			if strings.HasPrefix(path, join(root, pfx)) {
+				relPath := strings.TrimPrefix(path, root)[1:]
+				paths[relPath] = struct{}{}
+				return err
+			}
+		}
+		return err
+	})
 }
 
 func main() {
@@ -178,121 +114,74 @@ func main() {
 		log.Fatalf("unsupported target CPU: %s", *flagTargetCPU)
 	}
 
-	genDepfileStdlib()
-
 	srcGoroot := *flagFuchsiaGoroot
 	dstGoroot := *flagOutGoroot
 
-	src := join(srcGoroot, "src")
-	dst := join(dstGoroot, "src")
-
-	mkdir(dst)
-	mkdir(join(dstGoroot, "misc"))
-	mkdir(join(dstGoroot, "pkg"))
-	mkdir(join(dstGoroot, "bin"))
-	mkdir(join(dstGoroot, "lib"))
-
-	mkdir(join(dstGoroot, "misc/fuchsia"))
-	miscFiles := []string{
-		"clangwrap.sh",
-		"gccwrap.sh",
-		"go_stdlib_tests.json",
+	srcFiles := map[string]struct{}{}
+	if err := allFilesIn(join(srcGoroot), srcFiles, "src/", "misc/fuchsia/"); err != nil {
+		log.Fatal(err)
 	}
-	for _, file := range miscFiles {
-		copyfile(join(srcGoroot, "misc/fuchsia", file), join(dstGoroot, "misc/fuchsia", file))
+
+	dstFiles := map[string]struct{}{}
+	if _, err := os.Stat(join(dstGoroot)); err == nil {
+		if err := allFilesIn(join(dstGoroot), dstFiles, ""); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	for f := range dstFiles {
+		if _, ok := srcFiles[f]; !ok {
+			// try to preserve the bin/ and pkg/ trees, as they can be used to do faster
+			// rebuilds of the toolchain.
+			if strings.HasPrefix(f, "src/") || strings.HasPrefix(f, "misc/fuchsia/") {
+				os.Remove(filepath.Join(dstGoroot, f))
+			}
+		}
+	}
+
+	for f := range srcFiles {
+		src, dst := join(srcGoroot, f), join(dstGoroot, f)
+		copyfile(src, dst)
 	}
 
 	versionFile := join(dstGoroot, "VERSION")
-	if _, err := os.Stat(versionFile); err != nil {
-		if !os.IsNotExist(err) {
-			log.Fatal(err)
-		}
-		err := ioutil.WriteFile(versionFile, []byte("devel third_party/go fuchsia"), 0664)
-		if err != nil {
-			log.Fatal(err)
-		}
+	if err := ioutil.WriteFile(versionFile, []byte("devel third_party/go fuchsia"), 0664); err != nil {
+		log.Fatal(err)
 	}
 
-	srcFiles, err := filepath.Glob(join(src, "*"))
+	cmd := exec.Command(*flagBuiltoolsGo, "env", "GOROOT")
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatalf("could not glob source files: %v", err)
+		log.Fatalf("cannot find bootstrap GOROOT: %v", err)
 	}
-	dstFiles, err := filepath.Glob(join(dst, "*"))
+
+	env := os.Environ()
+	env = append(env, "GOROOT_BOOTSTRAP="+strings.TrimSpace(string(out)))
+	env = append(env, "CC_FOR_fuchsia_"+goarchTarget+"="+dstGoroot+"/misc/fuchsia/gccwrap.sh")
+
+	cmd = exec.Command(join(dstGoroot, "src", "make.bash"))
+	cmd.Args = []string{"--no-clean"}
+	cmd.Dir = join(dstGoroot, "src")
+	cmd.Env = env
+	buf := new(bytes.Buffer)
+	cmd.Stdout = buf
+	cmd.Stderr = buf
+	if err := cmd.Run(); err != nil {
+		log.Fatalf("make.bash failed: %v\n%s", err, buf.String())
+	}
+
+	depfile, err := os.Create(*flagDepfile)
 	if err != nil {
-		log.Fatalf("could not glob destination files: %v", err)
+		log.Fatal(err)
 	}
-
-	srcRelNames := make(map[string]bool, len(srcFiles))
-	for _, file := range srcFiles {
-		srcRelNames[file[len(src)+1:]] = true
+	fmt.Fprintf(depfile, "%s/goroot.done:", relGenDir())
+	for f := range srcFiles {
+		fmt.Fprintf(depfile, " %s", join(srcGoroot, f))
 	}
-	for _, file := range dstFiles {
-		if !srcRelNames[file[len(dst)+1:]] {
-			rm(file)
-		}
-	}
+	fmt.Fprintf(depfile, " %s", join(srcGoroot, "makefuchsia.go"))
 
-	var wg sync.WaitGroup
-	for _, file := range srcFiles {
-		file := file
-		deepCopy := func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if strings.HasSuffix(path, "_test.go") && !strings.Contains(path, "os/") {
-				return nil
-			}
-			if filepath.Base(path) == "testdata" {
-				return filepath.SkipDir
-			}
-			if info.IsDir() {
-				return nil
-			}
-			dstPath := join(dst, path[len(src)+1:])
-			mkdir(filepath.Dir(dstPath))
-			copyfile(path, dstPath)
-			return nil
-		}
-		wg.Add(1)
-		go func() {
-			if err := filepath.Walk(file, deepCopy); err != nil {
-				log.Fatalf("goroot deep copy failed: %v", err)
-			}
-			wg.Done()
-		}()
-	}
-	wg.Wait()
-
-	if _, err := os.Stat(join(dstGoroot, "bin", "go")); err != nil {
-		cmd := exec.Command(*flagBuiltoolsGo, "env", "GOROOT")
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			log.Fatalf("cannot find bootstrap GOROOT: %v", err)
-		}
-
-		env := os.Environ()
-		env = append(env, "GOROOT_BOOTSTRAP="+strings.TrimSpace(string(out)))
-		env = append(env, "CC_FOR_fuchsia_"+goarchTarget+"="+dstGoroot+"/misc/fuchsia/gccwrap.sh")
-
-		// Fresh copy, we need to build the compiler.
-		// On subsequent copies, we can rely on "go build" to
-		// rebuild any standard library changes.
-		cmd = exec.Command(join(dst, "make.bash"))
-		cmd.Dir = dst
-		cmd.Env = env
-		buf := new(bytes.Buffer)
-		cmd.Stdout = buf
-		cmd.Stderr = buf
-		if err := cmd.Run(); err != nil {
-			log.Fatalf("make.bash failed: %v\n%s", err, buf.String())
-		}
-	}
-
-	if didSomething {
-		donePath := join(*flagRootGenDir, "goroot.done")
-		rm(donePath)
-		if err := ioutil.WriteFile(donePath, []byte("done"), 0664); err != nil {
-			log.Fatalf("writing goroot.done failed: %v", err)
-		}
+	donePath := join(*flagRootGenDir, "goroot.done")
+	if err := ioutil.WriteFile(donePath, []byte("done"), 0664); err != nil {
+		log.Fatalf("writing goroot.done failed: %v", err)
 	}
 }
