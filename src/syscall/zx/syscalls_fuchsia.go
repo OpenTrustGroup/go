@@ -75,7 +75,9 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_zx_timer_cancel zx_timer_cancel "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_vmo_create zx_vmo_create "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_vmo_read zx_vmo_read "libzircon.so"
+//go:cgo_import_dynamic vdso_zx_vmo_read_old zx_vmo_read_old "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_vmo_write zx_vmo_write "libzircon.so"
+//go:cgo_import_dynamic vdso_zx_vmo_write_old zx_vmo_write_old "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_vmo_get_size zx_vmo_get_size "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_vmo_set_size zx_vmo_set_size "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_vmo_op_range zx_vmo_op_range "libzircon.so"
@@ -189,7 +191,9 @@ import "unsafe"
 //go:linkname vdso_zx_timer_cancel vdso_zx_timer_cancel
 //go:linkname vdso_zx_vmo_create vdso_zx_vmo_create
 //go:linkname vdso_zx_vmo_read vdso_zx_vmo_read
+//go:linkname vdso_zx_vmo_read_old vdso_zx_vmo_read_old
 //go:linkname vdso_zx_vmo_write vdso_zx_vmo_write
+//go:linkname vdso_zx_vmo_write_old vdso_zx_vmo_write_old
 //go:linkname vdso_zx_vmo_get_size vdso_zx_vmo_get_size
 //go:linkname vdso_zx_vmo_set_size vdso_zx_vmo_set_size
 //go:linkname vdso_zx_vmo_op_range vdso_zx_vmo_op_range
@@ -304,7 +308,9 @@ var (
 	vdso_zx_timer_cancel                        uintptr
 	vdso_zx_vmo_create                          uintptr
 	vdso_zx_vmo_read                            uintptr
+	vdso_zx_vmo_read_old                        uintptr
 	vdso_zx_vmo_write                           uintptr
+	vdso_zx_vmo_write_old                       uintptr
 	vdso_zx_vmo_get_size                        uintptr
 	vdso_zx_vmo_set_size                        uintptr
 	vdso_zx_vmo_op_range                        uintptr
@@ -619,7 +625,15 @@ func sys_vmo_read(handle Handle, data unsafe.Pointer, offset uint64, len uint, a
 
 //go:noescape
 //go:nosplit
+func sys_vmo_read_old(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
+
+//go:noescape
+//go:nosplit
 func sys_vmo_write(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
+
+//go:noescape
+//go:nosplit
+func sys_vmo_write_old(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
 
 //go:noescape
 //go:nosplit

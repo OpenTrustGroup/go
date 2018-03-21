@@ -704,6 +704,18 @@ TEXT ·sys_vmo_read(SB),NOSPLIT,$0-44
 	MOVL AX, ret+40(FP)
 	RET
 
+// func sys_vmo_read_old(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
+TEXT ·sys_vmo_read_old(SB),NOSPLIT,$0-44
+	MOVL handle+0(FP), DI
+	MOVQ data+8(FP), SI
+	MOVQ offset+16(FP), DX
+	MOVQ len+24(FP), CX
+	MOVQ actual+32(FP), R8
+	MOVQ vdso_zx_vmo_read_old(SB), AX
+	CALL AX
+	MOVL AX, ret+40(FP)
+	RET
+
 // func sys_vmo_write(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
 TEXT ·sys_vmo_write(SB),NOSPLIT,$0-44
 	MOVL handle+0(FP), DI
@@ -712,6 +724,18 @@ TEXT ·sys_vmo_write(SB),NOSPLIT,$0-44
 	MOVQ len+24(FP), CX
 	MOVQ actual+32(FP), R8
 	MOVQ vdso_zx_vmo_write(SB), AX
+	CALL AX
+	MOVL AX, ret+40(FP)
+	RET
+
+// func sys_vmo_write_old(handle Handle, data unsafe.Pointer, offset uint64, len uint, actual *uint) Status
+TEXT ·sys_vmo_write_old(SB),NOSPLIT,$0-44
+	MOVL handle+0(FP), DI
+	MOVQ data+8(FP), SI
+	MOVQ offset+16(FP), DX
+	MOVQ len+24(FP), CX
+	MOVQ actual+32(FP), R8
+	MOVQ vdso_zx_vmo_write_old(SB), AX
 	CALL AX
 	MOVL AX, ret+40(FP)
 	RET

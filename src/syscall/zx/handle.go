@@ -432,7 +432,7 @@ func (vmo *VMO) Clone(options uint32, offset, size uint64) (VMO, error) {
 
 func (vmo *VMO) Read(b []byte, offset uint64) (n int, err error) {
 	var actual uint
-	if status := sys_vmo_read(Handle(*vmo), unsafe.Pointer(&b[0]), offset, uint(len(b)), &actual); status != ErrOk {
+	if status := sys_vmo_read_old(Handle(*vmo), unsafe.Pointer(&b[0]), offset, uint(len(b)), &actual); status != ErrOk {
 		return int(actual), Error{Status: status, Text: "zx.VMO.Read"}
 	}
 	return int(actual), nil
@@ -440,7 +440,7 @@ func (vmo *VMO) Read(b []byte, offset uint64) (n int, err error) {
 
 func (vmo *VMO) Write(b []byte, offset uint64) (n int, err error) {
 	var actual uint
-	if status := sys_vmo_write(Handle(*vmo), unsafe.Pointer(&b[0]), offset, uint(len(b)), &actual); status != ErrOk {
+	if status := sys_vmo_write_old(Handle(*vmo), unsafe.Pointer(&b[0]), offset, uint(len(b)), &actual); status != ErrOk {
 		return int(actual), Error{Status: status, Text: "zx.VMO.Write"}
 	}
 	return int(actual), nil
