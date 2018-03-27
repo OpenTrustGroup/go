@@ -40,9 +40,12 @@ func (f *VMOFile) Read(data []byte) (n int, err error) {
 	if len(data) == 0 {
 		return 0, err
 	}
-	n, err = f.h.Read(data, uint64(f.at))
+	if err2 := f.h.Read(data, uint64(f.at)); err2 != nil {
+		return 0, err2
+	}
+	n = len(data)
 	f.at += int64(n)
-	return n, err
+	return
 }
 
 func (f *VMOFile) ReadAt(data []byte, off int64) (n int, err error) {
@@ -62,8 +65,8 @@ func (f *VMOFile) ReadAt(data []byte, off int64) (n int, err error) {
 		err = zx.EOF
 	}
 	data = data[:n]
-	if n2, err2 := f.h.Read(data, uint64(off)); err2 != nil {
-		return n2, err2
+	if err2 := f.h.Read(data, uint64(off)); err2 != nil {
+		return 0, err2
 	}
 	return
 }
