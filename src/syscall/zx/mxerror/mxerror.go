@@ -39,7 +39,7 @@ func Prependf(err error, format string, args ...interface{}) error {
 
 // Errorf creates an error with an zx.Status code.
 func Errorf(s zx.Status, format string, args ...interface{}) error {
-	return &zx.Error{
+	return zx.Error{
 		Status: s,
 		Text:   fmt.Sprintf(format, args...),
 	}

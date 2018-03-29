@@ -138,7 +138,7 @@ func (d *Dispatcher) CancelWait(id WaitID) error {
 	// Look up the wait context.
 	wc := d.objects[id]
 	if wc == nil {
-		return &zx.Error{Status: zx.ErrNotFound}
+		return zx.Error{Status: zx.ErrNotFound}
 	}
 
 	// Deregister no matter what here. Due to stack semantics of defer, this will always
