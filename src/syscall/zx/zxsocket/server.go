@@ -42,7 +42,6 @@ func Handler(h zx.Socket, cb interface{}, cookie int64) error {
 		return err
 	}
 	if !msg.IsValidIncoming(numBytes) {
-		msg.DiscardHandles()
 		return zx.Error{Status: zx.ErrInvalidArgs, Text: "zxsocket.Handler"}
 	}
 
@@ -54,7 +53,6 @@ func Handler(h zx.Socket, cb interface{}, cookie int64) error {
 		return nil
 	} else if status < 0 || !msg.IsValid() {
 		// zx.Error case
-		msg.DiscardHandles()
 		msg.Datalen = 0
 		if msg.Arg >= 0 {
 			// TODO(smklein): This error code may change. It currently is set to "ERR_FAULT" in
@@ -65,9 +63,6 @@ func Handler(h zx.Socket, cb interface{}, cookie int64) error {
 
 	msg.SetOp(fdio.OpStatus)
 	_, err = msg.WriteMsg(h)
-	if err != nil {
-		msg.DiscardHandles()
-	}
 	if isClose {
 		// Signals that a close callback is not necessary -- the op has already completed
 		return fdio.ErrDisconnectNoCallback

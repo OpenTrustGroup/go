@@ -367,45 +367,43 @@ func (m *Msg) WriteMsg(c zx.Channel) error {
 	return c.Write(data, handles, 0)
 }
 
-func (m *Msg) Op() uint32 {
+func (m *MsgHeader) Op() uint32 {
 	return m.op & 0x3FFF
 }
-func (m *Msg) SetOp(v uint32) {
+func (m *MsgHeader) SetOp(v uint32) {
 	m.op = (v & 0x3FFF)
 }
-func (m *Msg) OpHandleCount() uint32 {
+func (m *MsgHeader) OpHandleCount() uint32 {
 	return (m.op >> 8) & 3
 }
-func (m *Msg) Off() int64 {
+func (m *MsgHeader) Off() int64 {
 	return m.arg2
 }
-func (m *Msg) SetOff(v int64) {
+func (m *MsgHeader) SetOff(v int64) {
 	m.arg2 = v
 }
-func (m *Msg) Mode() uint32 {
+func (m *MsgHeader) Mode() uint32 {
 	return uint32(m.arg2)
 }
-func (m *Msg) SetMode(v uint32) {
+func (m *MsgHeader) SetMode(v uint32) {
 	m.arg2 = int64(v)
 }
-func (m *Msg) Protocol() Protocol {
+func (m *MsgHeader) Protocol() Protocol {
 	return Protocol(m.arg2)
 }
-func (m *Msg) SetProtocol(p Protocol) {
+func (m *MsgHeader) SetProtocol(p Protocol) {
 	m.arg2 = int64(p)
 }
-func (m *Msg) IoctlOp() uint32 {
+func (m *MsgHeader) IoctlOp() uint32 {
 	return uint32(m.arg2)
 }
-func (m *Msg) SetIoctlOp(v uint32) {
+func (m *MsgHeader) SetIoctlOp(v uint32) {
 	m.arg2 = int64(v)
 }
-
-func (m *Msg) FcntlFlags() uint32 {
+func (m *MsgHeader) FcntlFlags() uint32 {
 	return uint32(m.arg2)
 }
-
-func (m *Msg) SetFcntlFlags(v uint32) {
+func (m *MsgHeader) SetFcntlFlags(v uint32) {
 	m.arg2 = int64(v)
 }
 

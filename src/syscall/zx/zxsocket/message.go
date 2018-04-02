@@ -117,34 +117,6 @@ func (m *Msg) WriteChannelMsg(c *zx.Channel) error {
 	return c.Write(data, handles, 0)
 }
 
-func (m *Msg) Op() uint32 {
-	return m.AsFDIOMsg().Op()
-}
-func (m *Msg) SetOp(v uint32) {
-	m.AsFDIOMsg().SetOp(v)
-}
-func (m *Msg) Off() int64 {
-	return m.AsFDIOMsg().Off()
-}
-func (m *Msg) SetOff(v int64) {
-	m.AsFDIOMsg().SetOff(v)
-}
-func (m *Msg) Mode() uint32 {
-	return m.AsFDIOMsg().Mode()
-}
-func (m *Msg) SetMode(v uint32) {
-	m.AsFDIOMsg().SetMode(v)
-}
-func (m *Msg) IoctlOp() uint32 {
-	return m.AsFDIOMsg().IoctlOp()
-}
-func (m *Msg) SetIoctlOp(v uint32) {
-	m.AsFDIOMsg().SetIoctlOp(v)
-}
-func (m *Msg) OpHandleCount() uint32 {
-	return m.AsFDIOMsg().OpHandleCount()
-}
-
 func (m *Msg) IsValid() bool {
 	if m.Datalen > MessageChunkSize || m.Hcount != 0 {
 		return false
@@ -157,18 +129,4 @@ func (m *Msg) IsValidIncoming(size uint32) bool {
 		return false
 	}
 	return m.IsValid()
-}
-
-// DiscardHandles throws away any handles that might exist within the message
-func (m *Msg) DiscardHandles() {
-	for i := uint32(0); i < m.Hcount; i++ {
-		m.Handle[i].Close()
-	}
-	m.Hcount = 0
-}
-
-// AsFDIOMsg returns this message as an fdio.Msg. This is a temporary hack
-// to make the transition away from fdio easier.
-func (m *Msg) AsFDIOMsg() *fdio.Msg {
-	return (*fdio.Msg)(unsafe.Pointer(m))
 }

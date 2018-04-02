@@ -44,10 +44,7 @@ func (s *Socket) Close() error {
 	var msg Msg
 	msg.SetOp(OpClose)
 
-	ret, err := s.txn(&msg)
-	if ret >= 0 {
-		msg.DiscardHandles()
-	}
+	_, err := s.txn(&msg)
 
 	s.socket.Close()
 	s.socket = 0
@@ -136,7 +133,6 @@ func (s *Socket) Misc(op uint32, off int64, in, out []byte, handles []zx.Handle)
 	if _, err = s.txn(&msg); err != nil {
 		return 0, err
 	}
-	msg.DiscardHandles()
 
 	if int(msg.Datalen) > len(out) {
 		return 0, zx.Error{Status: zx.ErrIO, Text: "zxsocket.Misc"}
