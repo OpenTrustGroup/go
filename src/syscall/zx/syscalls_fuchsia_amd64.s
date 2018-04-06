@@ -55,6 +55,13 @@ TEXT ·Sys_clock_adjust(SB),NOSPLIT,$0-20
 	MOVL AX, ret+16(FP)
 	RET
 
+// func sys_system_get_dcache_line_size() uint32
+TEXT ·sys_system_get_dcache_line_size(SB),NOSPLIT,$0-4
+	MOVQ vdso_zx_system_get_dcache_line_size(SB), AX
+	CALL AX
+	MOVL AX, ret+0(FP)
+	RET
+
 // func Sys_system_get_num_cpus() uint32
 TEXT ·Sys_system_get_num_cpus(SB),NOSPLIT,$0-4
 	MOVQ vdso_zx_system_get_num_cpus(SB), AX
@@ -76,6 +83,15 @@ TEXT ·Sys_system_get_physmem(SB),NOSPLIT,$0-8
 	MOVQ vdso_zx_system_get_physmem(SB), AX
 	CALL AX
 	MOVQ AX, ret+0(FP)
+	RET
+
+// func sys_system_get_features(kind uint32, out *uint32) Status
+TEXT ·sys_system_get_features(SB),NOSPLIT,$0-20
+	MOVL kind+0(FP), DI
+	MOVQ out+8(FP), SI
+	MOVQ vdso_zx_system_get_features(SB), AX
+	CALL AX
+	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_cache_flush(addr unsafe.Pointer, len uint, options uint32) Status
@@ -239,6 +255,16 @@ TEXT ·Sys_object_get_child(SB),NOSPLIT,$0-36
 	MOVL AX, ret+32(FP)
 	RET
 
+// func sys_object_set_profile(handle Handle, profile Handle, options uint32) Status
+TEXT ·sys_object_set_profile(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVL profile+4(FP), SI
+	MOVL options+8(FP), DX
+	MOVQ vdso_zx_object_set_profile(SB), AX
+	CALL AX
+	MOVL AX, ret+16(FP)
+	RET
+
 // func sys_channel_create(options uint32, out0 *Handle, out1 *Handle) Status
 TEXT ·sys_channel_create(SB),NOSPLIT,$0-28
 	MOVL options+0(FP), DI
@@ -264,6 +290,28 @@ TEXT ·sys_channel_read(SB),NOSPLIT,$32-52
 	PUSHQ R13
 	PUSHQ R12
 	MOVQ vdso_zx_channel_read(SB), AX
+	CALL AX
+	POPQ R12
+	POPQ R13
+	MOVQ BP, SP
+	MOVL AX, ret+48(FP)
+	RET
+
+// func sys_channel_read_etc(handle Handle, options uint32, bytes unsafe.Pointer, handles *int, num_bytes uint32, num_handles uint32, actual_bytes *uint32, actual_handles *uint32) Status
+TEXT ·sys_channel_read_etc(SB),NOSPLIT,$32-52
+	MOVL handle+0(FP), DI
+	MOVL options+4(FP), SI
+	MOVQ bytes+8(FP), DX
+	MOVQ handles+16(FP), CX
+	MOVL num_bytes+24(FP), R8
+	MOVL num_handles+28(FP), R9
+	MOVQ actual_bytes+32(FP), R12
+	MOVQ actual_handles+40(FP), R13
+	MOVQ SP, BP   // BP is preserved across vsdo call by the x86-64 ABI
+	ANDQ $~15, SP // stack alignment for x86-64 ABI
+	PUSHQ R13
+	PUSHQ R12
+	MOVQ vdso_zx_channel_read_etc(SB), AX
 	CALL AX
 	POPQ R12
 	POPQ R13
@@ -416,24 +464,23 @@ TEXT ·Sys_thread_start(SB),NOSPLIT,$0-44
 	MOVL AX, ret+40(FP)
 	RET
 
-// func Sys_thread_read_state(handle Handle, kind uint32, buffer unsafe.Pointer, len uint32, actual *uint32) Status
-TEXT ·Sys_thread_read_state(SB),NOSPLIT,$0-36
+// func Sys_thread_read_state(handle Handle, kind uint32, buffer unsafe.Pointer, len uint) Status
+TEXT ·Sys_thread_read_state(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL kind+4(FP), SI
 	MOVQ buffer+8(FP), DX
-	MOVL len+16(FP), CX
-	MOVQ actual+24(FP), R8
+	MOVQ len+16(FP), CX
 	MOVQ vdso_zx_thread_read_state(SB), AX
 	CALL AX
-	MOVL AX, ret+32(FP)
+	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_thread_write_state(handle Handle, kind uint32, buffer unsafe.Pointer, buffer_len uint32) Status
+// func Sys_thread_write_state(handle Handle, kind uint32, buffer unsafe.Pointer, buffer_len uint) Status
 TEXT ·Sys_thread_write_state(SB),NOSPLIT,$0-28
 	MOVL handle+0(FP), DI
 	MOVL kind+4(FP), SI
 	MOVQ buffer+8(FP), DX
-	MOVL buffer_len+16(FP), CX
+	MOVQ buffer_len+16(FP), CX
 	MOVQ vdso_zx_thread_write_state(SB), AX
 	CALL AX
 	MOVL AX, ret+24(FP)
@@ -869,6 +916,17 @@ TEXT ·Sys_fifo_read(SB),NOSPLIT,$0-36
 	MOVL AX, ret+32(FP)
 	RET
 
+// func Sys_fifo_read_old(handle Handle, data unsafe.Pointer, len uint, num_written *uint32) Status
+TEXT ·Sys_fifo_read_old(SB),NOSPLIT,$0-36
+	MOVL handle+0(FP), DI
+	MOVQ data+8(FP), SI
+	MOVQ len+16(FP), DX
+	MOVQ num_written+24(FP), CX
+	MOVQ vdso_zx_fifo_read_old(SB), AX
+	CALL AX
+	MOVL AX, ret+32(FP)
+	RET
+
 // func Sys_fifo_write(handle Handle, data unsafe.Pointer, len uint, num_written *uint32) Status
 TEXT ·Sys_fifo_write(SB),NOSPLIT,$0-36
 	MOVL handle+0(FP), DI
@@ -878,6 +936,27 @@ TEXT ·Sys_fifo_write(SB),NOSPLIT,$0-36
 	MOVQ vdso_zx_fifo_write(SB), AX
 	CALL AX
 	MOVL AX, ret+32(FP)
+	RET
+
+// func Sys_fifo_write_old(handle Handle, data unsafe.Pointer, len uint, num_written *uint32) Status
+TEXT ·Sys_fifo_write_old(SB),NOSPLIT,$0-36
+	MOVL handle+0(FP), DI
+	MOVQ data+8(FP), SI
+	MOVQ len+16(FP), DX
+	MOVQ num_written+24(FP), CX
+	MOVQ vdso_zx_fifo_write_old(SB), AX
+	CALL AX
+	MOVL AX, ret+32(FP)
+	RET
+
+// func Sys_profile_create(resource Handle, profile *int, out *Handle) Status
+TEXT ·Sys_profile_create(SB),NOSPLIT,$0-28
+	MOVL resource+0(FP), DI
+	MOVQ profile+8(FP), SI
+	MOVQ out+16(FP), DX
+	MOVQ vdso_zx_profile_create(SB), AX
+	CALL AX
+	MOVL AX, ret+24(FP)
 	RET
 
 // func Sys_vmar_unmap_handle_close_thread_exit(vmar_handle Handle, addr uintptr, len uint, handle Handle) Status
@@ -1040,39 +1119,112 @@ TEXT ·Sys_debug_send_command(SB),NOSPLIT,$0-28
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_interrupt_create(handle Handle, vector uint32, options uint32, out_handle *Handle) Status
-TEXT ·Sys_interrupt_create(SB),NOSPLIT,$0-28
-	MOVL handle+0(FP), DI
-	MOVL vector+4(FP), SI
-	MOVL options+8(FP), DX
-	MOVQ out_handle+16(FP), CX
+// func Sys_interrupt_create(hrsrc Handle, options uint32, out_handle *Handle) Status
+TEXT ·Sys_interrupt_create(SB),NOSPLIT,$0-20
+	MOVL hrsrc+0(FP), DI
+	MOVL options+4(FP), SI
+	MOVQ out_handle+8(FP), DX
 	MOVQ vdso_zx_interrupt_create(SB), AX
+	CALL AX
+	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_interrupt_bind(handle Handle, slot uint32, hrsrc Handle, vector uint32, options uint32) Status
+TEXT ·Sys_interrupt_bind(SB),NOSPLIT,$0-28
+	MOVL handle+0(FP), DI
+	MOVL slot+4(FP), SI
+	MOVL hrsrc+8(FP), DX
+	MOVL vector+12(FP), CX
+	MOVL options+16(FP), R8
+	MOVQ vdso_zx_interrupt_bind(SB), AX
 	CALL AX
 	MOVL AX, ret+24(FP)
 	RET
 
-// func Sys_interrupt_complete(handle Handle) Status
-TEXT ·Sys_interrupt_complete(SB),NOSPLIT,$0-12
+// func Sys_interrupt_wait(handle Handle, slots *uint64) Status
+TEXT ·Sys_interrupt_wait(SB),NOSPLIT,$0-20
 	MOVL handle+0(FP), DI
-	MOVQ vdso_zx_interrupt_complete(SB), AX
-	CALL AX
-	MOVL AX, ret+8(FP)
-	RET
-
-// func Sys_interrupt_wait(handle Handle) Status
-TEXT ·Sys_interrupt_wait(SB),NOSPLIT,$0-12
-	MOVL handle+0(FP), DI
+	MOVQ slots+8(FP), SI
 	MOVQ vdso_zx_interrupt_wait(SB), AX
 	CALL AX
+	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_interrupt_get_timestamp(handle Handle, slot uint32, timestamp *Time) Status
+TEXT ·Sys_interrupt_get_timestamp(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVL slot+4(FP), SI
+	MOVQ timestamp+8(FP), DX
+	MOVQ vdso_zx_interrupt_get_timestamp(SB), AX
+	CALL AX
+	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_interrupt_signal(handle Handle, slot uint32, timestamp Time) Status
+TEXT ·Sys_interrupt_signal(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVL slot+4(FP), SI
+	MOVQ timestamp+8(FP), DX
+	MOVQ vdso_zx_interrupt_signal(SB), AX
+	CALL AX
+	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_irq_create(src_obj Handle, src_num uint32, options uint32, out_handle *Handle) Status
+TEXT ·Sys_irq_create(SB),NOSPLIT,$0-28
+	MOVL src_obj+0(FP), DI
+	MOVL src_num+4(FP), SI
+	MOVL options+8(FP), DX
+	MOVQ out_handle+16(FP), CX
+	MOVQ vdso_zx_irq_create(SB), AX
+	CALL AX
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_irq_bind(inth Handle, porth Handle, key uint64, options uint32) Status
+TEXT ·Sys_irq_bind(SB),NOSPLIT,$0-28
+	MOVL inth+0(FP), DI
+	MOVL porth+4(FP), SI
+	MOVQ key+8(FP), DX
+	MOVL options+16(FP), CX
+	MOVQ vdso_zx_irq_bind(SB), AX
+	CALL AX
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_irq_wait(handle Handle, out_timestamp *Time) Status
+TEXT ·Sys_irq_wait(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVQ out_timestamp+8(FP), SI
+	MOVQ vdso_zx_irq_wait(SB), AX
+	CALL AX
+	MOVL AX, ret+16(FP)
+	RET
+
+// func Sys_irq_destroy(handle Handle) Status
+TEXT ·Sys_irq_destroy(SB),NOSPLIT,$0-12
+	MOVL handle+0(FP), DI
+	MOVQ vdso_zx_irq_destroy(SB), AX
+	CALL AX
 	MOVL AX, ret+8(FP)
 	RET
 
-// func Sys_interrupt_signal(handle Handle) Status
-TEXT ·Sys_interrupt_signal(SB),NOSPLIT,$0-12
+// func Sys_irq_ack(handle Handle) Status
+TEXT ·Sys_irq_ack(SB),NOSPLIT,$0-12
 	MOVL handle+0(FP), DI
-	MOVQ vdso_zx_interrupt_signal(SB), AX
+	MOVQ vdso_zx_irq_ack(SB), AX
 	CALL AX
 	MOVL AX, ret+8(FP)
+	RET
+
+// func Sys_irq_trigger(handle Handle, options uint32, timestamp Time) Status
+TEXT ·Sys_irq_trigger(SB),NOSPLIT,$0-20
+	MOVL handle+0(FP), DI
+	MOVL options+4(FP), SI
+	MOVQ timestamp+8(FP), DX
+	MOVQ vdso_zx_irq_trigger(SB), AX
+	CALL AX
+	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_mmap_device_io(handle Handle, io_addr uint32, len uint32) Status
@@ -1117,6 +1269,45 @@ TEXT ·Sys_iommu_create(SB),NOSPLIT,$0-36
 	MOVQ vdso_zx_iommu_create(SB), AX
 	CALL AX
 	MOVL AX, ret+32(FP)
+	RET
+
+// func Sys_bti_create(iommu Handle, options uint32, bti_id uint64, out *Handle) Status
+TEXT ·Sys_bti_create(SB),NOSPLIT,$0-28
+	MOVL iommu+0(FP), DI
+	MOVL options+4(FP), SI
+	MOVQ bti_id+8(FP), DX
+	MOVQ out+16(FP), CX
+	MOVQ vdso_zx_bti_create(SB), AX
+	CALL AX
+	MOVL AX, ret+24(FP)
+	RET
+
+// func Sys_bti_pin(bti Handle, options uint32, vmo Handle, offset uint64, size uint64, addrs *Paddr, addrs_count uint) Status
+TEXT ·Sys_bti_pin(SB),NOSPLIT,$24-52
+	MOVL bti+0(FP), DI
+	MOVL options+4(FP), SI
+	MOVL vmo+8(FP), DX
+	MOVQ offset+16(FP), CX
+	MOVQ size+24(FP), R8
+	MOVQ addrs+32(FP), R9
+	MOVQ addrs_count+40(FP), R12
+	MOVQ SP, BP   // BP is preserved across vsdo call by the x86-64 ABI
+	ANDQ $~15, SP // stack alignment for x86-64 ABI
+	PUSHQ R12
+	MOVQ vdso_zx_bti_pin(SB), AX
+	CALL AX
+	POPQ R12
+	MOVQ BP, SP
+	MOVL AX, ret+48(FP)
+	RET
+
+// func Sys_bti_unpin(bti Handle, base_addr Paddr) Status
+TEXT ·Sys_bti_unpin(SB),NOSPLIT,$0-20
+	MOVL bti+0(FP), DI
+	MOVQ base_addr+8(FP), SI
+	MOVQ vdso_zx_bti_unpin(SB), AX
+	CALL AX
+	MOVL AX, ret+16(FP)
 	RET
 
 // func Sys_bootloader_fb_get_info(format *uint32, width *uint32, height *uint32, stride *uint32) Status

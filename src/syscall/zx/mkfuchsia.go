@@ -4,7 +4,7 @@
 
 // +build ignore
 
-// Parses syscalls.inc of Fuchsia's zircon kernel and produces Go
+// Parses syscalls.abigen of Fuchsia's zircon kernel and produces Go
 // assembly for calling the system calls.
 //
 // Regenerate syscall/zx with:
@@ -46,7 +46,7 @@ func main() {
 	}
 	_ = sdkArch
 
-	syscallsFile := filepath.Join(*fuchsiaRoot, "/zircon/system/public/zircon/syscalls.sysgen")
+	syscallsFile := filepath.Join(*fuchsiaRoot, "/zircon/system/public/zircon/syscalls.abigen")
 	if args := flag.Args(); len(args) != 0 {
 		syscallsFile = args[0]
 	}
@@ -727,16 +727,26 @@ func (call zirconSyscallDef) exported() bool {
 	switch call.name {
 	case "handle_close",
 		"handle_duplicate",
+		"object_set_profile",
 		"object_wait_one",
 		"object_wait_many",
 		"channel_create",
 		"channel_read",
+		"channel_read_etc",
 		"channel_write",
+		"pci_get_bar",
+		"pci_map_interrupt",
+		"pci_query_irq_mode",
+		"pci_set_irq_mode",
+		"pci_init",
+		"pci_add_subtract_to_range",
 		"socket_create",
 		"socket_read",
 		"socket_write",
 		"socket_accept",
 		"socket_share",
+		"system_get_dcache_line_size",
+		"system_get_features",
 		"vmar_allocate",
 		"vmar_destroy",
 		"vmar_map",
@@ -845,4 +855,7 @@ var zirconTypeNamedStr = map[string]zirconTypeNamed{
 	"zx_pcie_get_nth_info_t":   zx_int,
 	"zx_vcpu_create_args_t":    zx_int,
 	"zx_system_powerctl_arg_t": zx_int,
+	"zx_handle_info_t":         zx_int,
+	"zx_profile_info_t":        zx_int,
+	"zx_pci_bar_t":             zx_int,
 }
