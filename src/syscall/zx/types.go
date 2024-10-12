@@ -135,6 +135,26 @@ type ChannelCallArgs struct {
 	ReadNumHandles  uint32
 }
 
+type SmcParas struct {
+	func_id      uint32
+	arg1         uint64
+	arg2         uint64
+	arg3         uint64
+	arg4         uint64
+	arg5         uint64
+	arg6         uint64
+	client_id    uint16
+	secure_os_id uint16
+}
+
+type SmcResult struct {
+	arg0 uint64
+	arg1 uint64
+	arg2 uint64
+	arg3 uint64
+	arg6 uint64
+}
+
 type FIFOState struct {
 	head, tail uint64
 }

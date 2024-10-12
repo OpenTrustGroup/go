@@ -28,9 +28,9 @@ import (
 )
 
 var (
-	stubs       = flag.Bool("stubs", false, "print only Go function stubs")
-	goarch      = flag.String("goarch", "amd64", "arch to print asm for")
-	fuchsiaRoot = flag.String("fuchsia_root", filepath.Join(os.Getenv("HOME"), "fuchsia"), "path to fuchsia root")
+	stubs  = flag.Bool("stubs", false, "print only Go function stubs")
+	goarch = flag.String("goarch", "amd64", "arch to print asm for")
+	fuchsiaRoot = flag.String("fuchsia_root", filepath.Join(os.Getenv("ZIRCON_SYSROOT"), ""), "path to nebula root")
 )
 
 func main() {
@@ -386,6 +386,10 @@ func printGoType(buf *bytes.Buffer, t zirconType) {
 		fmt.Fprint(buf, "Rrec")
 	case zx_channel_call_args_t:
 		fmt.Fprint(buf, "ChannelCallArgs")
+	case zx_smc_parameters_t:
+		fmt.Fprint(buf, "SmcParas")
+	case zx_smc_result_t:
+		fmt.Fprint(buf, "SmcResult")
 	case zx_fifo_state_t:
 		fmt.Fprint(buf, "FIFOState")
 	default:
@@ -806,6 +810,8 @@ const (
 	zx_function_pointer
 	zx_rrec_t
 	zx_channel_call_args_t
+	zx_smc_parameters_t
+	zx_smc_result_t
 	zx_fifo_state_t
 )
 
@@ -843,6 +849,8 @@ var zirconTypeNamedStr = map[string]zirconTypeNamed{
 	"zx_function_pointer":      zx_function_pointer,
 	"zx_rrec_t":                zx_rrec_t,
 	"zx_channel_call_args_t":   zx_channel_call_args_t,
+	"zx_smc_parameters_t":      zx_smc_parameters_t,
+	"zx_smc_result_t":          zx_smc_result_t,
 	"zx_fifo_state_t":          zx_fifo_state_t,
 	// TODO(smklein): Remove the following temporary types. They could be blacklisted, but this is
 	// easier.
