@@ -452,7 +452,7 @@ func (c *Cmd) Wait() error {
 	} else if !state.Success() {
 		return &ExitError{ProcessState: state}
 	}
-
+	c.Process.Release()//cyp add
 	return copyError
 }
 

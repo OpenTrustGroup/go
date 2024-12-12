@@ -159,6 +159,7 @@ func launchpadLaunchFdio(name string, argv []string, attr *ProcAttr) (zx.Handle,
 	if status != zx.ErrOk {
 		return 0, errors.New("launchpad_create")
 	}
+	jobToChild.Close()//cyp add
 	defer func() {
 		if lp != nil {
 			C.launchpad_destroy(lp)
