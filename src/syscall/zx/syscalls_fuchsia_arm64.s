@@ -91,12 +91,25 @@ TEXT ·Sys_system_get_physmem(SB),NOSPLIT,$0-8
 	MOVD R0, ret+0(FP)
 	RET
 
+// func Sys_system_get_bootmode(bootmode *uint64) Status
+TEXT ·Sys_system_get_bootmode(SB),NOSPLIT,$0-12
+	MOVD bootmode+0(FP), R0
+	BL vdso_zx_system_get_bootmode(SB)
+	MOVW R0, ret+8(FP)
+	RET
+
 // func sys_system_get_features(kind uint32, out *uint32) Status
 TEXT ·sys_system_get_features(SB),NOSPLIT,$0-20
 	MOVW kind+0(FP), R0
 	MOVD out+8(FP), R1
 	BL vdso_zx_system_get_features(SB)
 	MOVW R0, ret+16(FP)
+	RET
+
+// func Sys_system_get_tee_vendor_id() uint32
+TEXT ·Sys_system_get_tee_vendor_id(SB),NOSPLIT,$0-4
+	BL vdso_zx_system_get_tee_vendor_id(SB)
+	MOVW R0, ret+0(FP)
 	RET
 
 // func Sys_cache_flush(addr unsafe.Pointer, len uint, options uint32) Status
@@ -303,30 +316,6 @@ TEXT ·sys_channel_write(SB),NOSPLIT,$0-44
 	MOVW R0, ret+40(FP)
 	RET
 
-// func Sys_channel_call_noretry(handle Handle, options uint32, deadline Time, args *ChannelCallArgs, actual_bytes *uint32, actual_handles *uint32, read_status *Status) Status
-TEXT ·Sys_channel_call_noretry(SB),NOSPLIT,$0-52
-	MOVW handle+0(FP), R0
-	MOVW options+4(FP), R1
-	MOVD deadline+8(FP), R2
-	MOVD args+16(FP), R3
-	MOVD actual_bytes+24(FP), R4
-	MOVD actual_handles+32(FP), R5
-	MOVD read_status+40(FP), R6
-	BL vdso_zx_channel_call_noretry(SB)
-	MOVW R0, ret+48(FP)
-	RET
-
-// func Sys_channel_call_finish(deadline Time, args *ChannelCallArgs, actual_bytes *uint32, actual_handles *uint32, read_status *Status) Status
-TEXT ·Sys_channel_call_finish(SB),NOSPLIT,$0-44
-	MOVD deadline+0(FP), R0
-	MOVD args+8(FP), R1
-	MOVD actual_bytes+16(FP), R2
-	MOVD actual_handles+24(FP), R3
-	MOVD read_status+32(FP), R4
-	BL vdso_zx_channel_call_finish(SB)
-	MOVW R0, ret+40(FP)
-	RET
-
 // func Sys_channel_call(handle Handle, options uint32, deadline Time, args *ChannelCallArgs, actual_bytes *uint32, actual_handles *uint32, read_status *Status) Status
 TEXT ·Sys_channel_call(SB),NOSPLIT,$0-52
 	MOVW handle+0(FP), R0
@@ -432,6 +421,20 @@ TEXT ·Sys_thread_write_state(SB),NOSPLIT,$0-28
 	MOVD buffer_len+16(FP), R3
 	BL vdso_zx_thread_write_state(SB)
 	MOVW R0, ret+24(FP)
+	RET
+
+// func Sys_thread_set_cpu_affinity(handle Handle, kind uint32) Status
+TEXT ·Sys_thread_set_cpu_affinity(SB),NOSPLIT,$0-12
+	MOVW handle+0(FP), R0
+	MOVW kind+4(FP), R1
+	BL vdso_zx_thread_set_cpu_affinity(SB)
+	MOVW R0, ret+8(FP)
+	RET
+
+// func Sys_thread_get_current_cpu() uint32
+TEXT ·Sys_thread_get_current_cpu(SB),NOSPLIT,$0-4
+	BL vdso_zx_thread_get_current_cpu(SB)
+	MOVW R0, ret+0(FP)
 	RET
 
 // func Sys_thread_set_priority(prio int32) Status
@@ -808,15 +811,6 @@ TEXT ·Sys_fifo_create(SB),NOSPLIT,$0-36
 	MOVW R0, ret+32(FP)
 	RET
 
-// func Sys_fifo_read(handle Handle, data unsafe.Pointer, len uint, num_written *uint32) Status
-TEXT ·Sys_fifo_read(SB),NOSPLIT,$0-36
-	MOVW handle+0(FP), R0
-	MOVD data+8(FP), R1
-	MOVD len+16(FP), R2
-	MOVD num_written+24(FP), R3
-	BL vdso_zx_fifo_read(SB)
-	MOVW R0, ret+32(FP)
-	RET
 
 // func Sys_fifo_read_old(handle Handle, data unsafe.Pointer, len uint, num_written *uint32) Status
 TEXT ·Sys_fifo_read_old(SB),NOSPLIT,$0-36
@@ -828,15 +822,6 @@ TEXT ·Sys_fifo_read_old(SB),NOSPLIT,$0-36
 	MOVW R0, ret+32(FP)
 	RET
 
-// func Sys_fifo_write(handle Handle, data unsafe.Pointer, len uint, num_written *uint32) Status
-TEXT ·Sys_fifo_write(SB),NOSPLIT,$0-36
-	MOVW handle+0(FP), R0
-	MOVD data+8(FP), R1
-	MOVD len+16(FP), R2
-	MOVD num_written+24(FP), R3
-	BL vdso_zx_fifo_write(SB)
-	MOVW R0, ret+32(FP)
-	RET
 
 // func Sys_fifo_write_old(handle Handle, data unsafe.Pointer, len uint, num_written *uint32) Status
 TEXT ·Sys_fifo_write_old(SB),NOSPLIT,$0-36
@@ -1333,34 +1318,6 @@ TEXT ·Sys_job_set_relative_importance(SB),NOSPLIT,$0-20
 	MOVW R0, ret+16(FP)
 	RET
 
-// func Sys_trusty_set_config(process Handle, uuid unsafe.Pointer, uuid_len uint, mmios unsafe.Pointer, mmio_len uint, irq int32) Status
-TEXT ·Sys_trusty_set_config(SB),NOSPLIT,$0-52
-	MOVW process+0(FP), R0
-	MOVD uuid+8(FP), R1
-	MOVD uuid_len+16(FP), R2
-	MOVD mmios+24(FP), R3
-	MOVD mmio_len+32(FP), R4
-	MOVW irq+40(FP), R5
-	BL vdso_zx_trusty_set_config(SB)
-	MOVW R0, ret+48(FP)
-	RET
-
-// func Sys_trusty_create_heap_vmo(is_ion bool, heap_base Paddr, heap_size uint64, out *Handle) Status
-TEXT ·Sys_trusty_create_heap_vmo(SB),NOSPLIT,$0-36
-	MOVD is_ion+0(FP), R0
-	MOVD heap_base+8(FP), R1
-	MOVD heap_size+16(FP), R2
-	MOVD out+24(FP), R3
-	BL vdso_zx_trusty_create_heap_vmo(SB)
-	MOVW R0, ret+32(FP)
-	RET
-
-// func Sys_trusty_destroy_heap_vmo(heap Handle) Status
-TEXT ·Sys_trusty_destroy_heap_vmo(SB),NOSPLIT,$0-12
-	MOVW heap+0(FP), R0
-	BL vdso_zx_trusty_destroy_heap_vmo(SB)
-	MOVW R0, ret+8(FP)
-	RET
 
 // func Sys_set_cache_protection(flags uint32) Status
 TEXT ·Sys_set_cache_protection(SB),NOSPLIT,$0-12
@@ -1456,13 +1413,5 @@ TEXT ·Sys_system_suspend(SB),NOSPLIT,$0-20
 	MOVD entry+8(FP), R1
 	BL vdso_zx_system_suspend(SB)
 	MOVW R0, ret+16(FP)
-	RET
-
-// func Sys_wakeup_guest_os(vcpu Handle, vmid uint32) Status
-TEXT ·Sys_wakeup_guest_os(SB),NOSPLIT,$0-12
-	MOVW vcpu+0(FP), R0
-	MOVW vmid+4(FP), R1
-	BL vdso_zx_wakeup_guest_os(SB)
-	MOVW R0, ret+8(FP)
 	RET
 

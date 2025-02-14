@@ -55,6 +55,8 @@ import "unsafe"
 //go:cgo_import_dynamic vdso_zx_thread_start zx_thread_start "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_thread_read_state zx_thread_read_state "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_thread_write_state zx_thread_write_state "libzircon.so"
+//go:cgo_import_dynamic vdso_zx_thread_set_cpu_affinity zx_thread_set_cpu_affinity "libzircon.so"
+//go:cgo_import_dynamic vdso_zx_thread_get_current_cpu zx_thread_get_current_cpu "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_thread_set_priority zx_thread_set_priority "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_process_exit zx_process_exit "libzircon.so"
 //go:cgo_import_dynamic vdso_zx_process_create zx_process_create "libzircon.so"
@@ -211,6 +213,8 @@ import "unsafe"
 //go:linkname vdso_zx_thread_start vdso_zx_thread_start
 //go:linkname vdso_zx_thread_read_state vdso_zx_thread_read_state
 //go:linkname vdso_zx_thread_write_state vdso_zx_thread_write_state
+//go:linkname vdso_zx_thread_set_cpu_affinity vdso_zx_thread_set_cpu_affinity
+//go:linkname vdso_zx_thread_get_current_cpu vdso_zx_thread_get_current_cpu
 //go:linkname vdso_zx_thread_set_priority vdso_zx_thread_set_priority
 //go:linkname vdso_zx_process_exit vdso_zx_process_exit
 //go:linkname vdso_zx_process_create vdso_zx_process_create
@@ -322,161 +326,163 @@ import "unsafe"
 //go:linkname vdso_zx_wakeup_guest_os vdso_zx_wakeup_guest_os
 
 var (
-	vdso_zx_clock_get                           uintptr
-	vdso_zx_nanosleep                           uintptr
-	vdso_zx_ticks_get                           uintptr
-	vdso_zx_ticks_per_second                    uintptr
-	vdso_zx_deadline_after                      uintptr
-	vdso_zx_clock_adjust                        uintptr
-	vdso_zx_system_get_dcache_line_size         uintptr
-	vdso_zx_system_get_num_cpus                 uintptr
-	vdso_zx_system_get_version                  uintptr
-	vdso_zx_system_get_cpu_hwid                 uintptr
-	vdso_zx_system_get_cpu_id                   uintptr
-	vdso_zx_system_get_physmem                  uintptr
-	vdso_zx_system_get_features                 uintptr
-	vdso_zx_cache_flush                         uintptr
-	vdso_zx_handle_close                        uintptr
-	vdso_zx_handle_duplicate                    uintptr
-	vdso_zx_handle_replace                      uintptr
-	vdso_zx_object_wait_one                     uintptr
-	vdso_zx_object_wait_many                    uintptr
-	vdso_zx_object_wait_async                   uintptr
-	vdso_zx_object_signal                       uintptr
-	vdso_zx_object_signal_peer                  uintptr
-	vdso_zx_object_get_property                 uintptr
-	vdso_zx_object_set_property                 uintptr
-	vdso_zx_object_set_cookie                   uintptr
-	vdso_zx_object_get_cookie                   uintptr
-	vdso_zx_object_get_info                     uintptr
-	vdso_zx_object_get_child                    uintptr
-	vdso_zx_object_set_profile                  uintptr
-	vdso_zx_channel_create                      uintptr
-	vdso_zx_channel_read                        uintptr
-	vdso_zx_channel_read_etc                    uintptr
-	vdso_zx_channel_write                       uintptr
-	vdso_zx_channel_call_noretry                uintptr
-	vdso_zx_channel_call_finish                 uintptr
-	vdso_zx_channel_call                        uintptr
-	vdso_zx_socket_create                       uintptr
-	vdso_zx_socket_write                        uintptr
-	vdso_zx_socket_read                         uintptr
-	vdso_zx_socket_share                        uintptr
-	vdso_zx_socket_accept                       uintptr
-	vdso_zx_thread_exit                         uintptr
-	vdso_zx_thread_create                       uintptr
-	vdso_zx_thread_start                        uintptr
-	vdso_zx_thread_read_state                   uintptr
-	vdso_zx_thread_write_state                  uintptr
-	vdso_zx_thread_set_priority                 uintptr
-	vdso_zx_process_exit                        uintptr
-	vdso_zx_process_create                      uintptr
-	vdso_zx_process_start                       uintptr
-	vdso_zx_process_read_memory                 uintptr
-	vdso_zx_process_write_memory                uintptr
-	vdso_zx_job_create                          uintptr
-	vdso_zx_job_set_policy                      uintptr
-	vdso_zx_task_bind_exception_port            uintptr
-	vdso_zx_task_suspend                        uintptr
-	vdso_zx_task_resume                         uintptr
-	vdso_zx_task_kill                           uintptr
-	vdso_zx_event_create                        uintptr
-	vdso_zx_eventpair_create                    uintptr
-	vdso_zx_futex_wait                          uintptr
-	vdso_zx_futex_wake                          uintptr
-	vdso_zx_futex_requeue                       uintptr
-	vdso_zx_port_create                         uintptr
-	vdso_zx_port_queue                          uintptr
-	vdso_zx_port_wait                           uintptr
-	vdso_zx_port_cancel                         uintptr
-	vdso_zx_timer_create                        uintptr
-	vdso_zx_timer_set                           uintptr
-	vdso_zx_timer_cancel                        uintptr
-	vdso_zx_vmo_create                          uintptr
-	vdso_zx_vmo_read                            uintptr
-	vdso_zx_vmo_write                           uintptr
-	vdso_zx_vmo_get_size                        uintptr
-	vdso_zx_vmo_set_size                        uintptr
-	vdso_zx_vmo_op_range                        uintptr
-	vdso_zx_vmo_clone                           uintptr
-	vdso_zx_vmo_set_cache_policy                uintptr
-	vdso_zx_vmar_allocate                       uintptr
-	vdso_zx_vmar_destroy                        uintptr
-	vdso_zx_vmar_map                            uintptr
-	vdso_zx_vmar_unmap                          uintptr
-	vdso_zx_vmar_protect                        uintptr
-	vdso_zx_cprng_draw                          uintptr
-	vdso_zx_cprng_add_entropy                   uintptr
-	vdso_zx_fifo_create                         uintptr
-	vdso_zx_fifo_read                           uintptr
-	vdso_zx_fifo_read_old                       uintptr
-	vdso_zx_fifo_write                          uintptr
-	vdso_zx_fifo_write_old                      uintptr
-	vdso_zx_profile_create                      uintptr
+	vdso_zx_clock_get uintptr
+	vdso_zx_nanosleep uintptr
+	vdso_zx_ticks_get uintptr
+	vdso_zx_ticks_per_second uintptr
+	vdso_zx_deadline_after uintptr
+	vdso_zx_clock_adjust uintptr
+	vdso_zx_system_get_dcache_line_size uintptr
+	vdso_zx_system_get_num_cpus uintptr
+	vdso_zx_system_get_version uintptr
+	vdso_zx_system_get_cpu_hwid uintptr
+	vdso_zx_system_get_cpu_id uintptr
+	vdso_zx_system_get_physmem uintptr
+	vdso_zx_system_get_features uintptr
+	vdso_zx_cache_flush uintptr
+	vdso_zx_handle_close uintptr
+	vdso_zx_handle_duplicate uintptr
+	vdso_zx_handle_replace uintptr
+	vdso_zx_object_wait_one uintptr
+	vdso_zx_object_wait_many uintptr
+	vdso_zx_object_wait_async uintptr
+	vdso_zx_object_signal uintptr
+	vdso_zx_object_signal_peer uintptr
+	vdso_zx_object_get_property uintptr
+	vdso_zx_object_set_property uintptr
+	vdso_zx_object_set_cookie uintptr
+	vdso_zx_object_get_cookie uintptr
+	vdso_zx_object_get_info uintptr
+	vdso_zx_object_get_child uintptr
+	vdso_zx_object_set_profile uintptr
+	vdso_zx_channel_create uintptr
+	vdso_zx_channel_read uintptr
+	vdso_zx_channel_read_etc uintptr
+	vdso_zx_channel_write uintptr
+	vdso_zx_channel_call_noretry uintptr
+	vdso_zx_channel_call_finish uintptr
+	vdso_zx_channel_call uintptr
+	vdso_zx_socket_create uintptr
+	vdso_zx_socket_write uintptr
+	vdso_zx_socket_read uintptr
+	vdso_zx_socket_share uintptr
+	vdso_zx_socket_accept uintptr
+	vdso_zx_thread_exit uintptr
+	vdso_zx_thread_create uintptr
+	vdso_zx_thread_start uintptr
+	vdso_zx_thread_read_state uintptr
+	vdso_zx_thread_write_state uintptr
+	vdso_zx_thread_set_cpu_affinity uintptr
+	vdso_zx_thread_get_current_cpu uintptr
+	vdso_zx_thread_set_priority uintptr
+	vdso_zx_process_exit uintptr
+	vdso_zx_process_create uintptr
+	vdso_zx_process_start uintptr
+	vdso_zx_process_read_memory uintptr
+	vdso_zx_process_write_memory uintptr
+	vdso_zx_job_create uintptr
+	vdso_zx_job_set_policy uintptr
+	vdso_zx_task_bind_exception_port uintptr
+	vdso_zx_task_suspend uintptr
+	vdso_zx_task_resume uintptr
+	vdso_zx_task_kill uintptr
+	vdso_zx_event_create uintptr
+	vdso_zx_eventpair_create uintptr
+	vdso_zx_futex_wait uintptr
+	vdso_zx_futex_wake uintptr
+	vdso_zx_futex_requeue uintptr
+	vdso_zx_port_create uintptr
+	vdso_zx_port_queue uintptr
+	vdso_zx_port_wait uintptr
+	vdso_zx_port_cancel uintptr
+	vdso_zx_timer_create uintptr
+	vdso_zx_timer_set uintptr
+	vdso_zx_timer_cancel uintptr
+	vdso_zx_vmo_create uintptr
+	vdso_zx_vmo_read uintptr
+	vdso_zx_vmo_write uintptr
+	vdso_zx_vmo_get_size uintptr
+	vdso_zx_vmo_set_size uintptr
+	vdso_zx_vmo_op_range uintptr
+	vdso_zx_vmo_clone uintptr
+	vdso_zx_vmo_set_cache_policy uintptr
+	vdso_zx_vmar_allocate uintptr
+	vdso_zx_vmar_destroy uintptr
+	vdso_zx_vmar_map uintptr
+	vdso_zx_vmar_unmap uintptr
+	vdso_zx_vmar_protect uintptr
+	vdso_zx_cprng_draw uintptr
+	vdso_zx_cprng_add_entropy uintptr
+	vdso_zx_fifo_create uintptr
+	vdso_zx_fifo_read uintptr
+	vdso_zx_fifo_read_old uintptr
+	vdso_zx_fifo_write uintptr
+	vdso_zx_fifo_write_old uintptr
+	vdso_zx_profile_create uintptr
 	vdso_zx_vmar_unmap_handle_close_thread_exit uintptr
 	vdso_zx_futex_wake_handle_close_thread_exit uintptr
-	vdso_zx_log_create                          uintptr
-	vdso_zx_log_write                           uintptr
-	vdso_zx_log_read                            uintptr
-	vdso_zx_debuglog_create                     uintptr
-	vdso_zx_debuglog_write                      uintptr
-	vdso_zx_debuglog_read                       uintptr
-	vdso_zx_ktrace_read                         uintptr
-	vdso_zx_ktrace_control                      uintptr
-	vdso_zx_ktrace_write                        uintptr
-	vdso_zx_mtrace_control                      uintptr
-	vdso_zx_debug_read                          uintptr
-	vdso_zx_debug_write                         uintptr
-	vdso_zx_debug_send_command                  uintptr
-	vdso_zx_interrupt_create                    uintptr
-	vdso_zx_interrupt_bind                      uintptr
-	vdso_zx_interrupt_bind_vcpu                 uintptr
-	vdso_zx_interrupt_mask                      uintptr
-	vdso_zx_interrupt_unmask                    uintptr
-	vdso_zx_interrupt_configure_read            uintptr
-	vdso_zx_interrupt_configure_write           uintptr
-	vdso_zx_interrupt_wait                      uintptr
-	vdso_zx_interrupt_get_timestamp             uintptr
-	vdso_zx_interrupt_signal                    uintptr
-	vdso_zx_irq_create                          uintptr
-	vdso_zx_irq_bind                            uintptr
-	vdso_zx_irq_wait                            uintptr
-	vdso_zx_irq_destroy                         uintptr
-	vdso_zx_irq_ack                             uintptr
-	vdso_zx_irq_trigger                         uintptr
-	vdso_zx_smc_call                            uintptr
-	vdso_zx_mmap_device_io                      uintptr
-	vdso_zx_vmo_create_contiguous               uintptr
-	vdso_zx_vmo_create_physical                 uintptr
-	vdso_zx_vmo_create_physical_paged           uintptr
-	vdso_zx_iommu_create                        uintptr
-	vdso_zx_bti_create                          uintptr
-	vdso_zx_bti_pin                             uintptr
-	vdso_zx_bti_pin_new                         uintptr
-	vdso_zx_bti_unpin                           uintptr
-	vdso_zx_pmt_unpin                           uintptr
-	vdso_zx_bootloader_fb_get_info              uintptr
-	vdso_zx_set_framebuffer                     uintptr
-	vdso_zx_set_framebuffer_vmo                 uintptr
-	vdso_zx_acpi_uefi_rsdp                      uintptr
-	vdso_zx_resource_create                     uintptr
-	vdso_zx_system_mexec                        uintptr
-	vdso_zx_system_powerctl                     uintptr
-	vdso_zx_job_set_relative_importance         uintptr
-	vdso_zx_trusty_set_config                   uintptr
-	vdso_zx_trusty_create_heap_vmo              uintptr
-	vdso_zx_trusty_destroy_heap_vmo             uintptr
-	vdso_zx_set_cache_protection                uintptr
-	vdso_zx_poison_cache                        uintptr
-	vdso_zx_tipc_port_create                    uintptr
-	vdso_zx_tipc_port_accept                    uintptr
-	vdso_zx_tipc_port_connect                   uintptr
-	vdso_zx_tipc_chan_read                      uintptr
-	vdso_zx_tipc_chan_write                     uintptr
-	vdso_zx_vqueue_notifier_create              uintptr
-	vdso_zx_vqueue_notifier_bind_vcpu           uintptr
-	vdso_zx_system_suspend                      uintptr
-	vdso_zx_wakeup_guest_os                     uintptr
+	vdso_zx_log_create uintptr
+	vdso_zx_log_write uintptr
+	vdso_zx_log_read uintptr
+	vdso_zx_debuglog_create uintptr
+	vdso_zx_debuglog_write uintptr
+	vdso_zx_debuglog_read uintptr
+	vdso_zx_ktrace_read uintptr
+	vdso_zx_ktrace_control uintptr
+	vdso_zx_ktrace_write uintptr
+	vdso_zx_mtrace_control uintptr
+	vdso_zx_debug_read uintptr
+	vdso_zx_debug_write uintptr
+	vdso_zx_debug_send_command uintptr
+	vdso_zx_interrupt_create uintptr
+	vdso_zx_interrupt_bind uintptr
+	vdso_zx_interrupt_bind_vcpu uintptr
+	vdso_zx_interrupt_mask uintptr
+	vdso_zx_interrupt_unmask uintptr
+	vdso_zx_interrupt_configure_read uintptr
+	vdso_zx_interrupt_configure_write uintptr
+	vdso_zx_interrupt_wait uintptr
+	vdso_zx_interrupt_get_timestamp uintptr
+	vdso_zx_interrupt_signal uintptr
+	vdso_zx_irq_create uintptr
+	vdso_zx_irq_bind uintptr
+	vdso_zx_irq_wait uintptr
+	vdso_zx_irq_destroy uintptr
+	vdso_zx_irq_ack uintptr
+	vdso_zx_irq_trigger uintptr
+	vdso_zx_smc_call uintptr
+	vdso_zx_mmap_device_io uintptr
+	vdso_zx_vmo_create_contiguous uintptr
+	vdso_zx_vmo_create_physical uintptr
+	vdso_zx_vmo_create_physical_paged uintptr
+	vdso_zx_iommu_create uintptr
+	vdso_zx_bti_create uintptr
+	vdso_zx_bti_pin uintptr
+	vdso_zx_bti_pin_new uintptr
+	vdso_zx_bti_unpin uintptr
+	vdso_zx_pmt_unpin uintptr
+	vdso_zx_bootloader_fb_get_info uintptr
+	vdso_zx_set_framebuffer uintptr
+	vdso_zx_set_framebuffer_vmo uintptr
+	vdso_zx_acpi_uefi_rsdp uintptr
+	vdso_zx_resource_create uintptr
+	vdso_zx_system_mexec uintptr
+	vdso_zx_system_powerctl uintptr
+	vdso_zx_job_set_relative_importance uintptr
+	vdso_zx_trusty_set_config uintptr
+	vdso_zx_trusty_create_heap_vmo uintptr
+	vdso_zx_trusty_destroy_heap_vmo uintptr
+	vdso_zx_set_cache_protection uintptr
+	vdso_zx_poison_cache uintptr
+	vdso_zx_tipc_port_create uintptr
+	vdso_zx_tipc_port_accept uintptr
+	vdso_zx_tipc_port_connect uintptr
+	vdso_zx_tipc_chan_read uintptr
+	vdso_zx_tipc_chan_write uintptr
+	vdso_zx_vqueue_notifier_create uintptr
+	vdso_zx_vqueue_notifier_bind_vcpu uintptr
+	vdso_zx_system_suspend uintptr
+	vdso_zx_wakeup_guest_os uintptr
 )
 
 //go:noescape
@@ -529,7 +535,15 @@ func Sys_system_get_physmem() uint64
 
 //go:noescape
 //go:nosplit
+func Sys_system_get_bootmode(bootmode *uint64) Status
+
+//go:noescape
+//go:nosplit
 func sys_system_get_features(kind uint32, out *uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_system_get_tee_vendor_id() uint32
 
 //go:noescape
 //go:nosplit
@@ -662,6 +676,14 @@ func Sys_thread_read_state(handle Handle, kind uint32, buffer unsafe.Pointer, le
 //go:noescape
 //go:nosplit
 func Sys_thread_write_state(handle Handle, kind uint32, buffer unsafe.Pointer, buffer_len uint) Status
+
+//go:noescape
+//go:nosplit
+func Sys_thread_set_cpu_affinity(handle Handle, kind uint32) Status
+
+//go:noescape
+//go:nosplit
+func Sys_thread_get_current_cpu() uint32
 
 //go:noescape
 //go:nosplit
@@ -1093,7 +1115,7 @@ func Sys_vqueue_notifier_bind_vcpu(handle Handle, vcpu_id uint32, vcpu_handle Ha
 
 //go:noescape
 //go:nosplit
-func Sys_system_suspend(vcpu Handle, entry uintptr) Status
+// func Sys_system_suspend(vcpu Handle, entry Vaddr) Status
 
 //go:noescape
 //go:nosplit
